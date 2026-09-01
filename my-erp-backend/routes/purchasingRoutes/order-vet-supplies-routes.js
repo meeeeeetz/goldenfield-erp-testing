@@ -1,9 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const OrderVetSuppliesController = require('../../Controllers/main-purchasing-controller/order-vet-supplies-controller');
+const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 const pool = require('../../config/database');
 const controller = new OrderVetSuppliesController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -94,17 +101,26 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id/photo', authenticateToken, async (req, res) => {
+router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, res) => {
     try {
         const orderId = req.params.id;
-        const { photoBase64 } = req.body;
-        if (!photoBase64) {
-            return res.status(400).json({ error: 'No photo provided' });
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
         }
-        const fileName = `${orderId}_${Date.now()}.webp`;
-        const result = await controller.updateOrderPhoto(orderId, `/uploads/veterinary-supplies/${fileName}`);
-        res.json(result);
+        
+        const timestamp = Date.now();
+        const originalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const destination = `veterinary-supplies/${orderId}/${timestamp}_${originalName}`;
+        
+        const result = await uploadFile(req.file.buffer, destination, {
+            contentType: req.file.mimetype
+        });
+        
+        const publicUrl = result.publicUrl;
+        const dbResult = await controller.updateOrderPhoto(orderId, publicUrl);
+        res.json(dbResult);
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(500).json({ error: error.message });
     }
 });

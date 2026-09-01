@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const pool = require('../../config/database');
+const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 const router = express.Router();
 
 const storage = multer.memoryStorage();
@@ -13,13 +14,23 @@ const upload = multer({
 
 router.post('/upload', upload.single('photo'), async (req, res) => {
     try {
-        const { bankCode, bookNo, pageNo, lastBalance, rows, photoBase64 } = req.body;
+        const { bankCode, bookNo, pageNo, lastBalance, rows } = req.body;
 
         if (!bankCode || !bookNo || !pageNo) {
             return res.status(400).json({ error: 'Bank code, book no, and page no are required' });
         }
 
-        const photoData = req.file ? req.file.buffer : (photoBase64 ? Buffer.from(photoBase64, 'base64') : null);
+        let photoUrl = null;
+        if (req.file) {
+            const timestamp = Date.now();
+            const originalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const destination = `passbook-photos/${bankCode}_${bookNo}_${pageNo}/${timestamp}_${originalName}`;
+            
+            const result = await uploadFile(req.file.buffer, destination, {
+                contentType: req.file.mimetype
+            });
+            photoUrl = result.publicUrl;
+        }
 
         let parsedRows = [];
         if (rows) {
@@ -56,7 +67,7 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
             const debit = parseAmount(row.debit);
             const credit = parseAmount(row.credit);
             const balance = parseAmount(row.balance);
-            const link = '';
+            const link = photoUrl || '';
             try {
                 const codeBookPage = `${bankCode} ${bookNo} ${pageNo}`.trim();
                 const insertResult = await pool.query(
@@ -78,7 +89,7 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
             lastBalance: lastBalance || '0.00',
             rowsCount: parsedRows.length,
             savedStatements: savedStatements.length,
-            hasPhoto: !!photoData,
+            photoUrl: photoUrl,
             savedAt: new Date().toISOString()
         };
 

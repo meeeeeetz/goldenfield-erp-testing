@@ -1,34 +1,50 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const EmployeeProfileController = require('../../Controllers/main-human-resources-controller/employee-profile-controller');
+const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 const pool = require('../../config/database');
 const controller = new EmployeeProfileController(pool);
 
-router.post('/upload-documents', async (req, res) => {
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+router.post('/upload-documents', upload.array('files', 50), async (req, res) => {
     try {
-        const files = req.body.files || [];
-        const labels = req.body.labels || [];
-        let employeeId = req.body.employeeId || req.query.employeeId || 'unknown';
-        if (Array.isArray(employeeId)) {
-            employeeId = employeeId[0] || 'unknown';
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
         }
 
+        const { employeeId, labels } = req.body;
+        const employeeIdValue = Array.isArray(employeeId) ? employeeId[0] : employeeId || 'unknown';
+        const labelsArray = labels ? (Array.isArray(labels) ? labels : [labels]) : [];
+
         const savedFiles = [];
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const label = labels[i] || `file_${i}`;
-            const fileName = `${employeeId}_${label}_${Date.now()}.webp`;
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
+            const label = labelsArray[i] || `file_${i}`;
+            const timestamp = Date.now();
+            const originalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const destination = `employee-photos/${employeeIdValue}/${timestamp}_${label}_${originalName}`;
+
+            const result = await uploadFile(file.buffer, destination, {
+                contentType: file.mimetype
+            });
+
             savedFiles.push({
-                employeeId,
+                employeeId: employeeIdValue,
                 label,
-                fileName,
-                path: `/uploads/photos/${fileName}`,
-                size: file.base64 ? Buffer.from(file.base64, 'base64').length : 0
+                fileName: result.fileName,
+                publicUrl: result.publicUrl,
+                size: file.size
             });
         }
 
         res.json({ message: 'Documents uploaded successfully', files: savedFiles });
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(500).json({ error: error.message });
     }
 });

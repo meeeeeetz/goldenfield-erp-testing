@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { getPublicUrl } = require('../../utils/gcs');
 
 class EmployeeProfileController {
     constructor(dbConnection) {
@@ -306,10 +307,8 @@ class EmployeeProfileController {
     }
 
     async createEmployeeFolder({ employee_id, last_name, first_name }) {
-        const baseDir = 'C:\\Users\\ADMIN\\Documents\\uploads\\photos';
-
         if (!employee_id) {
-            throw new Error('employee_id is required to create employee folder');
+            throw new Error('employee_id is required');
         }
 
         const safe = (s = '') => {
@@ -318,19 +317,20 @@ class EmployeeProfileController {
         };
 
         const folderName = `${safe(employee_id)}_${safe(last_name)}_${safe(first_name)}`;
-        const fullPath = path.join(baseDir, folderName);
-        await fs.promises.mkdir(fullPath, { recursive: true });
-        return { folderName, fullPath };
+        
+        // GCS doesn't need folder creation - folders are auto-created on upload
+        return { folderName, fullPath: `employee-photos/${folderName}` };
     }
 
     async getEmployeeDocuments(employee_id) {
-        const baseDir = 'C:\\Users\\ADMIN\\Documents\\uploads\\photos';
+        const { bucket } = require('../../utils/gcs').initializeGCS();
         const folderName = await this.computeEmployeeFolderName(employee_id);
-        const folderPath = path.join(baseDir, folderName);
+        const prefix = `employee-photos/${folderName}/`;
 
         let files = [];
         try {
-            files = await fs.promises.readdir(folderPath);
+            const [gcsFiles] = await bucket.getFiles({ prefix });
+            files = gcsFiles.map(f => f.name.replace(prefix, ''));
         } catch (e) {
             return [];
         }
@@ -381,7 +381,8 @@ class EmployeeProfileController {
                 result.push({
                     docType,
                     label: labelMap[docType] || docType,
-                    fileName: match
+                    fileName: match,
+                    publicUrl: getPublicUrl(prefix + match)
                 });
             }
         }

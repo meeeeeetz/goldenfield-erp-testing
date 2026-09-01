@@ -6,3 +6,5 @@ dist/
 build/
 uploads/
 passbook-photos/
+gcp-key.json
+*-key.json

@@ -3,6 +3,7 @@ const router = express.Router();
 const ElectricBillController = require('../../Controllers/main-purchasing-controller/electric-bill-controller');
 const pool = require('../../config/database');
 const multer = require('multer');
+const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 const controller = new ElectricBillController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
 
@@ -14,9 +15,23 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
-        const fileName = req.file.originalname || 'electric-bill.webp';
-        res.status(201).json({ message: 'File uploaded successfully', fileName, size: req.file.size });
+        
+        const timestamp = Date.now();
+        const originalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const destination = `electric-bills/${timestamp}_${originalName}`;
+        
+        const result = await uploadFile(req.file.buffer, destination, {
+            contentType: req.file.mimetype
+        });
+        
+        res.status(201).json({
+            message: 'File uploaded successfully',
+            fileName: result.fileName,
+            publicUrl: result.publicUrl,
+            size: req.file.size
+        });
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(500).json({ error: error.message });
     }
 });

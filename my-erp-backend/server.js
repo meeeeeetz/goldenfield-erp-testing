@@ -60,6 +60,7 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const miscSuppliersRoutes = require('./routes/purchasingRoutes/misc-suppliers-routes');
     const orderMiscRoutes = require('./routes/purchasingRoutes/order-misc-routes');
     const orderMiscRepaymentsRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
+    const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -134,12 +135,9 @@ app.use('/api/miscellaneous-suppliers', miscSuppliersRoutes);
 app.use('/api/order-misc', orderMiscRoutes);
 app.use('/api/order-misc-repayments', orderMiscRepaymentsRoutes);
 app.use('/api/expenses', expenseRoutes);
-app.use('/uploads/passbook-photos', express.static(path.join(__dirname, 'passbook-photos')));
-app.use('/uploads/employee-photos', express.static(path.join(__dirname, 'uploads/photos')));
-app.use('/uploads/payslips', express.static(path.join(__dirname, 'uploads/payslips')));
-app.use('/uploads/feeds-receipts', express.static(path.join(__dirname, 'uploads/Feeds Receipts')));
-app.use('/uploads/electric-bills', express.static(path.join(__dirname, 'uploads/Electric Bill')));
-app.use('/uploads/veterinary-supplies', express.static(path.join(__dirname, 'uploads/Veterinary Supplies')));
+app.use('/api/upload', uploadRoutes);
+// Note: File uploads now use Google Cloud Storage
+// Static file serving is only for backward compatibility during migration
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));

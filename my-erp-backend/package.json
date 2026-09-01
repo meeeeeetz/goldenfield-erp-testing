@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.22.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -18,7 +19,8 @@
     "multer": "^2.2.0",
     "pdfkit": "^0.19.1",
     "pg": "^8.11.0",
-    "puppeteer": "^24.43.1"
+    "puppeteer": "^24.43.1",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
