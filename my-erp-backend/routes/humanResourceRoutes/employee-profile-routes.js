@@ -25,9 +25,10 @@ router.post('/upload-documents', upload.array('files', 50), async (req, res) => 
         for (let i = 0; i < req.files.length; i++) {
             const file = req.files[i];
             const label = labelsArray[i] || `file_${i}`;
-            const timestamp = Date.now();
-            const originalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const destination = `employee-photos/${employeeIdValue}/${timestamp}_${label}_${originalName}`;
+            const extension = file.originalname.split('.').pop() || '';
+            const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = extension ? `${employeeIdValue}_${safeLabel}.${extension}` : `${employeeIdValue}_${safeLabel}`;
+            const destination = `employee-photos/${employeeIdValue}/${fileName}`;
 
             const result = await uploadFile(file.buffer, destination, {
                 contentType: file.mimetype

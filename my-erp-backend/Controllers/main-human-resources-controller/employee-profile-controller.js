@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { getPublicUrl } = require('../../utils/gcs');
+const { getPublicUrl, initializeGCS } = require('../../utils/gcs');
 
 class EmployeeProfileController {
     constructor(dbConnection) {
@@ -67,25 +67,11 @@ class EmployeeProfileController {
         const result = await this.db.query(sql, [term]);
         const profiles = result.rows;
 
-        const baseDir = 'C:\\Users\\ADMIN\\Documents\\uploads\\photos';
         for (const profile of profiles) {
-            const folderName = await this.computeEmployeeFolderName(profile.employee_id);
-            profile.folder_name = folderName;
-            const folderPath = path.join(baseDir, folderName);
-            let photo = null;
-            try {
-                const files = await fs.promises.readdir(folderPath);
-                const match = files.find(f => {
-                    const lower = f.toLowerCase();
-                    return lower.startsWith(profile.employee_id.toLowerCase()) && lower.includes('2x2');
-                });
-                if (match) {
-                    photo = match;
-                }
-            } catch (e) {
-                // folder doesn't exist yet
-            }
-            profile.photo_file_name = photo;
+            const photo = await this.findEmployeePhoto(profile.employee_id);
+            profile.photo_file_name = photo.photo_file_name;
+            profile.photo_url = photo.photo_url;
+            profile.folder_name = photo.folder_name;
         }
         return profiles;
     }
@@ -306,6 +292,30 @@ class EmployeeProfileController {
         return `${safe(employee_id)}_${last_name}_${first_name}`;
     }
 
+    async findEmployeePhoto(employee_id) {
+        try {
+            const { bucket } = initializeGCS();
+            const folderName = await this.computeEmployeeFolderName(employee_id);
+            const prefix = `employee-photos/${folderName}/`;
+            const [files] = await bucket.getFiles({ prefix });
+            const lowerEmpId = String(employee_id).toLowerCase();
+            const match = files.find(f => {
+                const lower = f.name.toLowerCase();
+                return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
+            });
+            if (match) {
+                return {
+                    photo_file_name: match.name.replace(prefix, ''),
+                    photo_url: getPublicUrl(match.name),
+                    folder_name: folderName
+                };
+            }
+            return { photo_file_name: null, photo_url: null, folder_name: folderName };
+        } catch (e) {
+            return { photo_file_name: null, photo_url: null, folder_name: null };
+        }
+    }
+
     async createEmployeeFolder({ employee_id, last_name, first_name }) {
         if (!employee_id) {
             throw new Error('employee_id is required');
@@ -429,25 +439,11 @@ class EmployeeProfileController {
         const result = await this.db.query(query);
         const summaries = result.rows;
 
-        const baseDir = 'C:\\Users\\ADMIN\\Documents\\uploads\\photos';
         for (const summary of summaries) {
-            const folderName = await this.computeEmployeeFolderName(summary.employee_id);
-            summary.folder_name = folderName;
-            const folderPath = path.join(baseDir, folderName);
-            let photo = null;
-            try {
-                const files = await fs.promises.readdir(folderPath);
-                const match = files.find(f => {
-                    const lower = f.toLowerCase();
-                    return lower.startsWith(summary.employee_id.toLowerCase()) && lower.includes('2x2');
-                });
-                if (match) {
-                    photo = match;
-                }
-            } catch (e) {
-                // folder doesn't exist yet
-            }
-            summary.photo_file_name = photo;
+            const photo = await this.findEmployeePhoto(summary.employee_id);
+            summary.photo_file_name = photo.photo_file_name;
+            summary.photo_url = photo.photo_url;
+            summary.folder_name = photo.folder_name;
         }
         return summaries;
     }

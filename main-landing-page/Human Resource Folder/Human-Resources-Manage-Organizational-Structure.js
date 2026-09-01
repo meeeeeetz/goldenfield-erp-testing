@@ -990,6 +990,7 @@ function initializeModule(contentArea) {
                 node.append('image')
                     .attr('class', 'node-image')
                     .attr('href', d => {
+                        if (d.data.photo_url) return d.data.photo_url;
                         if (d.data.photo_file_name && d.data.folder_name) {
                             return `${API_BASE_UPLOADS}/${encodeURIComponent(d.data.folder_name)}/${encodeURIComponent(d.data.photo_file_name)}`;
                         }

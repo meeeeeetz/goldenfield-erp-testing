@@ -851,7 +851,7 @@ function initializeModule(contentArea) {
             const salaryAmount = emp.salary_amount ? `P ${parseFloat(emp.salary_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}` : 'P 0.00';
             const payMode = emp.salary_pay_mode || '';
             const salaryText = payMode ? `${payMode} : ${salaryAmount}` : salaryAmount;
-            const photoUrl = emp.photo_file_name && emp.folder_name ? `/uploads/employee-photos/${encodeURIComponent(emp.folder_name)}/${encodeURIComponent(emp.photo_file_name)}` : null;
+            const photoUrl = emp.photo_url || (emp.photo_file_name && emp.folder_name ? `/uploads/employee-photos/${encodeURIComponent(emp.folder_name)}/${encodeURIComponent(emp.photo_file_name)}` : null);
 
             const empTotals = paidTotalsByEmployee && paidTotalsByEmployee[emp.employee_id] ? paidTotalsByEmployee[emp.employee_id] : { total_gross_pay: 0, total_net_pay: 0 };
 
@@ -1360,6 +1360,11 @@ function initializeModule(contentArea) {
             if (!input) continue;
             const match = docArray.find(d => d.docType === docType);
             input.value = match ? match.fileName : 'No file uploaded';
+            if (match && match.publicUrl) {
+                input.dataset.publicUrl = match.publicUrl;
+            } else {
+                delete input.dataset.publicUrl;
+            }
         }
     }
 
@@ -1370,6 +1375,7 @@ function initializeModule(contentArea) {
             if (!el) return;
             if (el.tagName === 'SELECT') el.value = '';
             else el.value = '';
+            delete el.dataset.publicUrl;
         });
     }
 
@@ -1384,6 +1390,13 @@ function initializeModule(contentArea) {
         if (!inputEl || !imagePreviewModal || !imagePreviewImg) return;
         const val = inputEl.value.trim();
         if (!val || val === 'No file uploaded') return;
+        const publicUrl = inputEl.dataset.publicUrl;
+        if (publicUrl) {
+            if (empDocHideTimeout) { clearTimeout(empDocHideTimeout); empDocHideTimeout = null; }
+            imagePreviewImg.src = publicUrl;
+            imagePreviewModal.style.display = 'flex';
+            return;
+        }
         const empId = document.getElementById('employee-profile-emp-id')?.value.trim();
         const lastName = document.getElementById('emp-last-name')?.value.trim() || '';
         const firstName = document.getElementById('emp-first-name')?.value.trim() || '';

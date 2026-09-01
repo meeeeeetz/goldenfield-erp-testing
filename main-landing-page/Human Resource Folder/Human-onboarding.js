@@ -2190,7 +2190,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const idBackEmployeeId = document.getElementById('id-back-employee-id');
     const idBackEmergencyContact = document.getElementById('id-back-emergency-contact');
 
-    const loadIdEmployeePhoto = (folderName, photoFileName) => {
+    const loadIdEmployeePhoto = (folderName, photoFileName, photoUrl) => {
         if (!idFrontPhoto || !idFrontPhotoPlaceholder) return;
         if (!photoFileName) {
             idFrontPhoto.style.display = 'none';
@@ -2199,8 +2199,8 @@ ModuleComponents['hr-onboarding'] = (container) => {
         }
         const encodedFolder = encodeURIComponent(folderName || '');
         const encodedPhoto = encodeURIComponent(photoFileName);
-        const photoUrl = `/uploads/employee-photos/${encodedFolder}/${encodedPhoto}`;
-        idFrontPhoto.src = photoUrl;
+        const finalPhotoUrl = photoUrl || `/uploads/employee-photos/${encodedFolder}/${encodedPhoto}`;
+        idFrontPhoto.src = finalPhotoUrl;
         idFrontPhoto.style.display = 'block';
         idFrontPhotoPlaceholder.style.display = 'none';
         idFrontPhoto.onerror = () => {
@@ -2226,7 +2226,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         if (idBackEmployeeId) idBackEmployeeId.textContent = employeeId;
         if (idBackEmergencyContact) idBackEmergencyContact.textContent = emergencyContact;
 
-        loadIdEmployeePhoto(employee.folder_name, employee.photo_file_name);
+        loadIdEmployeePhoto(employee.folder_name, employee.photo_file_name, employee.photo_url);
     };
 
     const loadIdSearchResults = async (query) => {
