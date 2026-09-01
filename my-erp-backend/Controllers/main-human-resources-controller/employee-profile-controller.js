@@ -296,23 +296,33 @@ class EmployeeProfileController {
         try {
             const { bucket } = initializeGCS();
             const folderName = await this.computeEmployeeFolderName(employee_id);
-            const prefix = `employee-photos/${folderName}/`;
-            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}, bucket=${process.env.GCP_BUCKET_NAME}`);
-            const [files] = await bucket.getFiles({ prefix });
-            console.log(`[findEmployeePhoto] Found ${files.length} files in bucket`);
             const lowerEmpId = String(employee_id).toLowerCase();
-            const match = files.find(f => {
-                const lower = f.name.toLowerCase();
-                return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
-            });
-            if (match) {
-                console.log(`[findEmployeePhoto] Match found:`, match.name);
-                return {
-                    photo_file_name: match.name.replace(prefix, ''),
-                    photo_url: getPublicUrl(match.name),
-                    folder_name: folderName
-                };
+
+            const prefixes = [
+                `employee-photos/${folderName}/`,
+                `employee-photos/${employee_id}/`
+            ];
+
+            for (const prefix of prefixes) {
+                console.log(`[findEmployeePhoto] Searching prefix: ${prefix}`);
+                const [files] = await bucket.getFiles({ prefix });
+                if (files.length > 0) {
+                    console.log(`[findEmployeePhoto] Found ${files.length} files:`, files.map(f => f.name));
+                    const match = files.find(f => {
+                        const lower = f.name.toLowerCase();
+                        return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
+                    });
+                    if (match) {
+                        console.log(`[findEmployeePhoto] Match found:`, match.name);
+                        return {
+                            photo_file_name: match.name.replace(prefix, ''),
+                            photo_url: getPublicUrl(match.name),
+                            folder_name: folderName
+                        };
+                    }
+                }
             }
+
             console.log(`[findEmployeePhoto] No match found`);
             return { photo_file_name: null, photo_url: null, folder_name: folderName };
         } catch (e) {
@@ -340,18 +350,25 @@ class EmployeeProfileController {
     async getEmployeeDocuments(employee_id) {
         const { bucket } = require('../../utils/gcs').initializeGCS();
         const folderName = await this.computeEmployeeFolderName(employee_id);
-        const prefix = `employee-photos/${folderName}/`;
-        console.log(`[getEmployeeDocuments] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}`);
+        const lowerEmpId = String(employee_id || '').toLowerCase();
+
+        const prefixes = [
+            `employee-photos/${folderName}/`,
+            `employee-photos/${employee_id}/`
+        ];
 
         let files = [];
-        try {
-            const [gcsFiles] = await bucket.getFiles({ prefix });
-            files = gcsFiles.map(f => f.name.replace(prefix, ''));
-            console.log(`[getEmployeeDocuments] Found files:`, files);
-        } catch (e) {
-            console.error(`[getEmployeeDocuments] Error listing files:`, e.message);
-            return [];
+        for (const prefix of prefixes) {
+            try {
+                const [gcsFiles] = await bucket.getFiles({ prefix });
+                files = gcsFiles.map(f => ({ name: f.name, prefix }));
+                if (files.length > 0) break;
+            } catch (e) {
+                console.error(`[getEmployeeDocuments] Error listing files with prefix ${prefix}:`, e.message);
+            }
         }
+
+        console.log(`[getEmployeeDocuments] Found ${files.length} files`);
 
         const patterns = {
             '2x2-pic': ['2x2', '2x2_pic', '2x2-pic'],
@@ -370,17 +387,17 @@ class EmployeeProfileController {
         };
 
         const result = [];
-        const lowerEmpId = String(employee_id || '').toLowerCase();
 
         for (const doc of Object.entries(patterns)) {
             const docType = doc[0];
             const keywords = doc[1];
-            const match = files.find(f => {
-                const lower = f.toLowerCase();
-                if (!lower.startsWith(lowerEmpId)) return false;
+            const found = files.find(f => {
+                const lower = f.name.toLowerCase();
+                const filePrefix = f.prefix;
+                if (!lower.startsWith(`${filePrefix}${lowerEmpId}`)) return false;
                 return keywords.some(k => lower.includes(k));
             });
-            if (match) {
+            if (found) {
                 const labelMap = {
                     '2x2-pic': '2x2 Picture',
                     'resume': 'Resume',
@@ -399,8 +416,8 @@ class EmployeeProfileController {
                 result.push({
                     docType,
                     label: labelMap[docType] || docType,
-                    fileName: match,
-                    publicUrl: getPublicUrl(prefix + match)
+                    fileName: found.name.replace(found.prefix, ''),
+                    publicUrl: getPublicUrl(found.name)
                 });
             }
         }
