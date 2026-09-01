@@ -1,0 +1,1 @@
+require('dotenv').config({ path: '.env' }); const pool = require('./config/database'); pool.query(SELECT column_name FROM information_schema.columns WHERE table_name = 'employee_compensation' ORDER BY ordinal_position).then(res => { console.log('Columns:', res.rows.map(r => r.column_name).join('\n')); pool.end(); }).catch(err => { console.error(err); pool.end(); });

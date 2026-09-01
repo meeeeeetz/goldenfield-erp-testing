@@ -1,0 +1,25 @@
+const { Pool } = require('pg');
+const path = require('path');
+
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const pool = new Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
+});
+
+async function runMigration() {
+    try {
+        await pool.query('ALTER TABLE employee_profile ADD COLUMN IF NOT EXISTS email_address VARCHAR(255)');
+        console.log('email_address column added to employee_profile successfully');
+    } catch (error) {
+        console.error('Migration error:', error.message);
+    } finally {
+        await pool.end();
+    }
+}
+
+runMigration();

@@ -1,0 +1,92 @@
+
+
+/* ========================
+   Login Page Styles
+   ======================== */
+
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+    padding: 20px;
+}
+
+.login-card {
+    background: #EADECB;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-logo h1 {
+    font-size: 28px;
+    color: #1a1f2e;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.login-logo p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1a1f2e;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #D6D6D6;
+    border-radius: 6px;
+    font-size: 16px;
+    background: #fff;
+    color: #1a1f2e;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #a88805;
+    box-shadow: 0 0 0 3px rgba(168, 136, 5, 0.15);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #a88805;
+    color: #1a1f2e;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background-color: #8f7404;
+}

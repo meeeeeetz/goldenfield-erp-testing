@@ -1,0 +1,11 @@
+-- Code of Conduct table
+CREATE TABLE IF NOT EXISTS code_of_conduct (
+    coc_id SERIAL PRIMARY KEY,
+    coc_code VARCHAR(50) UNIQUE NOT NULL DEFAULT 'COCID-0000001',
+    category VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    remarks TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'Active',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

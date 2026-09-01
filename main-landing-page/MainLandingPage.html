@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goldenfield ERP</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐔</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <span class="logo-text">Goldenfield Egg Farm</span>
+                <span class="logo-subtext">ERP System</span>
+            </div>
+            <nav class="nav-links">
+                <div class="nav-group">
+                    <a href="#operations" class="nav-item nav-parent" data-tab="operations">Operations</a>
+                    <div class="subnav" id="subnav-operations">
+                        <a href="#egg-inventory" class="subnav-item" data-tab="operations-egg-inventory">Egg Inventory</a>
+                        <a href="#layer-buildings" class="subnav-item" data-tab="operations-layer-buildings">Layer Buildings</a>
+                        <a href="#petty-cash" class="subnav-item" data-tab="operations-petty-cash">Petty Cash</a>
+                        <a href="#shipping-permit" class="subnav-item" data-tab="operations-shipping-permit">Shipping Permit</a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#purchasing" class="nav-item nav-parent" data-tab="purchasing">Purchasing</a>
+                    <div class="subnav" id="subnav-purchasing">
+                        <a href="#feeds" class="subnav-item" data-tab="purchasing-feeds">Feeds</a>
+                        <a href="#electricity" class="subnav-item" data-tab="purchasing-electricity">Electricity</a>
+                        <a href="#egg-tray" class="subnav-item" data-tab="purchasing-egg-tray">Egg Tray</a>
+                        <a href="#veterinary-supplies" class="subnav-item" data-tab="purchasing-veterinary-supplies">Veterinary Supplies</a>
+                        <a href="#ready-to-lay" class="subnav-item" data-tab="purchasing-ready-to-lay">Ready-to Lay</a>
+                        <a href="#other-expenses" class="subnav-item" data-tab="purchasing-other-expenses">Other Expenses</a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#sales-marketing" class="nav-item nav-parent" data-tab="sales-marketing">Sales & Marketing</a>
+                    <div class="subnav" id="subnav-sales-marketing">
+                        <a href="#receipt-issuance" class="subnav-item" data-tab="sales-receipt-issuance">Receipt Issuance</a>
+                        <a href="#product-pricing" class="subnav-item" data-tab="sales-product-pricing">Product and Pricing</a>
+                        <a href="#customer-directory" class="subnav-item" data-tab="sales-customer-directory">Customer Directory</a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#human-resources" class="nav-item nav-parent" data-tab="human-resources">Human Resources</a>
+                    <div class="subnav" id="subnav-human-resources">
+                        <a href="#onboarding" class="subnav-item" data-tab="hr-onboarding">OnBoarding</a>
+                        <a href="#scheduling" class="subnav-item" data-tab="hr-scheduling">Scheduling</a>
+                        <a href="#salary" class="subnav-item" data-tab="hr-salary">Salary</a>
+                         <a href="#employees" class="subnav-item" data-tab="hr-employees">Employees</a>
+                         <a href="#evaluation" class="subnav-item" data-tab="hr-evaluation">Evaluation</a>
+                         <a href="#offenses" class="subnav-item" data-tab="hr-offenses">Offenses</a>
+                        <a href="#th-month" class="subnav-item" data-tab="hr-13th-month">13th Month</a>
+                    <a href="#cash-loans" class="subnav-item" data-tab="hr-cash-loans">Cash Loans</a>
+                </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#finance" class="nav-item nav-parent" data-tab="finance">Finance</a>
+                    <div class="subnav" id="subnav-finance">
+                        <a href="#finance-sales" class="subnav-item" data-tab="finance-sales">Sales</a>
+                        <a href="#finance-expenses" class="subnav-item" data-tab="finance-expenses">Expenses</a>
+                        <a href="#finance-movements" class="subnav-item" data-tab="finance-movements">Movements</a>
+                        <a href="#finance-loans" class="subnav-item" data-tab="finance-loans">Loans</a>
+                        <a href="#bank-management" class="subnav-item" data-tab="finance-bank-management">Bank management</a>
+                        <a href="#accounting" class="subnav-item" data-tab="finance-accounting">Accounting</a>
+                        <a href="#bookkeeper" class="subnav-item" data-tab="finance-bookkeeper">Bookeeper</a>
+                        <a href="#vat" class="subnav-item" data-tab="finance-vat">VAT</a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#systems" class="nav-item nav-parent" data-tab="systems">Systems</a>
+                    <div class="subnav" id="subnav-systems">
+                        <a href="#user-management" class="subnav-item" data-tab="systems-user-management">User Management</a>
+                        <a href="#integrations" class="subnav-item" data-tab="systems-integrations">Integrations</a>
+                        <a href="#maintenance" class="subnav-item" data-tab="systems-maintenance">Maintenance</a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <a href="#metzeler" class="nav-item nav-parent" data-tab="metzeler">Metzeler</a>
+                    <div class="subnav" id="subnav-metzeler">
+                        <a href="#print" class="subnav-item" data-tab="metz-print">Print</a>
+                        <a href="#master-control" class="subnav-item" data-tab="metz-master-control">Master control</a>
+                    </div>
+                </div>
+            </nav>
+            <a href="#logout" class="nav-item nav-item-logout" data-tab="logout">Log out</a>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="header-text">
+                    <h1 id="page-title">Welcome back Username!</h1>
+                    <div id="breadcrumb" class="breadcrumb"></div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" aria-label="Notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    </button>
+                    <button class="icon-btn" aria-label="Settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/></svg>
+                    </button>
+                    <button class="icon-btn" aria-label="Messages">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button class="icon-btn" aria-label="User Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                </div>
+            </header>
+            <div id="content-area" class="content-area">
+            </div>
+        </main>
+    </div>
+    <script>
+        if (!localStorage.getItem('goldenfield_auth_token')) {
+            window.location.href = '../index.html';
+        }
+    </script>
+    <!-- D3.js for Organizational Tree Charting -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="Script.js"></script>
+</body>
+</html>
