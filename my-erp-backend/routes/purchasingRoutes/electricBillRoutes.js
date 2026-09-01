@@ -3,23 +3,10 @@ const router = express.Router();
 const ElectricBillController = require('../../Controllers/main-purchasing-controller/electric-bill-controller');
 const pool = require('../../config/database');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const controller = new ElectricBillController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
 
-const uploadBase = 'C:\\Users\\ADMIN\\Documents\\uploads\\Electric Bill';
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        fs.promises.mkdir(uploadBase, { recursive: true }).then(() => cb(null, uploadBase)).catch(cb);
-    },
-    filename: (req, file, cb) => {
-        const originalName = file.originalname || 'electric-bill.webp';
-        cb(null, originalName);
-    }
-});
-
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
@@ -27,9 +14,8 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
-        const fileName = req.file.filename;
-        const fileUrl = `/uploads/electric-bills/${fileName}`;
-        res.status(201).json({ message: 'File uploaded successfully', filePath: fileUrl, fileName });
+        const fileName = req.file.originalname || 'electric-bill.webp';
+        res.status(201).json({ message: 'File uploaded successfully', fileName, size: req.file.size });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

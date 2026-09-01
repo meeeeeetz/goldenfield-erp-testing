@@ -1,26 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const OrderFeedController = require('../../Controllers/main-purchasing-controller/order-feed-controller');
 const pool = require('../../config/database');
 const controller = new OrderFeedController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
-
-const uploadBase = 'C:\\Users\\ADMIN\\Documents\\uploads\\Feeds Receipts';
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        fs.promises.mkdir(uploadBase, { recursive: true }).then(() => cb(null, uploadBase)).catch(cb);
-    },
-    filename: (req, file, cb) => {
-        const originalName = file.originalname || 'order-receipt.webp';
-        cb(null, originalName);
-    }
-});
-
-const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -98,26 +81,28 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/upload', authenticateToken, async (req, res) => {
     try {
-        if (!req.file) {
+        const { fileBase64, fileName } = req.body;
+        if (!fileBase64) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
-        const fileName = req.file.filename;
-        const fileUrl = `/uploads/feeds-receipts/${fileName}`;
-        res.status(201).json({ message: 'File uploaded successfully', filePath: fileUrl, fileName });
+        const name = fileName || 'order-receipt.webp';
+        res.status(201).json({ message: 'File uploaded successfully', fileName: name });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, res) => {
+router.put('/:id/photo', authenticateToken, async (req, res) => {
     try {
         const orderId = req.params.id;
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
+        const { photoBase64 } = req.body;
+        if (!photoBase64) {
+            return res.status(400).json({ error: 'No photo provided' });
         }
-        const result = await controller.updateOrderPhoto(orderId, `/uploads/feeds-receipts/${req.file.filename}`);
+        const fileName = `${orderId}_${Date.now()}.webp`;
+        const result = await controller.updateOrderPhoto(orderId, `/uploads/feeds-receipts/${fileName}`);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

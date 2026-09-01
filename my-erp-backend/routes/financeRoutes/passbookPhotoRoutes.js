@@ -1,14 +1,7 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const pool = require('../../config/database');
 const router = express.Router();
-
-const uploadDir = path.join(__dirname, '..', '..', 'passbook-photos');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -20,25 +13,13 @@ const upload = multer({
 
 router.post('/upload', upload.single('photo'), async (req, res) => {
     try {
-        const { bankCode, bookNo, pageNo, lastBalance, rows } = req.body;
+        const { bankCode, bookNo, pageNo, lastBalance, rows, photoBase64 } = req.body;
 
         if (!bankCode || !bookNo || !pageNo) {
             return res.status(400).json({ error: 'Bank code, book no, and page no are required' });
         }
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'No photo uploaded' });
-        }
-
-        const sanitizedBankCode = bankCode.replace(/[^a-zA-Z0-9]/g, '');
-        const sanitizedBookNo = bookNo.replace(/[^a-zA-Z0-9]/g, '');
-        const sanitizedPageNo = pageNo.replace(/[^a-zA-Z0-9]/g, '');
-
-        const baseFilename = `${sanitizedBankCode}_${sanitizedBookNo}_${sanitizedPageNo}`;
-        const filename = `${baseFilename}.webp`;
-        const filepath = path.join(uploadDir, filename);
-
-        fs.writeFileSync(filepath, req.file.buffer);
+        const photoData = req.file ? req.file.buffer : (photoBase64 ? Buffer.from(photoBase64, 'base64') : null);
 
         let parsedRows = [];
         if (rows) {
@@ -90,14 +71,14 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
         }
 
         const response = {
-            message: 'Passbook photo uploaded successfully',
-            filename: filename,
+            message: 'Passbook data saved successfully',
             bankCode: bankCode,
             bookNo: bookNo,
             pageNo: pageNo,
             lastBalance: lastBalance || '0.00',
             rowsCount: parsedRows.length,
             savedStatements: savedStatements.length,
+            hasPhoto: !!photoData,
             savedAt: new Date().toISOString()
         };
 

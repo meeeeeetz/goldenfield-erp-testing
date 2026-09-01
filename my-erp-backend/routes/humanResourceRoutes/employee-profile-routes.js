@@ -2,79 +2,29 @@ const express = require('express');
 const router = express.Router();
 const EmployeeProfileController = require('../../Controllers/main-human-resources-controller/employee-profile-controller');
 const pool = require('../../config/database');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const controller = new EmployeeProfileController(pool);
 
-const uploadBase = 'C:\\Users\\ADMIN\\Documents\\uploads\\photos';
-const tempUploadBase = path.join(uploadBase, 'temp');
-
-const safeFileName = (s = '') => {
-    const cleaned = String(s).trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
-    return cleaned.replace(/^_+|_+$/g, '') || 'file';
-};
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const tempDir = path.join(tempUploadBase, `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-        fs.promises.mkdir(tempDir, { recursive: true }).then(() => cb(null, tempDir)).catch(cb);
-    },
-    filename: (req, file, cb) => {
-        const originalName = file.originalname || 'document.webp';
-        cb(null, originalName);
-    }
-});
-
-const upload = multer({ storage: storage, limits: { fileSize: 1 * 1024 * 1024 } });
-
-router.post('/upload-documents', upload.array('files', 50), async (req, res) => {
+router.post('/upload-documents', async (req, res) => {
     try {
-        const files = req.files || [];
-        const labels = req.body.labels ? (Array.isArray(req.body.labels) ? req.body.labels : [req.body.labels]) : [];
+        const files = req.body.files || [];
+        const labels = req.body.labels || [];
         let employeeId = req.body.employeeId || req.query.employeeId || 'unknown';
         if (Array.isArray(employeeId)) {
             employeeId = employeeId[0] || 'unknown';
         }
 
-        const folderName = await controller.computeEmployeeFolderName(employeeId);
-        const targetDir = path.join(uploadBase, folderName);
-        await fs.promises.mkdir(targetDir, { recursive: true });
-
         const savedFiles = [];
-        const tempDirs = new Set();
-
-        for (const file of files) {
-            const tempDir = path.dirname(file.path);
-            tempDirs.add(tempDir);
-
-            const ext = path.extname(file.originalname || '');
-            const baseName = path.basename(file.originalname || 'document', ext).replace(/[^a-zA-Z0-9_-]/g, '_');
-            const label = labels.shift() || baseName;
-            const finalName = `${safeFileName(employeeId)}_${safeFileName(label)}.webp`;
-            const finalPath = path.join(targetDir, finalName);
-
-            try {
-                await fs.promises.rename(file.path, finalPath);
-            } catch (e) {
-                console.error('Failed to move file:', e.message);
-            }
-
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const label = labels[i] || `file_${i}`;
+            const fileName = `${employeeId}_${label}_${Date.now()}.webp`;
             savedFiles.push({
                 employeeId,
                 label,
-                fileName: finalName,
-                path: finalPath,
-                size: file.size
+                fileName,
+                path: `/uploads/photos/${fileName}`,
+                size: file.base64 ? Buffer.from(file.base64, 'base64').length : 0
             });
-        }
-
-        for (const tempDir of tempDirs) {
-            try {
-                await fs.promises.rm(tempDir, { recursive: true, force: true });
-            } catch (e) {
-                console.error('Failed to remove temp dir:', e.message);
-            }
         }
 
         res.json({ message: 'Documents uploaded successfully', files: savedFiles });

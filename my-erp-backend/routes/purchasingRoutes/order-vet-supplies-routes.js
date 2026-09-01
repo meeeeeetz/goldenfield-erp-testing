@@ -1,26 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const OrderVetSuppliesController = require('../../Controllers/main-purchasing-controller/order-vet-supplies-controller');
 const pool = require('../../config/database');
 const controller = new OrderVetSuppliesController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
-
-const uploadBase = 'C:\\Users\\ADMIN\\Documents\\uploads\\Veterinary Supplies';
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        fs.promises.mkdir(uploadBase, { recursive: true }).then(() => cb(null, uploadBase)).catch(cb);
-    },
-    filename: (req, file, cb) => {
-        const originalName = file.originalname || 'order-photo.webp';
-        cb(null, originalName);
-    }
-});
-
-const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -77,23 +60,13 @@ router.post('/', authenticateToken, async (req, res) => {
         }
         
         if (invoiceFileBase64 && firstOrderId) {
-            const fs = require('fs');
             const path = require('path');
-            
-            const uploadDir = 'C:\\Users\\ADMIN\\Documents\\uploads\\Veterinary Supplies';
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-            
+
             const sanitizedInvoice = (invoiceNumber || 'N/A').replace(/[^a-zA-Z0-9-_]/g, '_');
             const sanitizedDate = invoiceDate.replace(/[^0-9-]/g, '_');
             const fileName = `${firstOrderId}_Invoice_${sanitizedInvoice}_${sanitizedDate}.webp`;
-            const fullPath = path.join(uploadDir, fileName);
             const urlPath = `/uploads/veterinary-supplies/${fileName}`;
-            
-            const base64Data = invoiceFileBase64.replace(/^data:image\/webp;base64,/, '');
-            fs.writeFileSync(fullPath, base64Data, 'base64');
-            
+
             const updatedOrders = [];
             for (const order of createdOrders) {
                 const updated = await controller.updateOrder(order.order_id, { file_path: urlPath });
@@ -121,13 +94,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, res) => {
+router.put('/:id/photo', authenticateToken, async (req, res) => {
     try {
         const orderId = req.params.id;
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
+        const { photoBase64 } = req.body;
+        if (!photoBase64) {
+            return res.status(400).json({ error: 'No photo provided' });
         }
-        const result = await controller.updateOrderPhoto(orderId, `/uploads/veterinary-supplies/${req.file.filename}`);
+        const fileName = `${orderId}_${Date.now()}.webp`;
+        const result = await controller.updateOrderPhoto(orderId, `/uploads/veterinary-supplies/${fileName}`);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
