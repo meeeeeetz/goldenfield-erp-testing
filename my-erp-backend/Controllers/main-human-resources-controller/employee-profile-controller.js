@@ -313,13 +313,15 @@ class EmployeeProfileController {
                     console.log(`[findEmployeePhoto] Files:`, files.map(f => f.name));
                     for (const f of files) {
                         const lower = f.name.toLowerCase();
-                        const startsWithPrefix = lower.startsWith(`${prefix}${lowerEmpId}`);
+                        const lowerPrefix = prefix.toLowerCase();
+                        const startsWithPrefix = lower.startsWith(`${lowerPrefix}${lowerEmpId}`);
                         const includes2x2 = lower.includes('2x2');
                         console.log(`[findEmployeePhoto] Checking ${f.name}: startsWith=${startsWithPrefix}, includes2x2=${includes2x2}`);
                     }
                     const match = files.find(f => {
                         const lower = f.name.toLowerCase();
-                        return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
+                        const lowerPrefix = prefix.toLowerCase();
+                        return lower.startsWith(`${lowerPrefix}${lowerEmpId}`) && lower.includes('2x2');
                     });
                     if (match) {
                         console.log(`[findEmployeePhoto] Match found:`, match.name);
@@ -402,8 +404,8 @@ class EmployeeProfileController {
             const keywords = doc[1];
             const found = files.find(f => {
                 const lower = f.name.toLowerCase();
-                const filePrefix = f.prefix;
-                if (!lower.startsWith(`${filePrefix}${lowerEmpId}`)) return false;
+                const lowerPrefix = f.prefix.toLowerCase();
+                if (!lower.startsWith(`${lowerPrefix}${lowerEmpId}`)) return false;
                 return keywords.some(k => lower.includes(k));
             });
             if (found) {
