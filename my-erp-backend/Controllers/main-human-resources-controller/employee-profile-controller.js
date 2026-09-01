@@ -303,11 +303,20 @@ class EmployeeProfileController {
                 `employee-photos/${employee_id}/`
             ];
 
+            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}`);
+
             for (const prefix of prefixes) {
                 console.log(`[findEmployeePhoto] Searching prefix: ${prefix}`);
                 const [files] = await bucket.getFiles({ prefix });
+                console.log(`[findEmployeePhoto] Found ${files.length} files`);
                 if (files.length > 0) {
-                    console.log(`[findEmployeePhoto] Found ${files.length} files:`, files.map(f => f.name));
+                    console.log(`[findEmployeePhoto] Files:`, files.map(f => f.name));
+                    for (const f of files) {
+                        const lower = f.name.toLowerCase();
+                        const startsWithPrefix = lower.startsWith(`${prefix}${lowerEmpId}`);
+                        const includes2x2 = lower.includes('2x2');
+                        console.log(`[findEmployeePhoto] Checking ${f.name}: startsWith=${startsWithPrefix}, includes2x2=${includes2x2}`);
+                    }
                     const match = files.find(f => {
                         const lower = f.name.toLowerCase();
                         return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
@@ -323,10 +332,10 @@ class EmployeeProfileController {
                 }
             }
 
-            console.log(`[findEmployeePhoto] No match found`);
+            console.log(`[findEmployeePhoto] No match found for ${employee_id}`);
             return { photo_file_name: null, photo_url: null, folder_name: folderName };
         } catch (e) {
-            console.error(`[findEmployeePhoto] Error:`, e.message);
+            console.error(`[findEmployeePhoto] Error:`, e.message, e.stack);
             return { photo_file_name: null, photo_url: null, folder_name: null };
         }
     }
