@@ -297,21 +297,26 @@ class EmployeeProfileController {
             const { bucket } = initializeGCS();
             const folderName = await this.computeEmployeeFolderName(employee_id);
             const prefix = `employee-photos/${folderName}/`;
+            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}`);
             const [files] = await bucket.getFiles({ prefix });
+            console.log(`[findEmployeePhoto] Found ${files.length} files:`, files.map(f => f.name));
             const lowerEmpId = String(employee_id).toLowerCase();
             const match = files.find(f => {
                 const lower = f.name.toLowerCase();
                 return lower.startsWith(`${prefix}${lowerEmpId}`) && lower.includes('2x2');
             });
             if (match) {
+                console.log(`[findEmployeePhoto] Match found:`, match.name);
                 return {
                     photo_file_name: match.name.replace(prefix, ''),
                     photo_url: getPublicUrl(match.name),
                     folder_name: folderName
                 };
             }
+            console.log(`[findEmployeePhoto] No match found`);
             return { photo_file_name: null, photo_url: null, folder_name: folderName };
         } catch (e) {
+            console.error(`[findEmployeePhoto] Error:`, e.message);
             return { photo_file_name: null, photo_url: null, folder_name: null };
         }
     }
@@ -336,12 +341,15 @@ class EmployeeProfileController {
         const { bucket } = require('../../utils/gcs').initializeGCS();
         const folderName = await this.computeEmployeeFolderName(employee_id);
         const prefix = `employee-photos/${folderName}/`;
+        console.log(`[getEmployeeDocuments] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}`);
 
         let files = [];
         try {
             const [gcsFiles] = await bucket.getFiles({ prefix });
             files = gcsFiles.map(f => f.name.replace(prefix, ''));
+            console.log(`[getEmployeeDocuments] Found files:`, files);
         } catch (e) {
+            console.error(`[getEmployeeDocuments] Error listing files:`, e.message);
             return [];
         }
 
@@ -396,6 +404,7 @@ class EmployeeProfileController {
                 });
             }
         }
+        console.log(`[getEmployeeDocuments] Result:`, result);
         return result;
     }
 
