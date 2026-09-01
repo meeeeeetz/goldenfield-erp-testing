@@ -186,7 +186,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSearchResults(employees);
@@ -243,7 +243,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
                 if (firstNameInput) firstNameInput.value = firstName || '';
 
                 try {
-                    const compRes = await fetch(`http://localhost:5000/api/employee-compensations/employee/${encodeURIComponent(employeeId)}`);
+                    const compRes = await fetch(`/api/employee-compensations/employee/${encodeURIComponent(employeeId)}`);
                     let sickAvailable = 0;
                     let vacationAvailable = 0;
 
@@ -253,7 +253,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
                         vacationAvailable = comp.yearly_vacation_leave != null ? Number(comp.yearly_vacation_leave) : 0;
                     }
 
-                    const leaveRes = await fetch(`http://localhost:5000/api/leave-logs/employee/${encodeURIComponent(employeeId)}`);
+                    const leaveRes = await fetch(`/api/leave-logs/employee/${encodeURIComponent(employeeId)}`);
                     if (leaveRes.ok) {
                         const leaveLogs = await leaveRes.json();
                         const currentYear = new Date().getFullYear().toString();
@@ -325,7 +325,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/leave-logs/save', {
+                const res = await fetch('/api/leave-logs/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -381,7 +381,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/leave-logs/pending');
+            const res = await fetch('/api/leave-logs/pending');
             if (!res.ok) throw new Error('Failed to load pending leave logs');
             const logs = await res.json();
             renderPendingLeaveLogs(logs);
@@ -426,7 +426,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
                 if (!leaveId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/leave-logs/${encodeURIComponent(leaveId)}/approve`, {
+                    const res = await fetch(`/api/leave-logs/${encodeURIComponent(leaveId)}/approve`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -452,7 +452,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
                 if (!leaveId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/leave-logs/reject/${encodeURIComponent(leaveId)}`, {
+                    const res = await fetch(`/api/leave-logs/reject/${encodeURIComponent(leaveId)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -478,7 +478,7 @@ ModuleComponents['hr-salary-leave'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/leave-logs/all');
+            const res = await fetch('/api/leave-logs/all');
             if (!res.ok) throw new Error('Failed to load leave history');
             const logs = await res.json();
 

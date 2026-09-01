@@ -618,7 +618,7 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             if (sourceSelect) {
                 sourceSelect.innerHTML = '<option value="">Select Bank Account</option>';
                 try {
-                    const res = await fetch('http://localhost:5000/api/bank-accounts', {
+                    const res = await fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (res.ok) {
@@ -683,7 +683,7 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                 alert('Payment saved successfully');
 
                 try {
-                    await fetch(`http://localhost:5000/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
+                    await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -707,9 +707,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             }
         }
 
-        var API_BASE_EGG_TRAY_SUPPLIERS = 'http://localhost:5000/api/egg-tray-suppliers';
-        var API_BASE_EGG_TRAY_TYPES = 'http://localhost:5000/api/egg-tray-types';
-        var API_BASE_ORDER_EGG_TRAY = 'http://localhost:5000/api/order-egg-trays';
+        var API_BASE_EGG_TRAY_SUPPLIERS = '/api/egg-tray-suppliers';
+        var API_BASE_EGG_TRAY_TYPES = '/api/egg-tray-types';
+        var API_BASE_ORDER_EGG_TRAY = '/api/order-egg-trays';
         var eggTraySuppliersData = [];
         var currentEggTraySupplierPage = 1;
         var eggTraySuppliersPerPage = 10;

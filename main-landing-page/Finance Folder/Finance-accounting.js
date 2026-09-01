@@ -76,7 +76,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
         const tbody = document.getElementById('accounting-codes-body');
         if (!tbody) return;
 
-        fetch('http://localhost:5000/api/accounting-codes')
+        fetch('/api/accounting-codes')
             .then(res => res.json())
             .then(data => {
                 accountingCodesData = data;
@@ -158,7 +158,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
     function deleteAccountingCode(id, name) {
         if (!confirm('Are you sure you want to delete "' + name + '"?')) return;
-        fetch(`http://localhost:5000/api/accounting-codes/${id}`, { method: 'DELETE' })
+        fetch(`/api/accounting-codes/${id}`, { method: 'DELETE' })
             .then(res => {
                 if (!res.ok) throw new Error('Failed to delete');
                 loadAccountingCodes();
@@ -212,7 +212,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             document.getElementById('accounting-remarks-input').value = '';
 
             try {
-                const res = await fetch('http://localhost:5000/api/accounting-codes/next-id');
+                const res = await fetch('/api/accounting-codes/next-id');
                 const data = await res.json();
                 document.getElementById('accounting-id-input').value = data.accounting_id;
             } catch (err) {
@@ -236,8 +236,8 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             }
 
             const url = currentEditingDbId
-                ? `http://localhost:5000/api/accounting-codes/${currentEditingDbId}`
-                : 'http://localhost:5000/api/accounting-codes';
+                ? `/api/accounting-codes/${currentEditingDbId}`
+                : '/api/accounting-codes';
 
             const method = currentEditingDbId ? 'PUT' : 'POST';
 

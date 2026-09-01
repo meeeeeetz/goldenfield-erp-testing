@@ -230,7 +230,7 @@ function initializeModule(contentArea) {
     async function loadBankAccounts() {
         if (!bankAccountSelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/passbook-statements/distinct-bank-codes');
+            const res = await fetch('/api/passbook-statements/distinct-bank-codes');
             if (res.ok) {
                 const data = await res.json();
                 bankAccountSelect.innerHTML = '<option value="">Select Bank</option>' +
@@ -246,7 +246,7 @@ function initializeModule(contentArea) {
         passbookNoSelect.innerHTML = '<option value="">Select Passbook</option>';
         if (!bankCode) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/passbook-statements/distinct-book-nos?bankCode=${encodeURIComponent(bankCode)}`);
+            const res = await fetch(`/api/passbook-statements/distinct-book-nos?bankCode=${encodeURIComponent(bankCode)}`);
             if (res.ok) {
                 const data = await res.json();
                 passbookNoSelect.innerHTML += (data.book_nos || []).map(b => `<option value="${b}">${b}</option>`).join('');
@@ -261,7 +261,7 @@ function initializeModule(contentArea) {
         pageNoSelect.innerHTML = '<option value="">Select Page</option>';
         if (!bankCode || !bookNo) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/passbook-statements/distinct-page-nos?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}`);
+            const res = await fetch(`/api/passbook-statements/distinct-page-nos?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}`);
             if (res.ok) {
                 const data = await res.json();
                 pageNoSelect.innerHTML += (data.page_nos || []).map(p => `<option value="${p}">${p}</option>`).join('');
@@ -281,7 +281,7 @@ function initializeModule(contentArea) {
             imageBox.innerHTML = 'Space for a photo';
             return;
         }
-        const url = `http://localhost:5000/api/passbook-statements/photo?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`;
+        const url = `/api/passbook-statements/photo?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`;
         imageBox.innerHTML = `<img src="${url}" alt="Passbook" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px;">`;
     }
 
@@ -296,7 +296,7 @@ function initializeModule(contentArea) {
             return;
         }
         try {
-            const res = await fetch(`http://localhost:5000/api/passbook-statements/by-code-book-page?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
+            const res = await fetch(`/api/passbook-statements/by-code-book-page?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
             if (res.ok) {
                 const data = await res.json();
                 const statements = data.statements || [];
@@ -332,7 +332,7 @@ function initializeModule(contentArea) {
         const container = document.getElementById('pages-needing-photos');
         if (!container) return;
         try {
-            const res = await fetch('http://localhost:5000/api/passbook-statements/pages-needing-photos');
+            const res = await fetch('/api/passbook-statements/pages-needing-photos');
             if (!res.ok) throw new Error('Failed to fetch pages');
             const data = await res.json();
             const pages = data.pages || [];
@@ -380,7 +380,7 @@ function initializeModule(contentArea) {
         const box = document.getElementById('page-details-box');
         if (!box) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/passbook-statements/by-code-book-page?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
+            const res = await fetch(`/api/passbook-statements/by-code-book-page?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
             if (!res.ok) throw new Error('Failed to fetch page details');
             const data = await res.json();
             const statements = data.statements || [];
@@ -498,7 +498,7 @@ function initializeModule(contentArea) {
         if (!select) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/bank-accounts');
+            const res = await fetch('/api/bank-accounts');
             if (res.ok) {
                 const accounts = await res.json();
                 const activeAccounts = accounts.filter(acc => acc.status === 'Active');
@@ -522,7 +522,7 @@ function initializeModule(contentArea) {
             return;
         }
         try {
-            const res = await fetch(`http://localhost:5000/api/passbook-statements/next-page-no?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}`);
+            const res = await fetch(`/api/passbook-statements/next-page-no?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}`);
             if (res.ok) {
                 const data = await res.json();
                 pageNoInput.value = data.page_no || 'PG-001';
@@ -537,7 +537,7 @@ function initializeModule(contentArea) {
         const pageNo = pageNoInput.value;
         if (lastBalanceInput) {
             try {
-                const balRes = await fetch(`http://localhost:5000/api/passbook-statements/last-page-balance?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
+                const balRes = await fetch(`/api/passbook-statements/last-page-balance?bankCode=${encodeURIComponent(bankCode)}&bookNo=${encodeURIComponent(bookNo)}&pageNo=${encodeURIComponent(pageNo)}`);
                 if (balRes.ok) {
                     const balData = await balRes.json();
                     if (balData.previous_page_no && balData.last_balance !== null && balData.last_balance !== undefined) {
@@ -637,7 +637,7 @@ function initializeModule(contentArea) {
                 formData.append('lastBalance', lastBalance);
                 formData.append('rows', JSON.stringify(rows));
 
-                const res = await fetch('http://localhost:5000/api/passbook-photos/upload', {
+                const res = await fetch('/api/passbook-photos/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -751,7 +751,7 @@ function initializeModule(contentArea) {
                 formData.append('bookNo', bookNo);
                 formData.append('pageNo', pageNo);
 
-                const res = await fetch('http://localhost:5000/api/passbook-photos/upload', {
+                const res = await fetch('/api/passbook-photos/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -952,7 +952,7 @@ function initializeModule(contentArea) {
                 return;
             }
             try {
-                const res = await fetch('http://localhost:5000/api/passbook-statements/bulk', {
+                const res = await fetch('/api/passbook-statements/bulk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ rows })

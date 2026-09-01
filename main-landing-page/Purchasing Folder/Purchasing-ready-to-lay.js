@@ -498,7 +498,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             </div>
         `;
 
-        var API_BASE_RTL_SUPPLIERS = 'http://localhost:5000/api/rtl-suppliers';
+        var API_BASE_RTL_SUPPLIERS = '/api/rtl-suppliers';
 
         async function loadRtlSuppliers() {
             const tbody = document.getElementById('rtl-suppliers-table-body');
@@ -525,9 +525,9 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             }
         }
 
-        var API_BASE_RTL_TYPES = 'http://localhost:5000/api/rtl-types';
-        var API_BASE_ORDER_RTL = 'http://localhost:5000/api/order-rtl';
-        var API_BASE_ORDER_RTL_REPAYMENTS = 'http://localhost:5000/api/order-rtl-repayments';
+        var API_BASE_RTL_TYPES = '/api/rtl-types';
+        var API_BASE_ORDER_RTL = '/api/order-rtl';
+        var API_BASE_ORDER_RTL_REPAYMENTS = '/api/order-rtl-repayments';
 
         async function loadRtlTypes() {
             const tbody = document.getElementById('rtl-types-table-body');
@@ -765,7 +765,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch('http://localhost:5000/api/rtl-suppliers', {
+                    const res = await fetch('/api/rtl-suppliers', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -813,7 +813,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/rtl-suppliers/${encodeURIComponent(supplierId)}`, {
+                    const res = await fetch(`/api/rtl-suppliers/${encodeURIComponent(supplierId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -871,7 +871,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             if (!modal) return;
 
             try {
-                const idRes = await fetch('http://localhost:5000/api/rtl-types/next-id', {
+                const idRes = await fetch('/api/rtl-types/next-id', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 const idData = await idRes.json();
@@ -939,7 +939,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             if (searchResults) searchResults.style.display = 'none';
 
             try {
-                const res = await fetch(`http://localhost:5000/api/rtl-types/code/${encodeURIComponent(typeId)}`, {
+                const res = await fetch(`/api/rtl-types/code/${encodeURIComponent(typeId)}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (res.ok) {
@@ -1019,7 +1019,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch('http://localhost:5000/api/rtl-types', {
+                    const res = await fetch('/api/rtl-types', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1065,7 +1065,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/rtl-types/${encodeURIComponent(typeId)}`, {
+                    const res = await fetch(`/api/rtl-types/${encodeURIComponent(typeId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1108,7 +1108,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
                 rtlTypeSearchDebounce = setTimeout(async () => {
                     try {
-                        const res = await fetch('http://localhost:5000/api/rtl-types?search=' + encodeURIComponent(query), {
+                        const res = await fetch('/api/rtl-types?search=' + encodeURIComponent(query), {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                         });
                         if (res.ok) {
@@ -1151,7 +1151,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
         setupPrice(document.getElementById('edit-rtl-type-price'));
 
         var orderRtlItems = [];
-        var API_BASE_ORDER_RTL = 'http://localhost:5000/api/order-rtl';
+        var API_BASE_ORDER_RTL = '/api/order-rtl';
 
         function formatNumber(num) {
             return (num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1437,7 +1437,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 try {
-                    const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                    const expenseNextRes = await fetch('/api/expenses/next-id', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (expenseNextRes.ok) {
@@ -1445,7 +1445,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                         const expenseListId = expenseNextData.expense_list_id;
                         const remarks = orderRtlItems.map(item => `${item.item} priced at ${formatNumber(item.price)}`).join(', ');
                         if (expenseListId) {
-                            await fetch('http://localhost:5000/api/expenses', {
+                            await fetch('/api/expenses', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1576,7 +1576,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             if (!bankSelect) return;
 
             try {
-                const res = await fetch('http://localhost:5000/api/bank-accounts', {
+                const res = await fetch('/api/bank-accounts', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (res.ok) {
@@ -1809,7 +1809,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                             })
                         });
 
-                        const expenseRes = await fetch('http://localhost:5000/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
+                        const expenseRes = await fetch('/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                         });
 
@@ -1818,7 +1818,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                             const expenses = await expenseRes.json();
                             if (expenses.length > 0) {
                                 const existingExpense = expenses[0];
-                                const updateRes = await fetch('http://localhost:5000/api/expenses/' + encodeURIComponent(existingExpense.id), {
+                                const updateRes = await fetch('/api/expenses/' + encodeURIComponent(existingExpense.id), {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -1837,14 +1837,14 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
 
                         if (!expenseUpdated) {
                             try {
-                                const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                                const expenseNextRes = await fetch('/api/expenses/next-id', {
                                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                                 });
                                 if (expenseNextRes.ok) {
                                     const expenseNextData = await expenseNextRes.json();
                                     const expenseListId = expenseNextData.expense_list_id;
                                     if (expenseListId) {
-                                        const createRes = await fetch('http://localhost:5000/api/expenses', {
+                                        const createRes = await fetch('/api/expenses', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
@@ -1876,14 +1876,14 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                             }
                         }
                     } else {
-                        const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                        const expenseNextRes = await fetch('/api/expenses/next-id', {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                         });
                         if (expenseNextRes.ok) {
                             const expenseNextData = await expenseNextRes.json();
                             const expenseListId = expenseNextData.expense_list_id;
                             if (expenseListId) {
-                                const createRes = await fetch('http://localhost:5000/api/expenses', {
+                                const createRes = await fetch('/api/expenses', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -1954,13 +1954,13 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                                     })
                                 });
 
-                                const expenseRes = await fetch('http://localhost:5000/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
+                                const expenseRes = await fetch('/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
                                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                                 });
                                 if (expenseRes.ok) {
                                     const expenses = await expenseRes.json();
                                     for (const expense of expenses) {
-                                        await fetch('http://localhost:5000/api/expenses/' + encodeURIComponent(expense.id), {
+                                        await fetch('/api/expenses/' + encodeURIComponent(expense.id), {
                                             method: 'PUT',
                                             headers: {
                                                 'Content-Type': 'application/json',

@@ -330,9 +330,9 @@ ModuleComponents['sales-product-pricing'] = (container) => {
     `;
 };
 
-var API_BASE = 'http://localhost:5000/api/products';
-var API_BASE_CUSTOMERS = 'http://localhost:5000/api/customers';
-var API_BASE_PRICE_CHANGES = 'http://localhost:5000/api/price-changes';
+var API_BASE = '/api/products';
+var API_BASE_CUSTOMERS = '/api/customers';
+var API_BASE_PRICE_CHANGES = '/api/price-changes';
 
 async function loadProductsForEdit() {
     try {

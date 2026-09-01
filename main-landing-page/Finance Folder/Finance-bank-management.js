@@ -119,7 +119,7 @@ ModuleComponents['finance-bank-management'] = (container) => {
     `;
 };
 
-var API_BASE_BANK_ACCOUNTS = 'http://localhost:5000/api/bank-accounts';
+var API_BASE_BANK_ACCOUNTS = '/api/bank-accounts';
 
 async function loadAccountsCarousel() {
     const carousel = document.getElementById('accounts-carousel');

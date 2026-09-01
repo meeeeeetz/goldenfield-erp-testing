@@ -201,10 +201,10 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
         `;
     };
 
-var API_BASE_RECEIPTS = 'http://localhost:5000/api/receipt-issues';
-var API_BASE_CUSTOMERS = 'http://localhost:5000/api/customers';
-var API_BASE_PRICE_CHANGES = "http://localhost:5000/api/price-changes";
-var API_BASE_PRODUCTS = 'http://localhost:5000/api/products';
+var API_BASE_RECEIPTS = '/api/receipt-issues';
+var API_BASE_CUSTOMERS = '/api/customers';
+var API_BASE_PRICE_CHANGES = "/api/price-changes";
+var API_BASE_PRODUCTS = '/api/products';
 
 function generateReceiptItems() {
     const tbody = document.getElementById('receipt-items-body');

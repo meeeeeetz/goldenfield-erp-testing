@@ -214,7 +214,7 @@ function initializeModule(contentArea) {
         if (!select) return;
         select.innerHTML = '<option value="">Select Bank Code</option>';
         try {
-            const res = await fetch('http://localhost:5000/api/bank-accounts');
+            const res = await fetch('/api/bank-accounts');
             if (res.ok) {
                 const accounts = await res.json();
                 const activeAccounts = (accounts || []).filter(acc => (acc.status || '').toLowerCase() === 'active');
@@ -284,7 +284,7 @@ function initializeModule(contentArea) {
             };
 
             try {
-                const nextIdRes = await fetch('http://localhost:5000/api/check-database/next-id');
+                const nextIdRes = await fetch('/api/check-database/next-id');
                 const nextIdData = nextIdRes.ok ? await nextIdRes.json() : { check_transaction_id: 'ChkTra-000001' };
 
                 const payload = {
@@ -300,7 +300,7 @@ function initializeModule(contentArea) {
                     link_to_passbook: ''
                 };
 
-                const res = await fetch('http://localhost:5000/api/check-database', {
+                const res = await fetch('/api/check-database', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -324,7 +324,7 @@ function initializeModule(contentArea) {
 
     if (downloadTemplateBtn) {
         downloadTemplateBtn.addEventListener('click', () => {
-            window.open('http://localhost:5000/api/check-database/template', '_blank');
+            window.open('/api/check-database/template', '_blank');
         });
     }
 
@@ -335,7 +335,7 @@ function initializeModule(contentArea) {
                 return;
             }
             try {
-                const res = await fetch('http://localhost:5000/api/check-database/bulk', {
+                const res = await fetch('/api/check-database/bulk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ rows: checkDataRows })
@@ -506,7 +506,7 @@ function initializeModule(contentArea) {
         if (!bankAccountFilter) return;
         bankAccountFilter.innerHTML = '<option value="">All Accounts</option>';
         try {
-            const res = await fetch('http://localhost:5000/api/bank-accounts');
+            const res = await fetch('/api/bank-accounts');
             if (res.ok) {
                 const accounts = await res.json();
                 const activeAccounts = (accounts || []).filter(acc => (acc.status || '').toLowerCase() === 'active');
@@ -524,8 +524,8 @@ function initializeModule(contentArea) {
         const bankCode = bankAccountFilter ? bankAccountFilter.value : '';
         try {
             const url = bankCode
-                ? `http://localhost:5000/api/check-database?bank_code=${encodeURIComponent(bankCode)}`
-                : 'http://localhost:5000/api/check-database';
+                ? `/api/check-database?bank_code=${encodeURIComponent(bankCode)}`
+                : '/api/check-database';
             const res = await fetch(url);
             if (!res.ok) return;
             const checks = await res.json();

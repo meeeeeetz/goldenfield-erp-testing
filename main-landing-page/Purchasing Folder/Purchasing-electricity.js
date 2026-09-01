@@ -304,7 +304,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
         let filePath = null;
 
         try {
-            const idRes = await fetch('http://localhost:5000/api/electric-bills/next-id', {
+            const idRes = await fetch('/api/electric-bills/next-id', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
             });
             const idData = await idRes.json();
@@ -314,7 +314,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                 const formData = new FormData();
                 const fileName = getElectricBillFileName(electricBillId, periodStartVal, periodEndVal);
                 formData.append('file', electricBillFileBlob, fileName);
-                const uploadRes = await fetch('http://localhost:5000/api/electric-bills/upload', {
+                const uploadRes = await fetch('/api/electric-bills/upload', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -329,7 +329,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                 filePath = uploadData.filePath;
             }
 
-            const res = await fetch('http://localhost:5000/api/electric-bills', {
+            const res = await fetch('/api/electric-bills', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -384,7 +384,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
             if (sourceSelect) {
                 sourceSelect.innerHTML = '<option value="">Select Bank Account</option>';
                 try {
-                    const res = await fetch('http://localhost:5000/api/bank-accounts', {
+                    const res = await fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (res.ok) {
@@ -430,7 +430,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
             }
 
             try {
-                const res = await fetch(`http://localhost:5000/api/electric-bills/${encodeURIComponent(currentPaymentBillId)}`, {
+                const res = await fetch(`/api/electric-bills/${encodeURIComponent(currentPaymentBillId)}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -449,7 +449,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                     throw new Error(errData.error || 'Failed to save payment');
                 }
 
-                const expenseRes = await fetch(`http://localhost:5000/api/expenses/by-tracking-id/${encodeURIComponent(currentPaymentBillId)}`, {
+                const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(currentPaymentBillId)}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -657,7 +657,7 @@ function setupElectricBillUploadZone() {
     zone._clear = clearPreview;
 }
 
-var API_BASE_ELECTRIC_BILLS = 'http://localhost:5000/api/electric-bills';
+var API_BASE_ELECTRIC_BILLS = '/api/electric-bills';
 
 var electricBillsData = [];
 var electricBillsCurrentPage = 1;
@@ -850,7 +850,7 @@ function updateYAxis(containerId, maxValue) {
 
 async function loadChartData() {
     try {
-        const res = await fetch('http://localhost:5000/api/electric-bills/chart-data', {
+        const res = await fetch('/api/electric-bills/chart-data', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
         });
         if (!res.ok) throw new Error('Failed to fetch chart data');
@@ -875,7 +875,7 @@ async function loadChartData() {
 
 async function loadLatestComparison() {
     try {
-        const res = await fetch('http://localhost:5000/api/electric-bills/latest-comparison', {
+        const res = await fetch('/api/electric-bills/latest-comparison', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
         });
         if (!res.ok) throw new Error('Failed to fetch comparison data');
@@ -922,7 +922,7 @@ async function loadLatestComparison() {
         if (!wrap) return;
         const src = wrap.getAttribute('data-receipt-path');
         if (!src) return;
-        const fullSrc = src.startsWith('http') ? src : `http://localhost:5000${src}`;
+        const fullSrc = src.startsWith('http') ? src : `${src}`;
         photoTooltip.innerHTML = `<img src="${fullSrc}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
         photoTooltip.style.display = 'block';
         positionElectricPhotoTooltip();
@@ -1009,7 +1009,7 @@ async function loadLatestComparison() {
                     const formData = new FormData();
                     const fileName = getElectricBillFileName(currentElectricPhotoBillId, bill ? bill.billing_start : null, bill ? bill.billing_end : null);
                     formData.append('file', electricPhotoFileBlob, fileName);
-                    const uploadRes = await fetch('http://localhost:5000/api/electric-bills/upload', {
+                    const uploadRes = await fetch('/api/electric-bills/upload', {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` },
                         body: formData
@@ -1021,7 +1021,7 @@ async function loadLatestComparison() {
                     const uploadData = await uploadRes.json();
                     const filePath = uploadData.filePath;
 
-                    const updateRes = await fetch(`http://localhost:5000/api/electric-bills/${encodeURIComponent(currentElectricPhotoBillId)}`, {
+                    const updateRes = await fetch(`/api/electric-bills/${encodeURIComponent(currentElectricPhotoBillId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1047,7 +1047,7 @@ async function loadLatestComparison() {
             removeBtn.addEventListener('click', async () => {
                 if (!currentElectricPhotoBillId) return;
                 try {
-                    const updateRes = await fetch(`http://localhost:5000/api/electric-bills/${encodeURIComponent(currentElectricPhotoBillId)}`, {
+                    const updateRes = await fetch(`/api/electric-bills/${encodeURIComponent(currentElectricPhotoBillId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',

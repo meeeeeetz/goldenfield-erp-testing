@@ -448,7 +448,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
         const closeAddRemoveModal = () => addRemoveModal.classList.add('hidden');
         const getNextBuildingId = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings/next-id');
+                const res = await fetch('/api/layer-buildings-reports/buildings/next-id');
                 if (res.ok) {
                     const data = await res.json();
                     return data.building_id || 'BldgID-001';
@@ -478,7 +478,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 if (tab.dataset.tab === 'remove') {
                     const select = document.getElementById('remove-building-select');
                     try {
-                        const res = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings/active');
+                        const res = await fetch('/api/layer-buildings-reports/buildings/active');
                         if (res.ok) {
                             const buildings = await res.json();
                             select.innerHTML = '<option value="">Select Building</option>';
@@ -501,7 +501,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const status = document.getElementById('new-building-status').value;
             if (!buildingName) { alert('Please enter a building name.'); return; }
             try {
-                const res = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings', {
+                const res = await fetch('/api/layer-buildings-reports/buildings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ building_id: buildingId, building_name: buildingName, status })
@@ -523,7 +523,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const status = document.getElementById('remove-building-status').value;
             if (!buildingId) { alert('Please select a building.'); return; }
             try {
-                const res = await fetch(`http://localhost:5000/api/layer-buildings-reports/buildings/${encodeURIComponent(buildingId)}`, {
+                const res = await fetch(`/api/layer-buildings-reports/buildings/${encodeURIComponent(buildingId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
@@ -672,7 +672,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             };
 
             try {
-                const res = await fetch('http://localhost:5000/api/layer-buildings-reports', {
+                const res = await fetch('/api/layer-buildings-reports', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -786,7 +786,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const container = document.getElementById('building-view-tabs');
             if (!container) return;
             try {
-                const res = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings/active');
+                const res = await fetch('/api/layer-buildings-reports/buildings/active');
                 if (!res.ok) throw new Error('Failed to fetch buildings');
                 const buildings = await res.json();
                 if (!buildings.length) {
@@ -812,7 +812,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const tbody = document.getElementById('buildings-table-body');
             if (!tbody) return;
             try {
-                const res = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings');
+                const res = await fetch('/api/layer-buildings-reports/buildings');
                 if (!res.ok) throw new Error('Failed to fetch buildings');
                 const buildings = await res.json();
                 tbody.innerHTML = buildings.map(b => `

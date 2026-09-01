@@ -120,7 +120,7 @@ ModuleComponents['sales-customer-directory'] = (container) => {
     `;
 };
 
-var API_BASE_CUSTOMERS = 'http://localhost:5000/api/customers';
+var API_BASE_CUSTOMERS = '/api/customers';
 
 async function loadCustomersForEdit() {
     try {

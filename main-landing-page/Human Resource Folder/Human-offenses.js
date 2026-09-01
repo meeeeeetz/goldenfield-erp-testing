@@ -336,7 +336,7 @@ ModuleComponents['hr-offenses'] = (container) => {
 
     const loadOffenseStats = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/offenses/stats');
+            const res = await fetch('/api/offenses/stats');
             if (!res.ok) throw new Error('Failed to load offense stats');
             const stats = await res.json();
 
@@ -356,7 +356,7 @@ ModuleComponents['hr-offenses'] = (container) => {
         const tbody = document.getElementById('offenses-tbody');
         if (!tbody) return;
         try {
-            const res = await fetch('http://localhost:5000/api/offenses');
+            const res = await fetch('/api/offenses');
             if (!res.ok) throw new Error('Failed to load offenses');
             const offenses = await res.json();
             if (!offenses || offenses.length === 0) {
@@ -385,7 +385,7 @@ ModuleComponents['hr-offenses'] = (container) => {
         const select = document.getElementById('offense-employee');
         if (!select) return;
         try {
-            const res = await fetch('http://localhost:5000/api/employees');
+            const res = await fetch('/api/employees');
             if (!res.ok) throw new Error('Failed to load employees');
             const employees = await res.json();
             select.innerHTML = '<option value="">Select employee</option>' + employees.map(emp => `<option value="${emp.employee_id}">${emp.last_name}, ${emp.first_name} (${emp.employee_id})</option>`).join('');
@@ -417,7 +417,7 @@ ModuleComponents['hr-offenses'] = (container) => {
         }
 
         try {
-            const res = await fetch('http://localhost:5000/api/offenses', {
+            const res = await fetch('/api/offenses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ date, employee_id: employeeId, offense_type: offenseType, description, severity, status })
@@ -534,7 +534,7 @@ ModuleComponents['hr-offenses'] = (container) => {
 
         if (!docContents[tabId]) {
             try {
-                const res = await fetch(`http://localhost:5000/api/offenses/documents/${tabId}`);
+                const res = await fetch(`/api/offenses/documents/${tabId}`);
                 if (res.ok) {
                     const data = await res.json();
                     docContents[tabId] = data.html_content || '';
@@ -569,7 +569,7 @@ ModuleComponents['hr-offenses'] = (container) => {
             docContents[activeDocTab] = content;
             
             try {
-                const res = await fetch('http://localhost:5000/api/offenses/documents', {
+                const res = await fetch('/api/offenses/documents', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ doc_type: activeDocTab, html_content: content })
@@ -629,7 +629,7 @@ ModuleComponents['hr-offenses'] = (container) => {
         'manage-coc': document.getElementById('panel-manage-coc')
     };
 
-    const API_BASE_COC = 'http://localhost:5000/api/code-of-conduct';
+    const API_BASE_COC = '/api/code-of-conduct';
 
     const loadNextCocId = async () => {
         try {
@@ -833,7 +833,7 @@ ModuleComponents['hr-offenses'] = (container) => {
 
     const loadActiveCodeOfConduct = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/code-of-conduct?status=Active');
+            const res = await fetch('/api/code-of-conduct?status=Active');
             if (!res.ok) return;
             const records = await res.json();
             cocAllRecords = records;

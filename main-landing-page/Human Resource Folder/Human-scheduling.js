@@ -167,7 +167,7 @@ function initializeModule(contentArea) {
             const shiftPolicyIdInput = document.getElementById('shift-policy-id');
             if (shiftPolicyIdInput) {
                 try {
-                    const res = await fetch('http://localhost:5000/api/shift-policies/next-id');
+                    const res = await fetch('/api/shift-policies/next-id');
                     if (res.ok) {
                         const data = await res.json();
                         shiftPolicyIdInput.value = data.shift_policy_id || 'ShfPo-0001';
@@ -195,7 +195,7 @@ function initializeModule(contentArea) {
 
     const shiftOrgUnit = document.getElementById('shift-org-unit');
     if (shiftOrgUnit) {
-        fetch('http://localhost:5000/api/organizational-units')
+        fetch('/api/organizational-units')
             .then(res => res.json())
             .then(units => {
                 const activeUnits = (units || []).filter(u => (u.status || '').toLowerCase() === 'active');
@@ -340,7 +340,7 @@ function initializeModule(contentArea) {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/shift-policies');
+            const res = await fetch('/api/shift-policies');
             if (!res.ok) throw new Error('Failed to load shift policies');
             const policies = await res.json();
 
@@ -412,7 +412,7 @@ function initializeModule(contentArea) {
                     status: 'Active'
                 };
 
-                const res = await fetch('http://localhost:5000/api/shift-policies', {
+                const res = await fetch('/api/shift-policies', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(shiftData)
@@ -441,7 +441,7 @@ function initializeModule(contentArea) {
     async function loadOrgTabs() {
         if (!orgTabsContainer) return;
         try {
-            const res = await fetch('http://localhost:5000/api/organizational-units');
+            const res = await fetch('/api/organizational-units');
             const units = await res.json();
             const activeUnits = (units || []).filter(u => (u.status || '').toLowerCase() === 'active');
             orgTabsContainer.innerHTML = '';
@@ -491,7 +491,7 @@ function initializeModule(contentArea) {
         if (!employeeListContainer || !orgUnitName) return;
         employeeListContainer.innerHTML = '<div style="text-align: center; padding: 12px; color: #999; font-size: 12px;">Loading...</div>';
         try {
-            const res = await fetch(`http://localhost:5000/api/organizational-structure/active-employees/org-unit-name/${encodeURIComponent(orgUnitName)}`);
+            const res = await fetch(`/api/organizational-structure/active-employees/org-unit-name/${encodeURIComponent(orgUnitName)}`);
             const rows = await res.json();
             employeeListContainer.innerHTML = '';
             if (!Array.isArray(rows) || rows.length === 0) {
@@ -562,11 +562,11 @@ function initializeModule(contentArea) {
                     const alreadyExists = Array.from(existingChips).some(c => c.dataset.employeeId === employeeId);
                     if (alreadyExists) return;
 
-                    const nextIdRes = await fetch('http://localhost:5000/api/schedules/next-id');
+                    const nextIdRes = await fetch('/api/schedules/next-id');
                     const nextIdData = await nextIdRes.json();
                     const scheduleId = nextIdData.schedule_id || 'Sch-0001';
 
-                    const saveRes = await fetch('http://localhost:5000/api/schedules', {
+                    const saveRes = await fetch('/api/schedules', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -595,7 +595,7 @@ function initializeModule(contentArea) {
                     removeBtn.style.cssText = 'cursor:pointer;font-weight:700;color:#ef4444;margin-left:2px;';
                     removeBtn.addEventListener('click', async () => {
                         try {
-                            const delRes = await fetch(`http://localhost:5000/api/schedules/${saved.schedule_id}`, { method: 'DELETE' });
+                            const delRes = await fetch(`/api/schedules/${saved.schedule_id}`, { method: 'DELETE' });
                             if (delRes.ok) chip.remove();
                         } catch (err) {
                             console.error('Failed to remove schedule:', err);
@@ -616,7 +616,7 @@ function initializeModule(contentArea) {
         const startDate = `${year}-${String(month).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
         const endDate = `${year}-${String(month).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
         try {
-            const res = await fetch(`http://localhost:5000/api/schedules?org_unit=${encodeURIComponent(currentOrgUnit)}&start_date=${startDate}&end_date=${endDate}`);
+            const res = await fetch(`/api/schedules?org_unit=${encodeURIComponent(currentOrgUnit)}&start_date=${startDate}&end_date=${endDate}`);
             const schedules = await res.json();
             const scheduleMap = new Map();
             (Array.isArray(schedules) ? schedules : []).forEach(s => {
@@ -681,7 +681,7 @@ function initializeModule(contentArea) {
                 removeBtn.style.cssText = 'cursor:pointer;font-weight:700;color:#ef4444;margin-left:2px;';
                 removeBtn.addEventListener('click', async () => {
                     try {
-                        const delRes = await fetch(`http://localhost:5000/api/schedules/${s.schedule_id}`, { method: 'DELETE' });
+                        const delRes = await fetch(`/api/schedules/${s.schedule_id}`, { method: 'DELETE' });
                         if (delRes.ok) chip.remove();
                     } catch (err) {
                         console.error('Failed to remove schedule:', err);

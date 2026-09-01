@@ -1,6 +1,6 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
-var API_BASE = 'http://localhost:5000/api/users';
+var API_BASE = '/api/users';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('goldenfield_auth_token');

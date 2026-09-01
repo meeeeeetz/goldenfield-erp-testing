@@ -920,7 +920,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
 
         var vetCategories = [];
         var currentVetCategoryId = 1;
-        var API_BASE_VET_CATEGORIES = 'http://localhost:5000/api/vet-supplies-categories';
+        var API_BASE_VET_CATEGORIES = '/api/vet-supplies-categories';
 
         function switchVetCategoryTab(tab) {
         }
@@ -1072,7 +1072,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
         }
 
         var vetSuppliersData = [];
-        var API_BASE_VET_SUPPLIERS = 'http://localhost:5000/api/vet-suppliers';
+        var API_BASE_VET_SUPPLIERS = '/api/vet-suppliers';
 
         function switchVetSupplierTab(tab) {
             const createPanel = document.getElementById('panel-create-vet-supplier');
@@ -1401,7 +1401,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch('http://localhost:5000/api/rtl-suppliers', {
+                    const res = await fetch('/api/rtl-suppliers', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1448,7 +1448,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/rtl-suppliers/${encodeURIComponent(supplierId)}`, {
+                    const res = await fetch(`/api/rtl-suppliers/${encodeURIComponent(supplierId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1616,7 +1616,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
 
         loadVetSuppliersPage();
 
-        var API_BASE_VET_PRODUCTS = 'http://localhost:5000/api/vet-products';
+        var API_BASE_VET_PRODUCTS = '/api/vet-products';
 
         function switchVetProductTab(tab) {
             const createPanel = document.getElementById('panel-create-vet-product');
@@ -2129,10 +2129,10 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
         loadVetSuppliersPage();
 
         var orderVetSuppliesItems = [];
-        var API_BASE_VET_PRODUCTS = 'http://localhost:5000/api/vet-products';
-        var API_BASE_VET_ORDERS = 'http://localhost:5000/api/order-vet-supplies';
-        var API_BASE_VET_REPAYMENT = 'http://localhost:5000/api/order-vet-supplies-repayment';
-        var API_BASE_VET_INVENTORY = 'http://localhost:5000/api/vet-products-inventory';
+        var API_BASE_VET_PRODUCTS = '/api/vet-products';
+        var API_BASE_VET_ORDERS = '/api/order-vet-supplies';
+        var API_BASE_VET_REPAYMENT = '/api/order-vet-supplies-repayment';
+        var API_BASE_VET_INVENTORY = '/api/vet-products-inventory';
 
         async function loadVetStocksAvailability() {
             const tbody = document.getElementById('vet-stocks-availability-table-body');
@@ -2165,7 +2165,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             if (!tbody) return;
 
             try {
-                const res = await fetch('http://localhost:5000/api/vet-supplies-use', {
+                const res = await fetch('/api/vet-supplies-use', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (!res.ok) throw new Error('Failed to fetch vet supplies use');
@@ -2491,13 +2491,13 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                         const item = orderVetSuppliesItems[i];
 
                         try {
-                            const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                            const expenseNextRes = await fetch('/api/expenses/next-id', {
                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                             });
                             if (!expenseNextRes.ok) continue;
                             const expenseNextData = await expenseNextRes.json();
 
-                            const expenseRes = await fetch('http://localhost:5000/api/expenses', {
+                            const expenseRes = await fetch('/api/expenses', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -2803,7 +2803,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 }
 
                 try {
-                    const bankRes = await fetch('http://localhost:5000/api/bank-accounts', {
+                    const bankRes = await fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (bankRes.ok) {
@@ -2977,7 +2977,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             if (sourceSelect) {
                 sourceSelect.innerHTML = '<option value="">Select Bank Account</option>';
                 try {
-                    const res = await fetch('http://localhost:5000/api/bank-accounts', {
+                    const res = await fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (res.ok) {
@@ -3096,7 +3096,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 const today = new Date().toISOString().split('T')[0];
                 for (const item of items) {
                     try {
-                        await fetch(`http://localhost:5000/api/expenses/by-tracking-id/${encodeURIComponent(item.order_id)}`, {
+                        await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(item.order_id)}`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -3598,7 +3598,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     fetch(API_BASE_VET_ORDERS, {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     }),
-                    fetch('http://localhost:5000/api/bank-accounts', {
+                    fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     })
                 ]);
@@ -3756,7 +3756,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             if (!wrap) return;
             const src = wrap.getAttribute('data-file-path');
             if (!src) return;
-            const fullSrc = src.startsWith('http') ? src : `http://localhost:5000${src}`;
+            const fullSrc = src.startsWith('http') ? src : `${src}`;
             vetPhotoTooltip.innerHTML = `<img src="${fullSrc}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
             vetPhotoTooltip.style.display = 'block';
             positionVetPhotoTooltip();
@@ -3965,7 +3965,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             try {
                 const formData = new FormData();
                 formData.append('file', fileToUpload, `order-${currentVetPhotoUploadOrderId}.webp`);
-                const uploadRes = await fetch(`http://localhost:5000/api/order-vet-supplies/${currentVetPhotoUploadOrderId}/photo`, {
+                const uploadRes = await fetch(`/api/order-vet-supplies/${currentVetPhotoUploadOrderId}/photo`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -3999,7 +3999,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     return;
                 }
                 try {
-                    const res = await fetch(`http://localhost:5000/api/order-vet-supplies/${encodeURIComponent(currentVetPhotoUploadOrderId)}/photo`, {
+                    const res = await fetch(`/api/order-vet-supplies/${encodeURIComponent(currentVetPhotoUploadOrderId)}/photo`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -4057,7 +4057,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const tbody = document.getElementById('vet-use-tbody');
             if (!tbody) return;
             try {
-                const buildingsRes = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings/active');
+                const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active');
                 const buildings = buildingsRes.ok ? await buildingsRes.json() : [];
 
                 const inventoryRes = await fetch(API_BASE_VET_INVENTORY, {
@@ -4113,7 +4113,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             recordVetUseBtn.addEventListener('click', async () => {
                 await populateVetUseRowData();
                 try {
-                    const idRes = await fetch('http://localhost:5000/api/vet-supplies-use/next-id', {
+                    const idRes = await fetch('/api/vet-supplies-use/next-id', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     const idData = await idRes.json();
@@ -4202,7 +4202,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 }
 
                 try {
-                    const res = await fetch('http://localhost:5000/api/vet-supplies-use', {
+                    const res = await fetch('/api/vet-supplies-use', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

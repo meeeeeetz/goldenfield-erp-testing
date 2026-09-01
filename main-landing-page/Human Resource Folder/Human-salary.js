@@ -1207,7 +1207,7 @@ function initializeModule(contentArea) {
             clearTimeout(salarySearchDebounce);
             salarySearchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/salary-computation/search?q=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/salary-computation/search?q=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSalarySearchResults(employees);
@@ -1266,7 +1266,7 @@ function initializeModule(contentArea) {
 
                 if (employeeId) {
                     try {
-                        const outstandingRes = await fetch(`http://localhost:5000/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`);
+                        const outstandingRes = await fetch(`/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`);
                         if (outstandingRes.ok) {
                             const outstandingData = await outstandingRes.json();
                             const startingCashLoan = document.getElementById('salary-starting-cash-loan');
@@ -1278,7 +1278,7 @@ function initializeModule(contentArea) {
                     }
 
                     try {
-                        const lossesRes = await fetch(`http://localhost:5000/api/salary-computation/outstanding/losses-damages/${encodeURIComponent(employeeId)}`);
+                        const lossesRes = await fetch(`/api/salary-computation/outstanding/losses-damages/${encodeURIComponent(employeeId)}`);
                         if (lossesRes.ok) {
                             const lossesData = await lossesRes.json();
                             const startingLosses = document.getElementById('salary-starting-losses');
@@ -1290,7 +1290,7 @@ function initializeModule(contentArea) {
                     }
 
                     try {
-                        const compRes = await fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(employeeId)}/compensation`);
+                        const compRes = await fetch(`/api/employee-profiles/${encodeURIComponent(employeeId)}/compensation`);
                         if (compRes.ok) {
                             const compData = await compRes.json();
                             const salaryPayMode = document.getElementById('salary-pay-mode');
@@ -1351,7 +1351,7 @@ function initializeModule(contentArea) {
             if (!from || !to) return;
 
             try {
-                const res = await fetch(`http://localhost:5000/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`);
+                const res = await fetch(`/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`);
                 if (!res.ok) throw new Error('Failed to load salary totals');
                 const data = await res.json();
 
@@ -1553,7 +1553,7 @@ function initializeModule(contentArea) {
             };
 
             try {
-                const res = await fetch('http://localhost:5000/api/payroll', {
+                const res = await fetch('/api/payroll', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payrollData)
@@ -1566,7 +1566,7 @@ function initializeModule(contentArea) {
                 alert(`Payroll saved successfully for employee ${employeeId}`);
                 if (typeof updatePayslipPreview === 'function') updatePayslipPreview();
                 try {
-                    const pdfRes = await fetch(`http://localhost:5000/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
+                    const pdfRes = await fetch(`/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
                     if (!pdfRes.ok) {
                         const pdfError = await pdfRes.json().catch(() => ({}));
                         console.error('PDF generation failed:', pdfError);
@@ -1680,7 +1680,7 @@ function initializeModule(contentArea) {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/holidays', {
+                const res = await fetch('/api/holidays', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ holiday_name: holidayName, date_of_holiday: holidayDate, type_of_holiday: holidayType })
@@ -1720,7 +1720,7 @@ function initializeModule(contentArea) {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/holidays');
+            const res = await fetch('/api/holidays');
             if (!res.ok) throw new Error('Failed to load holidays');
             const holidays = await res.json();
             renderYearlyHolidays(holidays);
@@ -1761,7 +1761,7 @@ function initializeModule(contentArea) {
                 if (!holidayId) return;
                 if (!confirm('Are you sure you want to delete this holiday?')) return;
                 try {
-                    const res = await fetch(`http://localhost:5000/api/holidays/${encodeURIComponent(holidayId)}`, {
+                    const res = await fetch(`/api/holidays/${encodeURIComponent(holidayId)}`, {
                         method: 'DELETE'
                     });
                     if (!res.ok) {
@@ -1782,7 +1782,7 @@ function initializeModule(contentArea) {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/payroll/status/Pending');
+            const res = await fetch('/api/payroll/status/Pending');
             if (!res.ok) throw new Error('Failed to load pending payrolls');
             const payrolls = await res.json();
 
@@ -1836,7 +1836,7 @@ function initializeModule(contentArea) {
                         <td>${fmt(p.ending_cash_loan)}</td>
                         <td>${fmt(p.starting_losses_damages)}</td>
                         <td>${fmt(p.ending_losses_damages)}</td>
-                        <td style="text-align: center;"><a href="http://localhost:5000/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
+                        <td style="text-align: center;"><a href="/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
                         <td style="text-align: center;"><button class="btn-danger" data-payroll-id="${p.payroll_id}" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Delete</button></td>
                     </tr>
                 `;
@@ -1877,7 +1877,7 @@ function initializeModule(contentArea) {
                     if (!payrollId) return;
                     if (!confirm('Delete this payroll and its PDF?')) return;
                     try {
-                        const res = await fetch(`http://localhost:5000/api/payroll/${encodeURIComponent(payrollId)}`, { method: 'DELETE' });
+                        const res = await fetch(`/api/payroll/${encodeURIComponent(payrollId)}`, { method: 'DELETE' });
                         if (!res.ok) throw new Error('Failed to delete payroll');
                         const row = e.target.closest('tr');
                         if (row) row.remove();
@@ -1909,7 +1909,7 @@ function initializeModule(contentArea) {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/payroll/all');
+            const res = await fetch('/api/payroll/all');
             if (!res.ok) throw new Error('Failed to load salary history');
             const payrolls = await res.json();
 
@@ -2001,7 +2001,7 @@ function initializeModule(contentArea) {
         if (!valueEl || !trendEl || !arrowEl || !percentEl) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/payroll/totals/monthly-comparison');
+            const res = await fetch('/api/payroll/totals/monthly-comparison');
             if (!res.ok) throw new Error('Failed to load monthly salary comparison');
             const data = await res.json();
 
@@ -2056,7 +2056,7 @@ function initializeModule(contentArea) {
         const start = formatDateForFile(dateStart);
         const end = formatDateForFile(dateEnd);
         const filename = `payslip_${employeeId}_${start}_to_${end}.pdf`;
-        const url = `http://localhost:5000/uploads/payslips/${encodeURIComponent(filename)}`;
+        const url = `/uploads/payslips/${encodeURIComponent(filename)}`;
 
         window.open(url, '_blank');
     });
@@ -2284,7 +2284,7 @@ function initializeModule(contentArea) {
                         }
 
                         try {
-                            const res = await fetch('http://localhost:5000/api/batch-payroll/confirm', {
+                            const res = await fetch('/api/batch-payroll/confirm', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -2303,7 +2303,7 @@ function initializeModule(contentArea) {
                             alert('Batch payroll confirmed successfully!');
 
                             if (result.batch && result.batch.batch_payroll_id) {
-                                window.open(`http://localhost:5000/api/batch-payroll/${result.batch.batch_payroll_id}/pdf`, '_blank');
+                                window.open(`/api/batch-payroll/${result.batch.batch_payroll_id}/pdf`, '_blank');
                             }
 
                             batchPrintPreviewModal.style.display = 'none';
@@ -2327,7 +2327,7 @@ function initializeModule(contentArea) {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/batch-payroll');
+            const res = await fetch('/api/batch-payroll');
             if (!res.ok) throw new Error('Failed to load batch payrolls');
             const batches = await res.json();
 
@@ -2379,7 +2379,7 @@ function initializeModule(contentArea) {
             if (!printBtn) return;
             const batchId = printBtn.dataset.batchId;
             if (!batchId) return;
-            window.open(`http://localhost:5000/api/batch-payroll/${batchId}/pdf`, '_blank');
+            window.open(`/api/batch-payroll/${batchId}/pdf`, '_blank');
         });
     }
 
@@ -2414,7 +2414,7 @@ function initializeModule(contentArea) {
         const batchDepartmentSelect = document.getElementById('batch-search-employee');
         if (!batchDepartmentSelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/organizational-units?status=Active');
+            const res = await fetch('/api/organizational-units?status=Active');
             if (!res.ok) return;
             const units = await res.json();
             batchDepartmentSelect.innerHTML = '<option value="">Select Department</option><option value="All">All Departments</option>';
@@ -2470,9 +2470,9 @@ function initializeModule(contentArea) {
             const employeeId = checkbox.value;
             try {
                 const [salaryRes, cashRes, lossesRes] = await Promise.all([
-                    fetch(`http://localhost:5000/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`),
-                    fetch(`http://localhost:5000/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`),
-                    fetch(`http://localhost:5000/api/salary-computation/outstanding/losses-damages/${encodeURIComponent(employeeId)}`)
+                    fetch(`/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`),
+                    fetch(`/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`),
+                    fetch(`/api/salary-computation/outstanding/losses-damages/${encodeURIComponent(employeeId)}`)
                 ]);
 
                 const salaryData = salaryRes.ok ? await salaryRes.json() : {};
@@ -2573,9 +2573,9 @@ function initializeModule(contentArea) {
             try {
                 let url = '';
                 if (orgUnitId === 'All') {
-                    url = 'http://localhost:5000/api/employee-profiles/active';
+                    url = '/api/employee-profiles/active';
                 } else {
-                    url = `http://localhost:5000/api/employee-profiles/department/${encodeURIComponent(orgUnitId)}`;
+                    url = `/api/employee-profiles/department/${encodeURIComponent(orgUnitId)}`;
                 }
 
                 const res = await fetch(url);
@@ -2717,7 +2717,7 @@ function initializeModule(contentArea) {
                         status: 'Pending'
                     };
 
-                    const res = await fetch('http://localhost:5000/api/payroll', {
+                    const res = await fetch('/api/payroll', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payrollData)
@@ -2731,7 +2731,7 @@ function initializeModule(contentArea) {
                     const payroll = await res.json();
 
                     try {
-                        const pdfRes = await fetch(`http://localhost:5000/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
+                        const pdfRes = await fetch(`/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
                         if (!pdfRes.ok) {
                             console.error(`PDF generation failed for ${row.employeeId}:`, await pdfRes.json().catch(() => ({})));
                         }
@@ -2886,7 +2886,7 @@ function initializeModule(contentArea) {
         formData.append('payrollFile', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/payroll/validate', {
+            const res = await fetch('/api/payroll/validate', {
                 method: 'POST',
                 body: formData
             });
@@ -2982,7 +2982,7 @@ function initializeModule(contentArea) {
             formData.append('payrollFile', payrollFileInput.files[0]);
 
             try {
-                const res = await fetch('http://localhost:5000/api/payroll/upload', {
+                const res = await fetch('/api/payroll/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -3009,7 +3009,7 @@ function initializeModule(contentArea) {
 
     async function downloadPayrollTemplate() {
         try {
-            const res = await fetch('http://localhost:5000/api/payroll/template');
+            const res = await fetch('/api/payroll/template');
             if (!res.ok) throw new Error('Failed to download template');
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);

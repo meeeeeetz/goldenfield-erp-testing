@@ -158,7 +158,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/loss-damages/pending');
+            const res = await fetch('/api/loss-damages/pending');
             if (!res.ok) throw new Error('Failed to load pending loss/damages');
             const logs = await res.json();
             renderPendingLossDamages(logs);
@@ -205,7 +205,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
                 if (!lossDamageId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/loss-damages/${encodeURIComponent(lossDamageId)}/approve`, {
+                    const res = await fetch(`/api/loss-damages/${encodeURIComponent(lossDamageId)}/approve`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -231,7 +231,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
                 if (!lossDamageId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/loss-damages/${encodeURIComponent(lossDamageId)}/reject`, {
+                    const res = await fetch(`/api/loss-damages/${encodeURIComponent(lossDamageId)}/reject`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -257,7 +257,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/loss-damages/all');
+            const res = await fetch('/api/loss-damages/all');
             if (!res.ok) throw new Error('Failed to load loss/damage history');
             const logs = await res.json();
 
@@ -306,7 +306,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
     const openAddLossDamageModal = async () => {
         if (addLossDamageModal) {
             try {
-                const res = await fetch('http://localhost:5000/api/loss-damages/next-id');
+                const res = await fetch('/api/loss-damages/next-id');
                 if (res.ok) {
                     const data = await res.json();
                     const lossDamageIdInput = document.getElementById('loss-damage-id');
@@ -352,7 +352,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSearchResults(employees);
@@ -453,7 +453,7 @@ ModuleComponents['hr-salary-losses'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/loss-damages', {
+                const res = await fetch('/api/loss-damages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

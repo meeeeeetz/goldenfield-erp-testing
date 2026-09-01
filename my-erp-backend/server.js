@@ -135,11 +135,19 @@ app.use('/api/order-misc', orderMiscRoutes);
 app.use('/api/order-misc-repayments', orderMiscRepaymentsRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/uploads/passbook-photos', express.static(path.join(__dirname, 'passbook-photos')));
-app.use('/uploads/employee-photos', express.static('C:\\Users\\ADMIN\\Documents\\uploads\\photos'));
-app.use('/uploads/payslips', express.static('C:\\Users\\ADMIN\\Documents\\uploads\\payslips'));
-app.use('/uploads/feeds-receipts', express.static('C:\\Users\\ADMIN\\Documents\\uploads\\Feeds Receipts'));
-app.use('/uploads/electric-bills', express.static('C:\\Users\\ADMIN\\Documents\\uploads\\Electric Bill'));
-app.use('/uploads/veterinary-supplies', express.static('C:\\Users\\ADMIN\\Documents\\uploads\\Veterinary Supplies'));
+app.use('/uploads/employee-photos', express.static(path.join(__dirname, 'uploads/photos')));
+app.use('/uploads/payslips', express.static(path.join(__dirname, 'uploads/payslips')));
+app.use('/uploads/feeds-receipts', express.static(path.join(__dirname, 'uploads/Feeds Receipts')));
+app.use('/uploads/electric-bills', express.static(path.join(__dirname, 'uploads/Electric Bill')));
+app.use('/uploads/veterinary-supplies', express.static(path.join(__dirname, 'uploads/Veterinary Supplies')));
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '..')));
+app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, '..', 'index.html'));
+    }
+});
 
 // Express error handler - MUST come AFTER all routes
 app.use((err, req, res, next) => {

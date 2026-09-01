@@ -275,10 +275,10 @@ function initializeModule(contentArea) {
     const render = ModuleComponents[currentTab] || ModuleComponents['hr-employees'];
     render(contentArea);
 
-     const API_BASE_ORG_UNITS = 'http://localhost:5000/api/organizational-units';
-     const API_BASE_ORG_ROLES = 'http://localhost:5000/api/organizational-roles';
-     const API_BASE_ORG_STRUCTURE = 'http://localhost:5000/api/organizational-structure';
-     const API_BASE_UPLOADS = 'http://localhost:5000/uploads/employee-photos';
+     const API_BASE_ORG_UNITS = '/api/organizational-units';
+     const API_BASE_ORG_ROLES = '/api/organizational-roles';
+     const API_BASE_ORG_STRUCTURE = '/api/organizational-structure';
+     const API_BASE_UPLOADS = '/uploads/employee-photos';
      const returnBtn = document.getElementById('return-to-employees-btn');
      if (returnBtn) {
          returnBtn.addEventListener('click', () => {

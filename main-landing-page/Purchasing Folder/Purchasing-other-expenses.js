@@ -383,14 +383,14 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
 
             Promise.all([
-                fetch('http://localhost:5000/api/miscellaneous-suppliers', {
+                fetch('/api/miscellaneous-suppliers', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 }).then(async res => {
                     if (!res.ok) throw new Error('Unauthorized');
                     const data = await res.json();
                     return Array.isArray(data) ? data : [];
                 }).catch(() => []),
-                fetch('http://localhost:5000/api/expense-categories', {
+                fetch('/api/expense-categories', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 }).then(async res => {
                     if (!res.ok) throw new Error('Unauthorized');
@@ -501,7 +501,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/order-misc', {
+                const res = await fetch('/api/order-misc', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -533,7 +533,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
         }
 
-        var API_BASE_ORDER_MISC_REPAYMENTS = 'http://localhost:5000/api/order-misc-repayments';
+        var API_BASE_ORDER_MISC_REPAYMENTS = '/api/order-misc-repayments';
 
         async function openPayMiscModal() {
             const modal = document.getElementById('pay-misc-modal');
@@ -578,7 +578,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             if (!bankSelect) return;
 
             try {
-                const res = await fetch('http://localhost:5000/api/bank-accounts', {
+                const res = await fetch('/api/bank-accounts', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (res.ok) {
@@ -786,7 +786,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             });
         }
 
-        var API_BASE_MISC_SUPPLIERS = 'http://localhost:5000/api/miscellaneous-suppliers';
+        var API_BASE_MISC_SUPPLIERS = '/api/miscellaneous-suppliers';
         var miscSuppliersData = [];
         var currentMiscSupplierPage = 1;
         var miscSuppliersPerPage = 5;
@@ -910,7 +910,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
         }
 
-        var API_BASE_ORDER_MISC = 'http://localhost:5000/api/order-misc';
+        var API_BASE_ORDER_MISC = '/api/order-misc';
         var miscTransactionsData = [];
         var currentMiscTransactionPage = 1;
         var miscTransactionsPerPage = 5;

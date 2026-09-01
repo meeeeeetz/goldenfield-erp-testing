@@ -1345,7 +1345,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const newApplicationModal = document.getElementById('new-application-modal');
     const closeNewApplicationModal = document.getElementById('close-new-application-modal');
 
-    const API_BASE = 'http://localhost:5000/api';
+    const API_BASE = '/api';
 
     if (typeof window.currentSession === 'undefined') {
         window.currentSession = {};
@@ -1624,7 +1624,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 saveDocumentsBtn.disabled = true;
                 saveDocumentsBtn.innerText = 'Saving Documents...';
 
-                const res = await fetch('http://localhost:5000/api/employee-profiles/upload-documents', {
+                const res = await fetch('/api/employee-profiles/upload-documents', {
                     method: 'POST',
                     body: formData
                 });
@@ -1685,14 +1685,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
         });
     }
 
-    const API_BASE_ORG_STRUCTURE = 'http://localhost:5000/api/organizational-structure';
+    const API_BASE_ORG_STRUCTURE = '/api/organizational-structure';
     const compensationRoleSelect = document.getElementById('compensation-role');
     const compensationDepartmentSelect = document.getElementById('compensation-department');
 
     const populateCompensationDepartmentDropdown = async () => {
         if (!compensationDepartmentSelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/organizational-units');
+            const res = await fetch('/api/organizational-units');
             if (!res.ok) throw new Error('Failed to fetch units');
             const units = await res.json();
             const activeUnits = (units || []).filter(u => (u.status || '').toLowerCase() === 'active');
@@ -1726,7 +1726,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const populateShiftPolicyDropdown = async () => {
         if (!shiftPolicySelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/shift-policies?status=Active');
+            const res = await fetch('/api/shift-policies?status=Active');
             if (!res.ok) throw new Error('Failed to fetch shift policies');
             const policies = await res.json();
             shiftPolicySelect.innerHTML = '<option value="">Select Shift Policy</option>' +
@@ -1770,7 +1770,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     return;
                 }
 
-                const nextIdRes = await fetch('http://localhost:5000/api/employee-compensations/next-id');
+                const nextIdRes = await fetch('/api/employee-compensations/next-id');
                 if (!nextIdRes.ok) throw new Error('Failed to fetch next compensation ID');
                 const nextIdData = await nextIdRes.json();
                 const compensationId = nextIdData.compensation_id;
@@ -1800,7 +1800,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     yearly_sick_leave: document.getElementById('yearly-sick-leave')?.value || null,
                     yearly_vacation_leave: document.getElementById('yearly-vacation-leave')?.value || null
                 };
-                const res = await fetch('http://localhost:5000/api/employee-compensations', {
+                const res = await fetch('/api/employee-compensations', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(compensationData)
@@ -1809,7 +1809,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
 
                 const roleId = document.getElementById('compensation-role')?.value;
                 if (roleId) {
-                    const roleRes = await fetch(`http://localhost:5000/api/organizational-structure/${encodeURIComponent(roleId)}`, {
+                    const roleRes = await fetch(`/api/organizational-structure/${encodeURIComponent(roleId)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ employee_assigned: employeeId })
@@ -2092,7 +2092,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
 
         if (!onboardingDocContents[tabId]) {
             try {
-                const res = await fetch(`http://localhost:5000/api/onboarding-documents/documents/${tabId}`);
+                const res = await fetch(`/api/onboarding-documents/documents/${tabId}`);
                 if (res.ok) {
                     const data = await res.json();
                     onboardingDocContents[tabId] = data.html_content || '';
@@ -2127,7 +2127,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             onboardingDocContents[onboardingActiveDocTab] = content;
             
             try {
-                const res = await fetch('http://localhost:5000/api/onboarding-documents/documents', {
+                const res = await fetch('/api/onboarding-documents/documents', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ doc_type: onboardingActiveDocTab, html_content: content })
@@ -2199,7 +2199,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         }
         const encodedFolder = encodeURIComponent(folderName || '');
         const encodedPhoto = encodeURIComponent(photoFileName);
-        const photoUrl = `http://localhost:5000/uploads/employee-photos/${encodedFolder}/${encodedPhoto}`;
+        const photoUrl = `/uploads/employee-photos/${encodedFolder}/${encodedPhoto}`;
         idFrontPhoto.src = photoUrl;
         idFrontPhoto.style.display = 'block';
         idFrontPhotoPlaceholder.style.display = 'none';
@@ -2237,7 +2237,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             return;
         }
         try {
-                const res = await fetch(`http://localhost:5000/api/employee-profiles?search=${encodeURIComponent(query.trim())}&status=active`);
+                const res = await fetch(`/api/employee-profiles?search=${encodeURIComponent(query.trim())}&status=active`);
             if (!res.ok) return;
             const records = await res.json();
             idSearchResults.innerHTML = '';

@@ -884,7 +884,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             bankSelect.innerHTML = '<option value="">-- Select Bank --</option>';
 
             try {
-                const bankRes = await fetch('http://localhost:5000/api/bank-accounts', {
+                const bankRes = await fetch('/api/bank-accounts', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (bankRes.ok) {
@@ -912,7 +912,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             select.innerHTML = '<option value="">-- Select Pending Feed --</option>';
 
             try {
-                const idRes = await fetch('http://localhost:5000/api/order-feeds-repayment/next-id', {
+                const idRes = await fetch('/api/order-feeds-repayment/next-id', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (idRes.ok) {
@@ -1053,7 +1053,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             const checkNumber = document.getElementById('repayment-check-number').value;
 
             try {
-                const idRes = await fetch('http://localhost:5000/api/order-feeds-repayment/next-id', {
+                const idRes = await fetch('/api/order-feeds-repayment/next-id', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (!idRes.ok) throw new Error('Failed to get repayment ID');
@@ -1065,7 +1065,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     const totalText = cells[5].textContent.replace('P ', '').replace(',', '');
                     const total = parseFloat(totalText);
 
-                    const res = await fetch('http://localhost:5000/api/order-feeds-repayment', {
+                    const res = await fetch('/api/order-feeds-repayment', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1106,7 +1106,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
                 const today = new Date().toISOString().split('T')[0];
                 const expenseUpdatePromises = orderIds.map(orderId =>
-                    fetch(`http://localhost:5000/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
+                    fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1355,14 +1355,14 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 }).filter(Boolean).join(', ');
 
                 try {
-                    const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                    const expenseNextRes = await fetch('/api/expenses/next-id', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (expenseNextRes.ok) {
                         const expenseNextData = await expenseNextRes.json();
                         const expenseListId = expenseNextData.expense_list_id;
 
-                        const expenseRes = await fetch('http://localhost:5000/api/expenses', {
+                        const expenseRes = await fetch('/api/expenses', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1677,7 +1677,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
                     const formData = new FormData();
                     formData.append('file', orderReceiptFileBlob, customFileName);
-                    const uploadRes = await fetch('http://localhost:5000/api/order-feeds/upload', {
+                    const uploadRes = await fetch('/api/order-feeds/upload', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -1692,7 +1692,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     filePath = uploadData.filePath;
                 }
 
-                const orderRes = await fetch('http://localhost:5000/api/order-feeds', {
+                const orderRes = await fetch('/api/order-feeds', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1724,14 +1724,14 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 const feedRemarks = selectedFeedType ? (selectedFeedType.remarks || '') : '';
 
                 try {
-                    const expenseNextRes = await fetch('http://localhost:5000/api/expenses/next-id', {
+                    const expenseNextRes = await fetch('/api/expenses/next-id', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (expenseNextRes.ok) {
                         const expenseNextData = await expenseNextRes.json();
                         const expenseListId = expenseNextData.expense_list_id;
 
-                        const expenseRes = await fetch('http://localhost:5000/api/expenses', {
+                        const expenseRes = await fetch('/api/expenses', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1787,12 +1787,12 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
         };
 
-        var API_BASE_FEEDS_SUPPLIERS = 'http://localhost:5000/api/feeds-suppliers';
+        var API_BASE_FEEDS_SUPPLIERS = '/api/feeds-suppliers';
         var feedsSuppliersData = [];
         var currentSupplierPage = 1;
         var suppliersPerPage = 10;
 
-        var API_BASE_FEED_TYPES = 'http://localhost:5000/api/feed-types';
+        var API_BASE_FEED_TYPES = '/api/feed-types';
         var feedTypesData = [];
         var currentFeedTypePage = 1;
         var feedTypesPerPage = 10;
@@ -2584,8 +2584,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
         setupOrderReceiptUploadZone();
 
-        var API_BASE_ORDER_FEEDS = 'http://localhost:5000/api/order-feeds';
-        var API_BASE_ORDER_FEEDS_REPAYMENT = 'http://localhost:5000/api/order-feeds-repayment';
+        var API_BASE_ORDER_FEEDS = '/api/order-feeds';
+        var API_BASE_ORDER_FEEDS_REPAYMENT = '/api/order-feeds-repayment';
         var feedsTransactionData = [];
         var feedsTransactionCurrentPage = 1;
         var FEEDS_TRANSACTION_PER_PAGE = 10;
@@ -2691,7 +2691,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!preLayEl || !layer1El || !layer2El) return;
 
             try {
-                const res = await fetch('http://localhost:5000/api/feed-inventory/summary', {
+                const res = await fetch('/api/feed-inventory/summary', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 if (!res.ok) throw new Error('Failed to fetch feed inventory summary');
@@ -2918,7 +2918,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!wrap) return;
             const src = wrap.getAttribute('data-receipt-path');
             if (!src) return;
-            const fullSrc = src.startsWith('http') ? src : `http://localhost:5000${src}`;
+            const fullSrc = src.startsWith('http') ? src : `${src}`;
             photoTooltip.innerHTML = `<img src="${fullSrc}" alt="receipt preview">`;
             photoTooltip.style.display = 'block';
             positionTooltip(e);
@@ -3111,7 +3111,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/order-feeds/bulk', {
+                const res = await fetch('/api/order-feeds/bulk', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3318,7 +3318,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 let customFileName = `order-${currentPhotoUploadOrderId}.webp`;
                 try {
                     let supplierName = 'Unknown';
-                    const orderRes = await fetch(`http://localhost:5000/api/order-feeds/${currentPhotoUploadOrderId}`, {
+                    const orderRes = await fetch(`/api/order-feeds/${currentPhotoUploadOrderId}`, {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (orderRes.ok) {
@@ -3326,7 +3326,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         supplierName = order.company_name || order.supplier_name || 'Unknown';
                         if (supplierName === 'Unknown' && order.supplier_id) {
                             try {
-                                const supRes = await fetch(`http://localhost:5000/api/feeds-suppliers/code/${encodeURIComponent(order.supplier_id)}`, {
+                                const supRes = await fetch(`/api/feeds-suppliers/code/${encodeURIComponent(order.supplier_id)}`, {
                                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                                 });
                                 if (supRes.ok) {
@@ -3350,7 +3350,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
                 const formData = new FormData();
                 formData.append('file', fileToUpload, customFileName);
-                const uploadRes = await fetch(`http://localhost:5000/api/order-feeds/${currentPhotoUploadOrderId}/photo`, {
+                const uploadRes = await fetch(`/api/order-feeds/${currentPhotoUploadOrderId}/photo`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -3384,7 +3384,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     return;
                 }
                 try {
-                    const res = await fetch(`http://localhost:5000/api/order-feeds/${encodeURIComponent(currentPhotoUploadOrderId)}/photo`, {
+                    const res = await fetch(`/api/order-feeds/${encodeURIComponent(currentPhotoUploadOrderId)}/photo`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -3414,7 +3414,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
         const tbody = document.getElementById('feeds-use-tbody');
         if (!tbody) return;
         try {
-            const buildingsRes = await fetch('http://localhost:5000/api/layer-buildings-reports/buildings/active');
+            const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active');
             const buildings = buildingsRes.ok ? await buildingsRes.json() : [];
             
             tbody.innerHTML = '';
@@ -3509,7 +3509,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     };
                 });
 
-                const res = await fetch('http://localhost:5000/api/feed-inventory/bulk', {
+                const res = await fetch('/api/feed-inventory/bulk', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

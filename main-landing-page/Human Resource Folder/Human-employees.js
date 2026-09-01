@@ -773,7 +773,7 @@ function initializeModule(contentArea) {
             }
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/employee-profiles?search=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/employee-profiles?search=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const profiles = await res.json();
                     renderSearchResults(profiles);
@@ -851,7 +851,7 @@ function initializeModule(contentArea) {
             const salaryAmount = emp.salary_amount ? `P ${parseFloat(emp.salary_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}` : 'P 0.00';
             const payMode = emp.salary_pay_mode || '';
             const salaryText = payMode ? `${payMode} : ${salaryAmount}` : salaryAmount;
-            const photoUrl = emp.photo_file_name && emp.folder_name ? `http://localhost:5000/uploads/employee-photos/${encodeURIComponent(emp.folder_name)}/${encodeURIComponent(emp.photo_file_name)}` : null;
+            const photoUrl = emp.photo_file_name && emp.folder_name ? `/uploads/employee-photos/${encodeURIComponent(emp.folder_name)}/${encodeURIComponent(emp.photo_file_name)}` : null;
 
             const empTotals = paidTotalsByEmployee && paidTotalsByEmployee[emp.employee_id] ? paidTotalsByEmployee[emp.employee_id] : { total_gross_pay: 0, total_net_pay: 0 };
 
@@ -925,14 +925,14 @@ function initializeModule(contentArea) {
 
         const statusFilter = filterStatus || currentEmployeeFilter || 'active';
         const apiUrl = statusFilter === 'inactive'
-            ? 'http://localhost:5000/api/employee-profiles/all?status=inactive'
-            : 'http://localhost:5000/api/employee-profiles/summary';
+            ? '/api/employee-profiles/all?status=inactive'
+            : '/api/employee-profiles/summary';
 
         try {
             const [empRes, totalsRes, totalsByEmpRes] = await Promise.all([
                 fetch(apiUrl),
-                fetch('http://localhost:5000/api/payroll/totals/paid'),
-                fetch('http://localhost:5000/api/payroll/totals/paid/by-employee')
+                fetch('/api/payroll/totals/paid'),
+                fetch('/api/payroll/totals/paid/by-employee')
             ]);
 
             if (!empRes.ok) throw new Error('Failed to load employees');
@@ -982,7 +982,7 @@ function initializeModule(contentArea) {
           if (loading) loading.style.display = 'block';
           try {
               const statusParam = currentEmployeeFilter === 'inactive' ? '&status=inactive' : '';
-              const res = await fetch(`http://localhost:5000/api/employee-profiles?search=${encodeURIComponent(query)}${statusParam}`);
+              const res = await fetch(`/api/employee-profiles?search=${encodeURIComponent(query)}${statusParam}`);
               if (!res.ok) throw new Error('Search failed');
               const employees = await res.json();
               if (loading) loading.style.display = 'none';
@@ -1039,7 +1039,7 @@ function initializeModule(contentArea) {
            if (!viewAllTbody) return;
            viewAllTbody.innerHTML = '<tr><td colspan="15" style="padding: 20px; text-align: center; color: #64748b;">Loading employees...</td></tr>';
            try {
-               const res = await fetch('http://localhost:5000/api/employee-profiles/all-active');
+               const res = await fetch('/api/employee-profiles/all-active');
                if (!res.ok) throw new Error('Failed to load employees');
                const employees = await res.json();
                if (!Array.isArray(employees) || employees.length === 0) {
@@ -1154,10 +1154,10 @@ function initializeModule(contentArea) {
 
         try {
             const [profileRes, compRes, roleRes, docsRes] = await Promise.all([
-                fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}`),
-                fetch(`http://localhost:5000/api/employee-compensations/employee/${encodeURIComponent(empId)}`),
-                fetch(`http://localhost:5000/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`),
-                fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}/documents`)
+                fetch(`/api/employee-profiles/${encodeURIComponent(empId)}`),
+                fetch(`/api/employee-compensations/employee/${encodeURIComponent(empId)}`),
+                fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`),
+                fetch(`/api/employee-profiles/${encodeURIComponent(empId)}/documents`)
             ]);
             if (profileRes.ok) {
                 const profile = await profileRes.json();
@@ -1389,7 +1389,7 @@ function initializeModule(contentArea) {
         const firstName = document.getElementById('emp-first-name')?.value.trim() || '';
         const safe = (s) => String(s).trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
         const folderName = empId ? `${safe(empId)}_${safe(lastName)}_${safe(firstName)}` : '';
-        const imgSrc = folderName ? `http://localhost:5000/uploads/employee-photos/${encodeURIComponent(folderName)}/${encodeURIComponent(val)}` : val;
+        const imgSrc = folderName ? `/uploads/employee-photos/${encodeURIComponent(folderName)}/${encodeURIComponent(val)}` : val;
         if (empDocHideTimeout) { clearTimeout(empDocHideTimeout); empDocHideTimeout = null; }
         imagePreviewImg.src = imgSrc;
         imagePreviewModal.style.display = 'flex';
@@ -1471,7 +1471,7 @@ function initializeModule(contentArea) {
             }
 
             try {
-                const res = await fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}`, {
+                const res = await fetch(`/api/employee-profiles/${encodeURIComponent(empId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
@@ -1482,11 +1482,11 @@ function initializeModule(contentArea) {
                 const departmentChanged = originalDepartment && department !== originalDepartment;
 
                 if (newStatus === 'Inactive' || departmentChanged) {
-                    const orgRes = await fetch(`http://localhost:5000/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
+                    const orgRes = await fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
                     if (orgRes.ok) {
                         const nodes = await orgRes.json();
                         await Promise.all((nodes || []).map(node =>
-                            fetch(`http://localhost:5000/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
+                            fetch(`/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ employee_assigned: null })
@@ -1496,7 +1496,7 @@ function initializeModule(contentArea) {
                 }
 
                 if (role && newStatus !== 'Inactive') {
-                    const oldRoleRes = await fetch(`http://localhost:5000/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
+                    const oldRoleRes = await fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
                     let oldRoleId = null;
                     if (oldRoleRes.ok) {
                         const oldRoles = await oldRoleRes.json();
@@ -1504,14 +1504,14 @@ function initializeModule(contentArea) {
                         if (matched) oldRoleId = matched.org_unit_role_id;
                     }
 
-                    await fetch(`http://localhost:5000/api/organizational-structure/${encodeURIComponent(role)}`, {
+                    await fetch(`/api/organizational-structure/${encodeURIComponent(role)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ employee_assigned: empId })
                     });
 
                     if (oldRoleId && oldRoleId !== role) {
-                        await fetch(`http://localhost:5000/api/organizational-structure/${encodeURIComponent(oldRoleId)}`, {
+                        await fetch(`/api/organizational-structure/${encodeURIComponent(oldRoleId)}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ employee_assigned: null })
@@ -1541,18 +1541,18 @@ function initializeModule(contentArea) {
             if (!confirmed) return;
 
             try {
-                const res = await fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}`, {
+                const res = await fetch(`/api/employee-profiles/${encodeURIComponent(empId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ employment_status: 'Inactive' })
                 });
                 if (!res.ok) throw new Error('Failed to deactivate employee');
 
-                const orgRes = await fetch(`http://localhost:5000/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
+                const orgRes = await fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
                 if (orgRes.ok) {
                     const nodes = await orgRes.json();
                     await Promise.all((nodes || []).map(node =>
-                        fetch(`http://localhost:5000/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
+                        fetch(`/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ employee_assigned: null })
@@ -1606,12 +1606,12 @@ function initializeModule(contentArea) {
             const yearlySickLeave = document.getElementById('emp-yearly-sick-leave')?.value.trim() || null;
             const yearlyVacationLeave = document.getElementById('emp-yearly-vacation-leave')?.value.trim() || null;
             try {
-                const nextIdRes = await fetch('http://localhost:5000/api/employee-compensations/next-id');
+                const nextIdRes = await fetch('/api/employee-compensations/next-id');
                 if (!nextIdRes.ok) throw new Error('Failed to fetch next compensation ID');
                 const nextIdData = await nextIdRes.json();
                 const compensationId = nextIdData.compensation_id;
 
-                const res = await fetch('http://localhost:5000/api/employee-compensations', {
+                const res = await fetch('/api/employee-compensations', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1656,7 +1656,7 @@ function initializeModule(contentArea) {
     const populateEmployeeDepartments = async () => {
         if (!empDepartmentSelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/organizational-units');
+            const res = await fetch('/api/organizational-units');
             if (!res.ok) throw new Error('Failed to fetch departments');
             const units = await res.json();
             const activeUnits = (units || []).filter(u => (u.status || '').toLowerCase() === 'active');
@@ -1672,8 +1672,8 @@ function initializeModule(contentArea) {
         if (!empRoleSelect) return;
         try {
             const url = orgUnitName
-                ? `http://localhost:5000/api/organizational-structure/unassigned-roles?org_unit_name=${encodeURIComponent(orgUnitName)}`
-                : 'http://localhost:5000/api/organizational-structure/unassigned-roles';
+                ? `/api/organizational-structure/unassigned-roles?org_unit_name=${encodeURIComponent(orgUnitName)}`
+                : '/api/organizational-structure/unassigned-roles';
             const res = await fetch(url);
             if (!res.ok) throw new Error('Failed to fetch roles');
             const roles = await res.json();
@@ -1688,7 +1688,7 @@ function initializeModule(contentArea) {
     const populateShiftPolicies = async () => {
         if (!empShiftPolicySelect) return;
         try {
-            const res = await fetch('http://localhost:5000/api/shift-policies?status=Active');
+            const res = await fetch('/api/shift-policies?status=Active');
             if (!res.ok) throw new Error('Failed to fetch shift policies');
             const policies = await res.json();
             const options = policies.map(p => `<option value="${p.shift_name}">${p.shift_name}</option>`).join('');
@@ -1863,7 +1863,7 @@ function initializeModule(contentArea) {
                 saveEmpDocUploadBtn.disabled = true;
                 saveEmpDocUploadBtn.innerText = 'Uploading...';
 
-                const res = await fetch('http://localhost:5000/api/employee-profiles/upload-documents', {
+                const res = await fetch('/api/employee-profiles/upload-documents', {
                     method: 'POST',
                     body: formData
                 });
@@ -1881,7 +1881,7 @@ function initializeModule(contentArea) {
                  await loadEmployeeCards();
                  closeUploadModal();
 
-                const docsRes = await fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}/documents`);
+                const docsRes = await fetch(`/api/employee-profiles/${encodeURIComponent(empId)}/documents`);
                 if (docsRes.ok) {
                     const docs = await docsRes.json();
                     loadEmployeeDocuments(docs);
@@ -1926,8 +1926,8 @@ function initializeModule(contentArea) {
     (async () => {
         try {
             const [monthlyRes, totalRes] = await Promise.all([
-                fetch('http://localhost:5000/api/employee-profiles/stats/monthly-new'),
-                fetch('http://localhost:5000/api/employee-profiles/stats/total-count')
+                fetch('/api/employee-profiles/stats/monthly-new'),
+                fetch('/api/employee-profiles/stats/total-count')
             ]);
             if (monthlyRes.ok) {
                 const data = await monthlyRes.json();
@@ -1999,10 +1999,10 @@ function initializeModule(contentArea) {
     async function populateEmployeeDetails(empId) {
         try {
             const [profileRes, compRes, docsRes, roleRes] = await Promise.all([
-                fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}`),
-                fetch(`http://localhost:5000/api/employee-compensations/employee/${encodeURIComponent(empId)}`),
-                fetch(`http://localhost:5000/api/employee-profiles/${encodeURIComponent(empId)}/documents`),
-                fetch(`http://localhost:5000/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`)
+                fetch(`/api/employee-profiles/${encodeURIComponent(empId)}`),
+                fetch(`/api/employee-compensations/employee/${encodeURIComponent(empId)}`),
+                fetch(`/api/employee-profiles/${encodeURIComponent(empId)}/documents`),
+                fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`)
             ]);
 
             if (profileRes.ok) {

@@ -241,7 +241,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const categorySelect = document.getElementById('petty-category');
             if (!categorySelect) return;
             try {
-                const res = await fetch('http://localhost:5000/api/expense-categories');
+                const res = await fetch('/api/expense-categories');
                 if (!res.ok) throw new Error('Failed to load expense categories');
                 const categories = await res.json();
                 categorySelect.innerHTML = '<option value="">Select category</option>' + categories.map(c => '<option value="' + c.expense_type + '">' + c.accounting_code + ' - ' + c.expense_type + '</option>').join('');
@@ -252,7 +252,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
         const loadPettyCashStats = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/petty-cash/stats');
+                const res = await fetch('/api/petty-cash/stats');
                 if (!res.ok) throw new Error('Failed to load petty cash stats');
                 const stats = await res.json();
                 
@@ -280,7 +280,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const tbody = document.getElementById("pending-petty-tbody");
             if (!tbody) return;
             try {
-                const res = await fetch("http://localhost:5000/api/petty-cash/status/Pending");
+                const res = await fetch("/api/petty-cash/status/Pending");
                 if (!res.ok) throw new Error("Failed to load pending petty cash transactions");
                 const transactions = await res.json();
                 allPendingPettyCash = transactions;
@@ -337,7 +337,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     if (!pettyId) return;
                     if (!confirm("Approve this petty cash transaction?")) return;
                     try {
-                        const res = await fetch("http://localhost:5000/api/petty-cash/" + pettyId, {
+                        const res = await fetch("/api/petty-cash/" + pettyId, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: "Approved" })
@@ -360,7 +360,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     if (!pettyId) return;
                     if (!confirm("Reject this petty cash transaction?")) return;
                     try {
-                        const res = await fetch("http://localhost:5000/api/petty-cash/" + pettyId, {
+                        const res = await fetch("/api/petty-cash/" + pettyId, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: "Rejected" })
@@ -383,7 +383,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const tbody = document.getElementById('petty-tbody');
             if (!tbody) return;
             try {
-                const res = await fetch('http://localhost:5000/api/petty-cash');
+                const res = await fetch('/api/petty-cash');
                 if (!res.ok) throw new Error('Failed to load petty cash transactions');
                 const transactions = await res.json();
                 if (!transactions || transactions.length === 0) {
@@ -439,7 +439,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/petty-cash', {
+                const res = await fetch('/api/petty-cash', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
@@ -646,7 +646,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                     continue;
                                 }
 
-                                const res = await fetch('http://localhost:5000/api/petty-cash/replenish', {
+                                const res = await fetch('/api/petty-cash/replenish', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ date, source, replenish_amount: replenishAmount, check_number: checkNumber, status })
@@ -662,7 +662,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                     continue;
                                 }
 
-                                const res = await fetch('http://localhost:5000/api/petty-cash', {
+                                const res = await fetch('/api/petty-cash', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
@@ -694,7 +694,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
         document.getElementById('download-template-btn').onclick = async () => {
             try {
                 const [categoriesRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/expense-categories')
+                    fetch('/api/expense-categories')
                 ]);
 
                 const categories = categoriesRes.ok ? await categoriesRes.json() : [];
@@ -781,7 +781,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const sourceSelect = document.getElementById('replenish-source');
             if (!sourceSelect) return;
             try {
-                const res = await fetch('http://localhost:5000/api/bank-accounts');
+                const res = await fetch('/api/bank-accounts');
                 if (!res.ok) throw new Error('Failed to load bank accounts');
                 const accounts = await res.json();
                 const activeAccounts = accounts.filter(acc => acc.status === 'Active');
@@ -805,7 +805,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/petty-cash/replenish', {
+                const res = await fetch('/api/petty-cash/replenish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -846,7 +846,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/petty-cash', {
+                const res = await fetch('/api/petty-cash', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
@@ -877,7 +877,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
         document.getElementById('download-template-btn').onclick = async () => {
             try {
                 const [categoriesRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/expense-categories')
+                    fetch('/api/expense-categories')
                 ]);
 
                 const categories = categoriesRes.ok ? await categoriesRes.json() : [];

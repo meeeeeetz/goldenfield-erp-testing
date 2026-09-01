@@ -189,7 +189,7 @@ async function loadExpenseCategories() {
     const tbody = document.getElementById('expense-categories-body');
     if (!tbody) return;
     try {
-        const res = await fetch('http://localhost:5000/api/expense-categories');
+        const res = await fetch('/api/expense-categories');
         if (!res.ok) throw new Error('Failed to fetch expense categories');
         const data = await res.json();
         expenseCategoriesData = data;
@@ -300,7 +300,7 @@ function initializeExpenseCategoryModal() {
             document.getElementById('expense-remarks-input').value = '';
             
             try {
-                const res = await fetch('http://localhost:5000/api/expense-categories/next-id');
+                const res = await fetch('/api/expense-categories/next-id');
                 const data = await res.json();
                 document.getElementById('expense-id-input').value = data.expense_id;
             } catch (err) {
@@ -331,13 +331,13 @@ function initializeExpenseCategoryModal() {
             try {
                 let res;
                 if (editingExpenseId) {
-                    res = await fetch(`http://localhost:5000/api/expense-categories/${editingExpenseId}`, {
+                    res = await fetch(`/api/expense-categories/${editingExpenseId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ expense_type: expenseType, accounting_code: accountingCode, remarks })
                     });
                 } else {
-                    res = await fetch('http://localhost:5000/api/expense-categories', {
+                    res = await fetch('/api/expense-categories', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ expense_type: expenseType, accounting_code: accountingCode, remarks })
@@ -361,7 +361,7 @@ function initializeExpenseCategoryModal() {
 
 async function editExpenseCategory(id) {
     try {
-        const res = await fetch(`http://localhost:5000/api/expense-categories/${id}`);
+        const res = await fetch(`/api/expense-categories/${id}`);
         if (!res.ok) throw new Error('Failed to fetch expense category');
         const category = await res.json();
         
@@ -381,7 +381,7 @@ async function editExpenseCategory(id) {
 async function deleteExpenseCategory(id, name) {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
     try {
-        const res = await fetch(`http://localhost:5000/api/expense-categories/${id}`, {
+        const res = await fetch(`/api/expense-categories/${id}`, {
             method: 'DELETE'
         });
         if (!res.ok) {
@@ -399,7 +399,7 @@ async function loadExpenses() {
     const tbody = document.getElementById('expense-list-body');
     if (!tbody) return;
     try {
-        const res = await fetch('http://localhost:5000/api/expenses', {
+        const res = await fetch('/api/expenses', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
         });
         if (!res.ok) throw new Error('Failed to fetch expenses');
@@ -481,7 +481,7 @@ async function deleteExpense(id) {
         return;
     }
     try {
-        const res = await fetch(`http://localhost:5000/api/expenses/${encodeURIComponent(id)}`, {
+        const res = await fetch(`/api/expenses/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
         });

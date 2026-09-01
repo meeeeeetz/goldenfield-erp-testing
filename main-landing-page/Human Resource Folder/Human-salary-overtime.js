@@ -177,7 +177,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSearchResults(employees);
@@ -418,7 +418,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/overtime-logs/save', {
+                const res = await fetch('/api/overtime-logs/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ logs })
@@ -466,7 +466,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/overtime-logs/pending');
+            const res = await fetch('/api/overtime-logs/pending');
             if (!res.ok) throw new Error('Failed to load pending overtime logs');
             const logs = await res.json();
             allPendingOvertimeLogs = logs;
@@ -512,7 +512,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
                 if (!overtimeId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/overtime-logs/${encodeURIComponent(overtimeId)}/approve`, {
+                    const res = await fetch(`/api/overtime-logs/${encodeURIComponent(overtimeId)}/approve`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -539,7 +539,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
                 if (!overtimeId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/overtime-logs/reject/${encodeURIComponent(overtimeId)}`, {
+                    const res = await fetch(`/api/overtime-logs/reject/${encodeURIComponent(overtimeId)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -598,7 +598,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         const confirmed = confirm(`Approve ${ids.length} overtime log(s)?`);
         if (!confirmed) return;
         try {
-            const res = await fetch('http://localhost:5000/api/overtime-logs/bulk-approve', {
+            const res = await fetch('/api/overtime-logs/bulk-approve', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ overtime_ids: ids })
@@ -631,7 +631,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         const confirmed = confirm(`Reject ${ids.length} overtime log(s)?`);
         if (!confirmed) return;
         try {
-            const res = await fetch('http://localhost:5000/api/overtime-logs/bulk-reject', {
+            const res = await fetch('/api/overtime-logs/bulk-reject', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ overtime_ids: ids })
@@ -678,7 +678,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/overtime-logs/all');
+            const res = await fetch('/api/overtime-logs/all');
             if (!res.ok) throw new Error('Failed to load overtime history');
             const logs = await res.json();
 

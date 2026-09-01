@@ -250,7 +250,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/cash-advances/pending');
+            const res = await fetch('/api/cash-advances/pending');
             if (!res.ok) throw new Error('Failed to load pending cash loans');
             const logs = await res.json();
             renderPendingCashLoans(logs);
@@ -297,7 +297,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                 if (!cashLoanId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/cash-advances/${encodeURIComponent(cashLoanId)}/approve`, {
+                    const res = await fetch(`/api/cash-advances/${encodeURIComponent(cashLoanId)}/approve`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -323,7 +323,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                 if (!cashLoanId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/cash-advances/${encodeURIComponent(cashLoanId)}/reject`, {
+                    const res = await fetch(`/api/cash-advances/${encodeURIComponent(cashLoanId)}/reject`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -349,7 +349,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/cash-advances/all');
+            const res = await fetch('/api/cash-advances/all');
             if (!res.ok) throw new Error('Failed to load cash loan history');
             const logs = await res.json();
 
@@ -389,7 +389,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                     if (!confirm('Are you sure you want to reject this cash advance?')) return;
 
                     try {
-                        const res = await fetch(`http://localhost:5000/api/cash-advances/${encodeURIComponent(cashLoanId)}/reject`, {
+                        const res = await fetch(`/api/cash-advances/${encodeURIComponent(cashLoanId)}/reject`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' }
                         });
@@ -465,7 +465,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSearchResults(employees);
@@ -521,7 +521,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
 
                 if (employeeId) {
                     try {
-                        const outstandingRes = await fetch(`http://localhost:5000/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`);
+                        const outstandingRes = await fetch(`/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`);
                         if (outstandingRes.ok) {
                             const outstandingData = await outstandingRes.json();
                             const outstandingInput = document.getElementById('cash-advance-outstanding');
@@ -555,7 +555,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/cash-advances', {
+                const res = await fetch('/api/cash-advances', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -628,7 +628,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
             clearTimeout(employeeSearchDebounce);
             employeeSearchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderEmployeeSearchResults(employees);
@@ -690,8 +690,8 @@ ModuleComponents['hr-cash-loans'] = (container) => {
 
         try {
             const [cashAdvancesRes, outstandingRes] = await Promise.all([
-                fetch(`http://localhost:5000/api/cash-advances/employee/${encodeURIComponent(employeeId)}`),
-                fetch(`http://localhost:5000/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`)
+                fetch(`/api/cash-advances/employee/${encodeURIComponent(employeeId)}`),
+                fetch(`/api/cash-advances/outstanding/${encodeURIComponent(employeeId)}`)
             ]);
 
             if (!cashAdvancesRes.ok) throw new Error('Failed to load cash advances');
@@ -733,7 +733,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
 
             const repayments = await Promise.all(
                 cashAdvances.map(ca =>
-                    fetch(`http://localhost:5000/api/cash-advance-repayments/cash-advance/${encodeURIComponent(ca.cashadvance_id)}`)
+                    fetch(`/api/cash-advance-repayments/cash-advance/${encodeURIComponent(ca.cashadvance_id)}`)
                         .then(res => res.ok ? res.json() : [])
                         .catch(() => [])
                 )
@@ -769,7 +769,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
         const unrecoveredDebtValue = document.getElementById('unrecovered-debt-value');
         if (!unrecoveredDebtValue) return;
         try {
-            const res = await fetch('http://localhost:5000/api/cash-advances/unrecovered-debt');
+            const res = await fetch('/api/cash-advances/unrecovered-debt');
             if (!res.ok) return;
             const data = await res.json();
             unrecoveredDebtValue.textContent = formatCurrency(data.unrecovered || 0);

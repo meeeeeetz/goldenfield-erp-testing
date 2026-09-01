@@ -254,7 +254,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
+                    const res = await fetch(`/api/attendance-logs/search-employee?query=${encodeURIComponent(query)}`);
                     if (!res.ok) throw new Error('Failed to search employees');
                     const employees = await res.json();
                     renderSearchResults(employees);
@@ -304,7 +304,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 if (searchResults) searchResults.style.display = 'none';
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/employee/${encodeURIComponent(selectedEmployeeId)}`);
+                    const res = await fetch(`/api/attendance-logs/employee/${encodeURIComponent(selectedEmployeeId)}`);
                     if (!res.ok) throw new Error('Failed to load employee details');
                     const emp = await res.json();
                     if (shiftTypeInput) shiftTypeInput.value = emp.shift_policy || '';
@@ -319,7 +319,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
     async function loadShiftPolicy(shiftType) {
         if (!shiftType) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/attendance-logs/shift-policy/${encodeURIComponent(shiftType)}`);
+            const res = await fetch(`/api/attendance-logs/shift-policy/${encodeURIComponent(shiftType)}`);
             if (!res.ok) throw new Error('Failed to load shift policy');
             window.currentShiftPolicy = await res.json();
             calculateAllRows();
@@ -489,7 +489,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/attendance-logs/save', {
+                const res = await fetch('/api/attendance-logs/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ logs })
@@ -518,7 +518,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/attendance-logs/pending');
+            const res = await fetch('/api/attendance-logs/pending');
             if (!res.ok) throw new Error('Failed to load pending attendance logs');
             const logs = await res.json();
             allPendingAttendanceLogs = logs;
@@ -582,7 +582,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         const confirmed = confirm(`Approve ${ids.length} attendance log(s)?`);
         if (!confirmed) return;
         try {
-            const res = await fetch('http://localhost:5000/api/attendance-logs/bulk-approve', {
+            const res = await fetch('/api/attendance-logs/bulk-approve', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ attendance_ids: ids })
@@ -617,7 +617,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         const confirmed = confirm(`Reject ${ids.length} attendance log(s)?`);
         if (!confirmed) return;
         try {
-            const res = await fetch('http://localhost:5000/api/attendance-logs/bulk-reject', {
+            const res = await fetch('/api/attendance-logs/bulk-reject', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ attendance_ids: ids })
@@ -701,7 +701,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 if (!attendanceId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/${encodeURIComponent(attendanceId)}/approve`, {
+                    const res = await fetch(`/api/attendance-logs/${encodeURIComponent(attendanceId)}/approve`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -729,7 +729,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 if (!attendanceId) return;
 
                 try {
-                    const res = await fetch(`http://localhost:5000/api/attendance-logs/reject/${encodeURIComponent(attendanceId)}`, {
+                    const res = await fetch(`/api/attendance-logs/reject/${encodeURIComponent(attendanceId)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -759,7 +759,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/attendance-logs/all');
+            const res = await fetch('/api/attendance-logs/all');
             if (!res.ok) throw new Error('Failed to load attendance history');
             const logs = await res.json();
             allAttendanceHistoryLogs = logs;
@@ -984,8 +984,8 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
     const fetchShiftData = async () => {
         try {
             const [employeesRes, policiesRes] = await Promise.all([
-                fetch('http://localhost:5000/api/employee-profiles/active-with-compensation'),
-                fetch('http://localhost:5000/api/shift-policies')
+                fetch('/api/employee-profiles/active-with-compensation'),
+                fetch('/api/shift-policies')
             ]);
             
             if (employeesRes.ok) {
@@ -1185,7 +1185,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
     if (downloadAttendanceTemplateBtn) {
         downloadAttendanceTemplateBtn.addEventListener('click', async () => {
             try {
-                const employeesRes = await fetch('http://localhost:5000/api/employee-profiles/active-with-compensation');
+                const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
                 const employees = employeesRes.ok ? await employeesRes.json() : [];
 
                 const attendanceHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', '1st Coffee Break IN', '1st Coffee Break OUT', 'Mid Break IN', 'Mid Break OUT', '2nd Coffee Break IN', '2nd Coffee Break OUT', 'Time Out'];
@@ -1253,7 +1253,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
     if (downloadAttendanceTemplateAdminBtn) {
         downloadAttendanceTemplateAdminBtn.addEventListener('click', async () => {
             try {
-                const employeesRes = await fetch('http://localhost:5000/api/employee-profiles/active-with-compensation');
+                const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
                 const employees = employeesRes.ok ? await employeesRes.json() : [];
 
                 const attendanceHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', '1st Coffee Break IN', '1st Coffee Break OUT', 'Mid Break IN', 'Mid Break OUT', '2nd Coffee Break IN', '2nd Coffee Break OUT', 'Time Out', 'Status'];
@@ -1428,7 +1428,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 saveBatchUploadAttendanceBtn.disabled = true;
                 saveBatchUploadAttendanceBtn.innerText = 'Saving...';
 
-                const res = await fetch('http://localhost:5000/api/attendance-logs/save', {
+                const res = await fetch('/api/attendance-logs/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ logs })
