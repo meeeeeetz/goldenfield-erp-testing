@@ -297,9 +297,9 @@ class EmployeeProfileController {
             const { bucket } = initializeGCS();
             const folderName = await this.computeEmployeeFolderName(employee_id);
             const prefix = `employee-photos/${folderName}/`;
-            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}`);
+            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}, prefix=${prefix}, bucket=${process.env.GCP_BUCKET_NAME}`);
             const [files] = await bucket.getFiles({ prefix });
-            console.log(`[findEmployeePhoto] Found ${files.length} files:`, files.map(f => f.name));
+            console.log(`[findEmployeePhoto] Found ${files.length} files in bucket`);
             const lowerEmpId = String(employee_id).toLowerCase();
             const match = files.find(f => {
                 const lower = f.name.toLowerCase();
