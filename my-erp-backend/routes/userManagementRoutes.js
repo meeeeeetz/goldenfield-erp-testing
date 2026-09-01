@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userManagementController');
+const userController = require('../Controllers/userManagementController');
 const { authenticateToken, requireRole } = require('../middleware/authMiddleware');
 
 router.post('/register', authenticateToken, requireRole('SUPER_ADMIN'), userController.registerValidation, userController.register);
