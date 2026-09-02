@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS payroll (
 -- Sequence for generating payroll IDs
 CREATE SEQUENCE IF NOT EXISTS payroll_seq START 1;
 
+SELECT setval('payroll_seq', COALESCE(MAX(CAST(SUBSTRING(payroll_id FROM 9) AS INTEGER)), 0), true) FROM payroll;
+
 -- Function to generate payroll ID in Payroll-000000001 format
 CREATE OR REPLACE FUNCTION generate_payroll_id()
 RETURNS TEXT AS $$

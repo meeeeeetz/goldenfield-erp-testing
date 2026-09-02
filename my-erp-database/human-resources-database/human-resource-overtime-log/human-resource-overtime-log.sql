@@ -19,6 +19,8 @@ CREATE TABLE overtime_log (
 -- Sequence for generating overtime IDs
 CREATE SEQUENCE IF NOT EXISTS overtime_log_seq START 1;
 
+SELECT setval('overtime_log_seq', COALESCE(MAX(CAST(SUBSTRING(overtime_id FROM 9) AS INTEGER)), 0), true) FROM overtime_log;
+
 -- Function to generate overtime ID in OTLog-000000001 format
 CREATE OR REPLACE FUNCTION generate_overtime_id()
 RETURNS TEXT AS $$
