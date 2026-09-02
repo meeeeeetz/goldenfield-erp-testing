@@ -98,20 +98,21 @@ ModuleComponents['finance-loans'] = (container) => {
                     <table class="data-table product-table">
                         <thead>
                             <tr>
-                                <th>Transaction ID</th>
+                                <th>Loan Transaction ID</th>
                                 <th>Date</th>
+                                <th>Loan Account</th>
                                 <th>Borrow</th>
                                 <th>Pay Principal</th>
                                 <th>Pay Interest</th>
-                                <th>Remaining Loan</th>
+                                <th>Remaining Balance</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>TRX-001</td><td>2026-06-15</td><td>P 10,000,000.00</td><td>P 2,000,000.00</td><td>P 500,000.00</td><td>P 8,000,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-002</td><td>2026-05-20</td><td>P 8,000,000.00</td><td>P 1,500,000.00</td><td>P 400,000.00</td><td>P 6,500,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-003</td><td>2026-04-10</td><td>P 7,000,000.00</td><td>P 1,800,000.00</td><td>P 350,000.00</td><td>P 5,200,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-004</td><td>2026-03-05</td><td>P 4,567,890.00</td><td>P 1,000,000.00</td><td>P 228,394.50</td><td>P 2,867,890.00</td><td>Pending</td></tr>
+                            <tr><td>TRX-001</td><td>2026-06-15</td><td>LoAcID-1</td><td>P 10,000,000.00</td><td>P 2,000,000.00</td><td>P 500,000.00</td><td>P 8,000,000.00</td><td>Approved</td></tr>
+                            <tr><td>TRX-002</td><td>2026-05-20</td><td>LoAcID-1</td><td>P 8,000,000.00</td><td>P 1,500,000.00</td><td>P 400,000.00</td><td>P 6,500,000.00</td><td>Approved</td></tr>
+                            <tr><td>TRX-003</td><td>2026-04-10</td><td>LoAcID-1</td><td>P 7,000,000.00</td><td>P 1,800,000.00</td><td>P 350,000.00</td><td>P 5,200,000.00</td><td>Approved</td></tr>
+                            <tr><td>TRX-004</td><td>2026-03-05</td><td>LoAcID-1</td><td>P 4,567,890.00</td><td>P 1,000,000.00</td><td>P 228,394.50</td><td>P 2,867,890.00</td><td>Pending</td></tr>
                         </tbody>
                     </table>
                 </div>
