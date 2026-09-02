@@ -874,25 +874,30 @@ ModuleComponents['finance-loans'] = (container) => {
         let runningBalance = 0;
         const fmt = (val) => 'P ' + Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        // Calculate running balance from all transactions
+        // Group transactions by account and calculate running balance per account
+        const accountBalances = {};
         loanTransactionsData.forEach(t => {
-            runningBalance += (t.borrow_amount || 0) - (t.payment_principal_amount || 0);
+            const acct = t.loan_account_id;
+            if (!accountBalances[acct]) accountBalances[acct] = 0;
+            accountBalances[acct] += (t.borrow_amount || 0) - (t.payment_principal_amount || 0);
         });
 
         let rows = pageData.map(t => {
+            const acct = t.loan_account_id;
             const balance = (t.borrow_amount || 0) - (t.payment_principal_amount || 0);
-            runningBalance -= balance;
+            const currentBalance = accountBalances[acct];
+            accountBalances[acct] -= balance;
             return `
                 <tr>
                     <td>${t.loan_transaction_id || '-'}</td>
                     <td>${t.date ? new Date(t.date).toLocaleDateString() : '-'}</td>
-                    <td>${t.loan_account_id || '-'}</td>
+                    <td>${acct || '-'}</td>
                     <td>${t.borrow_amount ? fmt(t.borrow_amount) : '-'}</td>
                     <td>${t.payment_principal_amount ? fmt(t.payment_principal_amount) : '-'}</td>
                     <td>${t.payment_interest_amount ? fmt(t.payment_interest_amount) : '-'}</td>
                     <td>${t.source_account || '-'}</td>
                     <td>${t.check_number || '-'}</td>
-                    <td>${fmt(runningBalance + balance)}</td>
+                    <td>${fmt(currentBalance)}</td>
                     <td><button class="delete-btn" data-id="${t.loan_transaction_id}" title="Delete Transaction" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:18px; padding:4px 8px;">&times;</button></td>
                 </tr>
             `;
