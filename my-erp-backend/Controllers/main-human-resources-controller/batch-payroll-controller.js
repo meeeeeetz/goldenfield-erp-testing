@@ -285,6 +285,194 @@ class BatchPayrollController {
         return { filePath, filename };
     }
 
+    async generateAcknowledgementPdf(batchId) {
+        const batchResult = await this.db.query('SELECT * FROM batch_payroll WHERE batch_payroll_id = $1', [batchId]);
+        const batch = batchResult.rows[0];
+        if (!batch) {
+            throw new Error('Batch not found');
+        }
+
+        const itemsResult = await this.db.query(
+            `SELECT bi.*, p.employee_id, ep.last_name, ep.first_name, p.date_start, p.date_end, p.total_days_worked, p.total_overtime_hours, p.total_allowance, p.total_leaves_usage, p.regular_holiday, p.special_holiday, p.total_income_tax, p.total_sss_payment, p.total_sss_loan_payment, p.total_philhealth_payment, p.total_pagibig_payment, p.total_pagibig_loan_payment, p.total_cash_loan_deductions, p.total_losses_damages, p.net_pay FROM batch_payroll_items bi JOIN payroll p ON bi.payroll_id = p.payroll_id LEFT JOIN employee_profile ep ON p.employee_id = ep.employee_id WHERE bi.batch_payroll_id = $1 ORDER BY p.employee_id ASC`,
+            [batchId]
+        );
+        const items = itemsResult.rows;
+
+        const outputDir = 'C:/Users/ADMIN/Documents/uploads/batchpayroll';
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        const formatDate = (d) => {
+            const date = new Date(d);
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+        const filename = `batchpayroll_acknowledgement_${batch.batch_reference}_${formatDate(batch.pay_period_start)}_to_${formatDate(batch.pay_period_end)}.pdf`;
+        const filePath = path.join(outputDir, filename);
+
+        const fmtNum = (val) => {
+            const n = Number(val) || 0;
+            return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const formatDateShort = (d) => {
+            if (!d) return '-';
+            const date = new Date(d);
+            if (isNaN(date.getTime())) return '-';
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const pages = [];
+        for (let i = 0; i < items.length; i += 6) {
+            pages.push(items.slice(i, i + 6));
+        }
+
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        const previewHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #000; }
+                    .acknowledgement-page { border: 1px solid #000; padding: 10mm; margin-bottom: 5mm; }
+                    .acknowledgement-header { text-align: center; margin-bottom: 8px; }
+                    .acknowledgement-header h2 { margin: 0; font-size: 14px; font-weight: bold; }
+                    .acknowledgement-header .subtitle { font-size: 10px; color: #333; }
+                    .acknowledgement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
+                    .acknowledgement-grid .field { font-size: 9px; }
+                    .acknowledgement-grid .field-label { font-weight: bold; font-size: 9px; }
+                    .acknowledgement-grid .field-value { font-size: 9px; }
+                    .acknowledgement-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; }
+                    .acknowledgement-table th, .acknowledgement-table td { border: 1px solid #000; padding: 2px 4px; font-size: 9px; }
+                    .acknowledgement-table th { background: #f0f0f0; font-weight: bold; }
+                    .acknowledgement-totals { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px; }
+                    .acknowledgement-signature { display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px; }
+                    .acknowledgement-signature .sign-line { border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px; }
+                </style>
+            </head>
+            <body>
+                ${pages.map(page => {
+                    const rows = page.map(item => {
+                        const grossPay = (Number(item.total_days_worked) || 0) + (Number(item.total_overtime_hours) || 0) + (Number(item.total_allowance) || 0) + (Number(item.total_leaves_usage) || 0) + (Number(item.regular_holiday) || 0) + (Number(item.special_holiday) || 0);
+                        const grossDeduction = (Number(item.total_income_tax) || 0) + (Number(item.total_sss_payment) || 0) + (Number(item.total_sss_loan_payment) || 0) + (Number(item.total_philhealth_payment) || 0) + (Number(item.total_pagibig_payment) || 0) + (Number(item.total_pagibig_loan_payment) || 0) + (Number(item.total_cash_loan_deductions) || 0) + (Number(item.total_losses_damages) || 0);
+                        const netPay = grossPay - grossDeduction;
+
+                        const deductions = [];
+                        if ((Number(item.total_sss_payment) || 0) > 0) deductions.push({ label: 'SSS', amount: item.total_sss_payment });
+                        if ((Number(item.total_philhealth_payment) || 0) > 0) deductions.push({ label: 'PhilHealth', amount: item.total_philhealth_payment });
+                        if ((Number(item.total_pagibig_payment) || 0) > 0) deductions.push({ label: 'Pag-IBIG', amount: item.total_pagibig_payment });
+                        if ((Number(item.total_cash_loan_deductions) || 0) > 0) deductions.push({ label: 'Cash Loan', amount: item.total_cash_loan_deductions });
+                        if ((Number(item.total_losses_damages) || 0) > 0) deductions.push({ label: 'Losses/Damages', amount: item.total_losses_damages });
+
+                        const deductionRows = deductions.map(d => `
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
+                            </tr>
+                        `).join('');
+
+                        return `
+                            <div class="acknowledgement-page">
+                                <div class="acknowledgement-header">
+                                    <h2>GOLDEN FIELD</h2>
+                                    <div class="subtitle">ACKNOWLEDGEMENT RECEIPT</div>
+                                </div>
+                                <div class="acknowledgement-grid">
+                                    <div class="field"><span class="field-label">Name:</span> <span class="field-value">${item.last_name || ''}, ${item.first_name || ''}</span></div>
+                                    <div class="field"><span class="field-label">Code:</span> <span class="field-value">${item.employee_id || ''}</span></div>
+                                    <div class="field"><span class="field-label">From:</span> <span class="field-value">${formatDateShort(item.date_start)}</span></div>
+                                    <div class="field"><span class="field-label">To:</span> <span class="field-value">${formatDateShort(item.date_end)}</span></div>
+                                </div>
+                                <table class="acknowledgement-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 30%;">EARNINGS</th>
+                                            <th style="width: 15%; text-align: center;">AMOUNT</th>
+                                            <th style="width: 15%; text-align: center;">ADJUSTMENTS</th>
+                                            <th style="width: 20%;">DEDUCTIONS</th>
+                                            <th style="width: 20%; text-align: right;">AMOUNT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="text-align: left;">Basic ${item.total_days_worked ? Number(item.total_days_worked).toFixed(2) : '0.00'}</td>
+                                            <td style="text-align: right;">${fmtNum(grossPay)}</td>
+                                            <td style="text-align: center;"></td>
+                                            <td style="text-align: left;"></td>
+                                            <td style="text-align: right;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align: left;">Allowance</td>
+                                            <td style="text-align: right;">${fmtNum(item.total_allowance || 0)}</td>
+                                            <td style="text-align: center;">1st</td>
+                                            <td style="text-align: left;"></td>
+                                            <td style="text-align: right;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align: left;">OT ${item.total_overtime_hours ? Number(item.total_overtime_hours).toFixed(2) : '0.00'}</td>
+                                            <td style="text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td>
+                                            <td style="text-align: center;">2nd</td>
+                                            <td style="text-align: left;"></td>
+                                            <td style="text-align: right;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="text-align: left;">Others</td>
+                                            <td style="text-align: right;">${fmtNum(0)}</td>
+                                            <td style="text-align: center;"></td>
+                                            <td style="text-align: left;"></td>
+                                            <td style="text-align: right;"></td>
+                                        </tr>
+                                        ${deductionRows.length > 0 ? deductionRows : '<tr><td style="text-align: left;" colspan="3"></td><td style="text-align: left;">No deductions</td><td style="text-align: right;"></td></tr>'}
+                                    </tbody>
+                                </table>
+                                <div class="acknowledgement-totals">
+                                    <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                    <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                    <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                </div>
+                                <div class="acknowledgement-signature">
+                                    <div>
+                                        <div class="sign-line">Authorized Signature</div>
+                                    </div>
+                                    <div>
+                                        <div class="sign-line">Date</div>
+                                        <div style="text-align: center;">${today}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `<div>${rows}</div>`;
+                }).join('')}
+            </body>
+            </html>
+        `;
+
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        await page.setViewport({ width: 794, height: 1123 });
+        await page.setContent(previewHtml, { waitUntil: 'networkidle0' });
+        await page.pdf({
+            path: filePath,
+            format: 'A4',
+            portrait: true,
+            printBackground: true,
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
+        });
+        await browser.close();
+
+        return { filePath, filename };
+    }
+
     async _createCashLoanRepayments(client, employeeId, payrollId, totalDeduction) {
         const cashAdvancesResult = await client.query(
             "SELECT cashadvance_id, ca_amount, installment_amount, status FROM cash_advance WHERE employee_id = $1 AND status IN ('unpaid', 'Approved') ORDER BY created_at ASC",

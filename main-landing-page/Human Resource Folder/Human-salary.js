@@ -820,6 +820,10 @@ ModuleComponents['hr-salary'] = (container) => {
                 <button class="modal-close-btn" id="close-batch-print-preview">&times;</button>
             </div>
             <div style="padding: 16px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                    <button id="batch-tab-summary" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer;">Batch Payroll Summary</button>
+                    <button id="batch-tab-acknowledgement" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer; background: #6c757d; border-color: #6c757d;">Pay slip Acknowledgement Receipt</button>
+                </div>
                 <div id="batch-print-preview-content" style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 16px;"></div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
                     <button id="batch-print-btn" class="btn-primary" type="button" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">Print Preview</button>
@@ -843,16 +847,171 @@ ModuleComponents['hr-salary'] = (container) => {
         });
     }
 
+    let batchPrintActiveTab = 'summary';
+    let currentBatchIdForPrint = null;
+    const batchTabSummaryBtn = document.getElementById('batch-tab-summary');
+    const batchTabAcknowledgementBtn = document.getElementById('batch-tab-acknowledgement');
     const batchPrintBtn = document.getElementById('batch-print-btn');
     const batchConfirmAfterPrintBtn = document.getElementById('batch-confirm-after-print-btn');
     const batchPrintPreviewContent = document.getElementById('batch-print-preview-content');
 
-    const renderBatchPrintPreview = (summaryData, tableData) => {
+    const setBatchPrintTab = (tab) => {
+        batchPrintActiveTab = tab;
+        if (batchTabSummaryBtn && batchTabAcknowledgementBtn) {
+            if (tab === 'summary') {
+                batchTabSummaryBtn.style.background = '#007bff';
+                batchTabSummaryBtn.style.borderColor = '#007bff';
+                batchTabAcknowledgementBtn.style.background = '#6c757d';
+                batchTabAcknowledgementBtn.style.borderColor = '#6c757d';
+            } else {
+                batchTabSummaryBtn.style.background = '#6c757d';
+                batchTabSummaryBtn.style.borderColor = '#6c757d';
+                batchTabAcknowledgementBtn.style.background = '#007bff';
+                batchTabAcknowledgementBtn.style.borderColor = '#007bff';
+            }
+        }
+        if (batchConfirmAfterPrintBtn) {
+            batchConfirmAfterPrintBtn.style.display = tab === 'summary' ? 'inline-block' : 'none';
+        }
+    };
+
+    if (batchTabSummaryBtn) {
+        batchTabSummaryBtn.addEventListener('click', () => {
+            setBatchPrintTab('summary');
+            renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
+        });
+    }
+
+    if (batchTabAcknowledgementBtn) {
+        batchTabAcknowledgementBtn.addEventListener('click', () => {
+            setBatchPrintTab('acknowledgement');
+            renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
+        });
+    }
+
+    const renderBatchPrintPreview = (summaryData, tableData, tab = 'summary') => {
         const contentEl = document.getElementById('batch-print-preview-content');
         if (!contentEl) return;
 
         if (!summaryData || !tableData) {
             contentEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Preview data is not available.</div>';
+            return;
+        }
+
+        if (tab === 'acknowledgement') {
+            const fmtNum = (val) => {
+                const n = Number(val) || 0;
+                return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+
+            const formatDateShort = (d) => {
+                if (!d) return '-';
+                const date = new Date(d);
+                if (isNaN(date.getTime())) return '-';
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            };
+
+            const pages = [];
+            for (let i = 0; i < tableData.length; i += 6) {
+                pages.push(tableData.slice(i, i + 6));
+            }
+
+            contentEl.innerHTML = pages.map(page => {
+                const rows = page.map(row => {
+                    const grossPay = (row.totalDays || 0) + (row.totalOvertime || 0) + (row.totalAllowance || 0) + (row.totalLeaves || 0) + (row.regularHoliday || 0) + (row.specialHoliday || 0);
+                    const grossDeduction = (row.totalTax || 0) + (row.totalSss || 0) + (row.totalSssLoan || 0) + (row.totalPhilhealth || 0) + (row.totalPagibig || 0) + (row.totalPagibigLoan || 0) + (row.totalCashLoanDeductions || 0) + (row.totalLossesDeductions || 0);
+                    const netPay = grossPay - grossDeduction;
+
+                    const deductions = [];
+                    if ((row.totalSss || 0) > 0) deductions.push({ label: 'SSS', amount: row.totalSss });
+                    if ((row.totalPhilhealth || 0) > 0) deductions.push({ label: 'PhilHealth', amount: row.totalPhilhealth });
+                    if ((row.totalPagibig || 0) > 0) deductions.push({ label: 'Pag-IBIG', amount: row.totalPagibig });
+                    if ((row.totalCashLoanDeductions || 0) > 0) deductions.push({ label: 'Cash Loan', amount: row.totalCashLoanDeductions });
+                    if ((row.totalLossesDeductions || 0) > 0) deductions.push({ label: 'Losses/Damages', amount: row.totalLossesDeductions });
+
+                    const deductionRows = deductions.map(d => `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
+                            <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
+                        </tr>
+                    `).join('');
+
+                    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                    return `
+                        <div class="acknowledgement-page" style="border: 1px solid #000; padding: 10mm; margin-bottom: 5mm;">
+                            <div class="acknowledgement-header">
+                                <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
+                                <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
+                            </div>
+                            <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">From:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodFrom)}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">To:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodTo)}</span></div>
+                            </div>
+                            <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
+                                <thead>
+                                    <tr>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 30%;">EARNINGS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center; width: 15%;">AMOUNT</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center; width: 15%;">ADJUSTMENTS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 20%;">DEDUCTIONS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Basic ${row.totalDays ? Number(row.totalDays).toFixed(2) : '0.00'}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(grossPay)}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Allowance</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum((row.totalAllowance || 0))}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">1st</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT ${row.totalOvertime ? Number(row.totalOvertime).toFixed(2) : '0.00'}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum((row.totalOvertime || 0))}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">2nd</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(0)}</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                                    </tr>
+                                    ${deductionRows.length > 0 ? deductionRows : '<tr><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="3"></td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td></tr>'}
+                                </tbody>
+                            </table>
+                            <div class="acknowledgement-totals" style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px;">
+                                <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                            </div>
+                            <div class="acknowledgement-signature" style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px;">
+                                <div>
+                                    <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Authorized Signature</div>
+                                </div>
+                                <div>
+                                    <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Date</div>
+                                    <div style="text-align: center;">${today}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `<div>${rows}</div>`;
+            }).join('');
             return;
         }
 
@@ -955,87 +1114,204 @@ ModuleComponents['hr-salary'] = (container) => {
 
             const style = document.createElement('style');
             style.id = 'batch-print-isolation-style';
-            style.textContent = `
-                @media print {
-                    @page { size: landscape; margin: 0.3in; }
-                    body > *:not(#batch-print-preview-modal) { display: none !important; }
-                    #batch-print-preview-modal {
-                        position: static !important;
-                        display: block !important;
-                        background: #fff !important;
-                        max-width: none !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
+
+            if (batchPrintActiveTab === 'acknowledgement') {
+                style.textContent = `
+                    @media print {
+                        @page { size: A4 portrait; margin: 10mm; }
+                        body > *:not(#batch-print-preview-modal) { display: none !important; }
+                        #batch-print-preview-modal {
+                            position: static !important;
+                            display: block !important;
+                            background: #fff !important;
+                            max-width: none !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-content {
+                            max-width: none !important;
+                            width: 100% !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            box-shadow: none !important;
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-header-row {
+                            display: none !important;
+                        }
+                        #batch-tab-summary, #batch-tab-acknowledgement {
+                            display: none !important;
+                        }
+                        #batch-print-preview-content {
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        .acknowledgement-page {
+                            page-break-after: always;
+                            border: 1px solid #000 !important;
+                            padding: 10mm !important;
+                            margin-bottom: 5mm !important;
+                        }
+                        .acknowledgement-page:last-child {
+                            page-break-after: auto;
+                        }
+                        .acknowledgement-header {
+                            text-align: center;
+                            margin-bottom: 8px;
+                        }
+                        .acknowledgement-header h2 {
+                            font-size: 14px !important;
+                            margin: 0 !important;
+                        }
+                        .acknowledgement-header .subtitle {
+                            font-size: 10px !important;
+                            color: #333 !important;
+                        }
+                        .acknowledgement-grid {
+                            display: grid !important;
+                            grid-template-columns: 1fr 1fr !important;
+                            gap: 4px !important;
+                            margin-bottom: 6px !important;
+                        }
+                        .acknowledgement-grid .field {
+                            font-size: 9px !important;
+                        }
+                        .acknowledgement-grid .field-label {
+                            font-weight: bold;
+                            font-size: 9px !important;
+                        }
+                        .acknowledgement-grid .field-value {
+                            font-size: 9px !important;
+                        }
+                        .acknowledgement-table {
+                            width: 100% !important;
+                            border-collapse: collapse !important;
+                            font-size: 9px !important;
+                            margin-bottom: 6px !important;
+                        }
+                        .acknowledgement-table th,
+                        .acknowledgement-table td {
+                            border: 1px solid #000 !important;
+                            padding: 2px 4px !important;
+                            font-size: 9px !important;
+                        }
+                        .acknowledgement-table th {
+                            background: #f0f0f0 !important;
+                            font-weight: bold !important;
+                        }
+                        .acknowledgement-totals {
+                            display: flex !important;
+                            justify-content: space-between !important;
+                            font-size: 9px !important;
+                            margin-bottom: 6px !important;
+                        }
+                        .acknowledgement-signature {
+                            display: flex !important;
+                            justify-content: space-between !important;
+                            font-size: 9px !important;
+                            margin-top: 8px !important;
+                        }
+                        .acknowledgement-signature .sign-line {
+                            border-top: 1px solid #000 !important;
+                            width: 120px !important;
+                            text-align: center !important;
+                            padding-top: 2px !important;
+                        }
                     }
-                    #batch-print-preview-modal .modal-content {
-                        max-width: none !important;
-                        width: 100% !important;
-                        max-height: none !important;
-                        overflow: visible !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
+                `;
+            } else {
+                style.textContent = `
+                    @media print {
+                        @page { size: landscape; margin: 0.3in; }
+                        body > *:not(#batch-print-preview-modal) { display: none !important; }
+                        #batch-print-preview-modal {
+                            position: static !important;
+                            display: block !important;
+                            background: #fff !important;
+                            max-width: none !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-content {
+                            max-width: none !important;
+                            width: 100% !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            box-shadow: none !important;
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-header-row {
+                            display: none !important;
+                        }
+                        #batch-tab-summary, #batch-tab-acknowledgement {
+                            display: none !important;
+                        }
+                        #batch-print-preview-content {
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        .print-summary {
+                            display: flex !important;
+                            flex-wrap: nowrap !important;
+                            gap: 8px !important;
+                            margin-bottom: 8px !important;
+                        }
+                        .print-summary > div {
+                            flex: 1 1 0 !important;
+                            min-width: 100px !important;
+                            padding: 6px !important;
+                        }
+                        .print-summary label {
+                            font-size: 9px !important;
+                            margin-bottom: 2px !important;
+                        }
+                        .print-summary input {
+                            font-size: 11px !important;
+                        }
+                        .print-table-wrap {
+                            overflow-x: visible !important;
+                        }
+                        table {
+                            font-size: 9px !important;
+                            width: 100% !important;
+                            table-layout: fixed !important;
+                            border-collapse: collapse !important;
+                        }
+                        th, td {
+                            padding: 3px 2px !important;
+                            border: 1px solid #ddd !important;
+                            word-wrap: break-word !important;
+                            overflow: hidden !important;
+                        }
+                        th {
+                            font-size: 9px !important;
+                            font-weight: 700 !important;
+                            background: #f4f4f4 !important;
+                        }
+                        h2 {
+                            font-size: 16px !important;
+                            margin-bottom: 2px !important;
+                        }
+                        .print-subtitle {
+                            font-size: 11px !important;
+                            margin-bottom: 10px !important;
+                        }
                     }
-                    #batch-print-preview-modal .modal-header-row {
-                        display: none !important;
-                    }
-                    #batch-print-preview-content {
-                        border: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .print-summary {
-                        display: flex !important;
-                        flex-wrap: nowrap !important;
-                        gap: 8px !important;
-                        margin-bottom: 8px !important;
-                    }
-                    .print-summary > div {
-                        flex: 1 1 0 !important;
-                        min-width: 100px !important;
-                        padding: 6px !important;
-                    }
-                    .print-summary label {
-                        font-size: 9px !important;
-                        margin-bottom: 2px !important;
-                    }
-                    .print-summary input {
-                        font-size: 11px !important;
-                    }
-                    .print-table-wrap {
-                        overflow-x: visible !important;
-                    }
-                    table {
-                        font-size: 9px !important;
-                        width: 100% !important;
-                        table-layout: fixed !important;
-                        border-collapse: collapse !important;
-                    }
-                    th, td {
-                        padding: 3px 2px !important;
-                        border: 1px solid #ddd !important;
-                        word-wrap: break-word !important;
-                        overflow: hidden !important;
-                    }
-                    th {
-                        font-size: 9px !important;
-                        font-weight: 700 !important;
-                        background: #f4f4f4 !important;
-                    }
-                    h2 {
-                        font-size: 16px !important;
-                        margin-bottom: 2px !important;
-                    }
-                    .print-subtitle {
-                        font-size: 11px !important;
-                        margin-bottom: 10px !important;
-                    }
-                }
-            `;
+                `;
+            }
+
             document.head.appendChild(style);
 
             setTimeout(() => {
@@ -2100,6 +2376,8 @@ function initializeModule(contentArea) {
 
             const batchPrintSummaryData = {
                 payPeriod: startingPayPeriodEl?.value && endingPayPeriodEl?.value ? `${startingPayPeriodEl.value} - ${endingPayPeriodEl.value}` : '-',
+                payPeriodFrom: startingPayPeriodEl?.value || '',
+                payPeriodTo: endingPayPeriodEl?.value || '',
                 employeeCount: employeeCountEl?.value || rows.length,
                 grossPay: grossPayEl?.value || '0.00',
                 grossDeduction: grossDeductionEl?.value || '0.00',
@@ -2151,110 +2429,9 @@ function initializeModule(contentArea) {
             const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
             if (batchPrintPreviewModal) {
                 batchPrintPreviewModal.style.display = 'flex';
+                setBatchPrintTab('summary');
                 requestAnimationFrame(() => {
-                    const contentEl = document.getElementById('batch-print-preview-content');
-                    if (!contentEl) return;
-
-                    const summaryData = batchPrintSummaryData;
-                    const tableData = batchPrintTableData;
-
-                    if (!summaryData || !tableData) {
-                        contentEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Preview data is not available.</div>';
-                        return;
-                    }
-
-                    const previewHtml = `
-                        <div style="font-family: Arial, sans-serif; color: #000;">
-                            <h2 style="text-align: center; margin-bottom: 2px; font-size: 16px;">GOLDEN FIELD</h2>
-                            <div class="print-subtitle" style="text-align: center; color: #555; margin-bottom: 10px; font-size: 11px;">BATCH PAYROLL SUMMARY</div>
-                            <div class="print-summary" style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap;">
-                                <div style="flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px;">
-                                    <label style="display: block; font-size: 9px; color: #666;">Pay Period</label>
-                                    <input readonly value="${summaryData.payPeriod || ''}" style="border: none; background: transparent; font-weight: 700; font-size: 11px; width: 100%;">
-                                </div>
-                                <div style="flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px;">
-                                    <label style="display: block; font-size: 9px; color: #666;">Employee Count</label>
-                                    <input readonly value="${summaryData.employeeCount || 0}" style="border: none; background: transparent; font-weight: 700; font-size: 11px; width: 100%;">
-                                </div>
-                                <div style="flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px;">
-                                    <label style="display: block; font-size: 9px; color: #666;">Total Gross Pay</label>
-                                    <input readonly value="${summaryData.grossPay || '0.00'}" style="border: none; background: transparent; font-weight: 700; font-size: 11px; width: 100%;">
-                                </div>
-                                <div style="flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px;">
-                                    <label style="display: block; font-size: 9px; color: #666;">Total Gross Deduction</label>
-                                    <input readonly value="${summaryData.grossDeduction || '0.00'}" style="border: none; background: transparent; font-weight: 700; font-size: 11px; width: 100%;">
-                                </div>
-                                <div style="flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px;">
-                                    <label style="display: block; font-size: 9px; color: #666;">Total Net Pay</label>
-                                    <input readonly value="${summaryData.netPay || '0.00'}" style="border: none; background: transparent; font-weight: 700; font-size: 11px; width: 100%;">
-                                </div>
-                            </div>
-                            <div class="print-table-wrap" style="overflow-x: auto;">
-                                <table style="width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed;">
-                                    <thead>
-                                        <tr>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: left; width: 4%;">Employee ID</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: left; width: 6%;">Last Name</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: left; width: 6%;">First Name</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Days Worked</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">OT</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Allowance</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Leaves</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Reg Holiday</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Spec Holiday</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 5%;">Gross Pay</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Income Tax</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">SSS</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">SSS Loan</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">PhilHealth</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Pag-IBIG</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Pag-IBIG Loan</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Cash Loan</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 6%;">Losses/Damages</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 5%;">Gross Deduction</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 5%;">Net Pay</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Starting Cash</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Ending Cash</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Starting Losses</th>
-                                            <th style="border: 1px solid #ddd; padding: 4px; background: #f4f4f4; font-weight: 700; text-align: right; width: 4%;">Ending Losses</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${tableData.map(row => `
-                                            <tr>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">${row.employeeId || ''}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">${row.lastName || ''}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">${row.firstName || ''}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalDays || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalOvertime || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalAllowance || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalLeaves || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.regularHoliday || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.specialHoliday || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right; font-weight: 600;">${(row.grossPay || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalTax || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalSss || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalSssLoan || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalPhilhealth || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalPagibig || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalPagibigLoan || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalCashLoanDeductions || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.totalLossesDeductions || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right; font-weight: 600;">${(row.grossDeduction || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right; font-weight: 600;">${(row.netPay || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.startingCashLoan || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.endingCashLoan || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.startingLosses || 0).toFixed(2)}</td>
-                                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; text-align: right;">${(row.endingLosses || 0).toFixed(2)}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    `;
-
-                    contentEl.innerHTML = previewHtml;
+                    renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
                 });
                 const batchConfirmAfterPrintBtn = document.getElementById('batch-confirm-after-print-btn');
                 if (batchConfirmAfterPrintBtn) {
@@ -2299,19 +2476,20 @@ function initializeModule(contentArea) {
                                 throw new Error(err.error || 'Failed to confirm batch payroll');
                             }
 
-                            const result = await res.json();
-                            alert('Batch payroll confirmed successfully!');
+                             const result = await res.json();
+                             alert('Batch payroll confirmed successfully!');
 
-                            if (result.batch && result.batch.batch_payroll_id) {
-                                window.open(`/api/batch-payroll/${result.batch.batch_payroll_id}/pdf`, '_blank');
-                            }
+                             if (result.batch && result.batch.batch_payroll_id) {
+                                 currentBatchIdForPrint = result.batch.batch_payroll_id;
+                                 setBatchPrintTab('acknowledgement');
+                                 renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
+                             }
 
-                            batchPrintPreviewModal.style.display = 'none';
-                            await loadPendingPayrolls();
-                            await loadBatchPayrolls();
-                            await loadSalaryHistory();
-                            await loadMonthlySalaryComparison();
-                            pendingBatchConfirmData = null;
+                             await loadPendingPayrolls();
+                             await loadBatchPayrolls();
+                             await loadSalaryHistory();
+                             await loadMonthlySalaryComparison();
+                             pendingBatchConfirmData = null;
                         } catch (err) {
                             console.error('Confirm batch payroll error:', err);
                             alert(err.message || 'Failed to confirm batch payroll');
