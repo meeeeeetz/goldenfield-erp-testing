@@ -601,7 +601,6 @@ ModuleComponents['finance-loans'] = (container) => {
     setupContactNumber(document.getElementById('edit-loan-contact'));
 
     // Apply for Loan Modal
-    const API_BASE_LOAN_TRANSACTIONS = '/api/loan-transactions';
 
     async function loadNextLoanApplicationId() {
         try {
