@@ -229,7 +229,7 @@ ModuleComponents['finance-loans'] = (container) => {
         if (!tbody) return;
 
         try {
-            const res = await fetch(API_BASE + '?search=Active', {
+            const res = await fetch(API_BASE, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
             });
             if (!res.ok) throw new Error('Failed to fetch loan accounts');
