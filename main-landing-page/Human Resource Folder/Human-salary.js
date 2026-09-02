@@ -868,9 +868,95 @@ ModuleComponents['hr-salary'] = (container) => {
         }
     };
 
+    const gatherBatchPrintData = () => {
+        const overviewTbody = document.getElementById('salary-overview-tbody');
+        if (!overviewTbody) return null;
+
+        const rows = Array.from(overviewTbody.querySelectorAll('tr')).filter(row => {
+            const firstCell = row.querySelector('td');
+            const payrollId = firstCell?.textContent.trim();
+            return payrollId && payrollId !== 'No pending payrolls' && payrollId !== 'Failed to load payrolls';
+        });
+
+        if (rows.length === 0) return null;
+
+        const employeeCountEl = document.getElementById('salary-overview-employee-count');
+        const grossPayEl = document.getElementById('salary-overview-gross-pay');
+        const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
+        const netPayEl = document.getElementById('salary-overview-net-pay');
+        const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
+        const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
+
+        const startDates = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return cells[4]?.textContent.trim();
+        }).filter(Boolean).map(d => new Date(d).getTime()).filter(t => !isNaN(t));
+        const endDates = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return cells[5]?.textContent.trim();
+        }).filter(Boolean).map(d => new Date(d).getTime()).filter(t => !isNaN(t));
+
+        const formatDateShort = (date) => {
+            if (!date || isNaN(date.getTime())) return '';
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const startingPayPeriod = startDates.length ? new Date(Math.min(...startDates)) : null;
+        const endingPayPeriod = endDates.length ? new Date(Math.max(...endDates)) : null;
+
+        const summaryData = {
+            payPeriod: startingPayPeriod && endingPayPeriod ? `${formatDateShort(startingPayPeriod)} - ${formatDateShort(endingPayPeriod)}` : '-',
+            payPeriodFrom: startingPayPeriod ? formatDateShort(startingPayPeriod) : '',
+            payPeriodTo: endingPayPeriod ? formatDateShort(endingPayPeriod) : '',
+            employeeCount: employeeCountEl?.value || rows.length,
+            grossPay: grossPayEl?.value || '0.00',
+            grossDeduction: grossDeductionEl?.value || '0.00',
+            netPay: netPayEl?.value || '0.00'
+        };
+
+        const tableData = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                employeeId: cells[1]?.textContent.trim() || '',
+                lastName: cells[2]?.textContent.trim() || '',
+                firstName: cells[3]?.textContent.trim() || '',
+                totalDays: parseFloat(cells[4]?.textContent) || 0,
+                totalOvertime: parseFloat(cells[5]?.textContent) || 0,
+                totalAllowance: parseFloat(cells[6]?.textContent) || 0,
+                totalLeaves: parseFloat(cells[7]?.textContent) || 0,
+                regularHoliday: parseFloat(cells[8]?.textContent) || 0,
+                specialHoliday: parseFloat(cells[9]?.textContent) || 0,
+                grossPay: parseFloat(cells[10]?.textContent) || 0,
+                totalTax: parseFloat(cells[11]?.textContent) || 0,
+                totalSss: parseFloat(cells[12]?.textContent) || 0,
+                totalSssLoan: parseFloat(cells[13]?.textContent) || 0,
+                totalPhilhealth: parseFloat(cells[14]?.textContent) || 0,
+                totalPagibig: parseFloat(cells[15]?.textContent) || 0,
+                totalPagibigLoan: parseFloat(cells[16]?.textContent) || 0,
+                totalCashLoanDeductions: parseFloat(cells[17]?.textContent) || 0,
+                totalLossesDeductions: parseFloat(cells[18]?.textContent) || 0,
+                grossDeduction: parseFloat(cells[19]?.textContent) || 0,
+                netPay: parseFloat(cells[20]?.textContent) || 0,
+                startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
+                endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
+                startingLosses: parseFloat(cells[23]?.textContent) || 0,
+                endingLosses: parseFloat(cells[24]?.textContent) || 0
+            };
+        });
+
+        return { summaryData, tableData };
+    };
+
     if (batchTabSummaryBtn) {
         batchTabSummaryBtn.addEventListener('click', () => {
             setBatchPrintTab('summary');
+            if (!batchPrintSummaryData || !batchPrintTableData) {
+                const gathered = gatherBatchPrintData();
+                if (gathered) {
+                    batchPrintSummaryData = gathered.summaryData;
+                    batchPrintTableData = gathered.tableData;
+                }
+            }
             renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
         });
     }
@@ -878,6 +964,13 @@ ModuleComponents['hr-salary'] = (container) => {
     if (batchTabAcknowledgementBtn) {
         batchTabAcknowledgementBtn.addEventListener('click', () => {
             setBatchPrintTab('acknowledgement');
+            if (!batchPrintSummaryData || !batchPrintTableData) {
+                const gathered = gatherBatchPrintData();
+                if (gathered) {
+                    batchPrintSummaryData = gathered.summaryData;
+                    batchPrintTableData = gathered.tableData;
+                }
+            }
             renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
         });
     }
