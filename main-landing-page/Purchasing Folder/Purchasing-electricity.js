@@ -326,7 +326,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                     throw new Error(errData.error || 'Failed to upload file');
                 }
                 const uploadData = await uploadRes.json();
-                filePath = uploadData.filePath;
+                filePath = uploadData.fileName;
             }
 
             const res = await fetch('/api/electric-bills', {
@@ -725,7 +725,7 @@ function renderElectricBillsTable() {
             <td>₱${Number(bill.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td>${bill.status || '-'}</td>
             <td>${bill.created_by_email || '-'}</td>
-            <td><span class="photo-icon-wrap" data-receipt-path="${bill.file_path || ''}" data-bill-id="${bill.electric_bill_id || ''}" onclick="window._electricPhotoClick && window._electricPhotoClick(this)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${bill.file_path ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span></td>
+            <td><span class="photo-icon-wrap" data-receipt-path="${bill.file_url || ''}" data-bill-id="${bill.electric_bill_id || ''}" onclick="window._electricPhotoClick && window._electricPhotoClick(this)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${bill.file_url ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span></td>
             <td>
                 <button class="btn-payment" onclick="openPaymentModal('${bill.electric_bill_id}', '${formatDate(bill.payment_date)}', '${bill.payment_source || ''}', '${bill.check_number || ''}')" title="Add Payment">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#1ea672" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
@@ -922,8 +922,7 @@ async function loadLatestComparison() {
         if (!wrap) return;
         const src = wrap.getAttribute('data-receipt-path');
         if (!src) return;
-        const fullSrc = src.startsWith('http') ? src : `${src}`;
-        photoTooltip.innerHTML = `<img src="${fullSrc}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
+        photoTooltip.innerHTML = `<img src="${src}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
         photoTooltip.style.display = 'block';
         positionElectricPhotoTooltip();
     });
@@ -1019,7 +1018,7 @@ async function loadLatestComparison() {
                         throw new Error(errData.error || 'Failed to upload photo');
                     }
                     const uploadData = await uploadRes.json();
-                    const filePath = uploadData.filePath;
+                    const filePath = uploadData.fileName;
 
                     const updateRes = await fetch(`/api/electric-bills/${encodeURIComponent(currentElectricPhotoBillId)}`, {
                         method: 'PUT',

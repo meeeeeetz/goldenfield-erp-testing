@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const ExpenseController = require('../main-finance-controller/expense-controller');
+const { getPublicUrl } = require('../../utils/gcs');
 
 class ElectricBillController {
     constructor(dbConnection) {
@@ -18,7 +19,10 @@ class ElectricBillController {
             ORDER BY eb.date DESC, eb.created_at DESC
         `;
         const result = await this.db.query(query);
-        return result.rows;
+        return result.rows.map(row => ({
+            ...row,
+            file_url: row.file_path ? getPublicUrl(row.file_path) : null
+        }));
     }
 
     async getElectricBillById(id) {
