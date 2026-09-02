@@ -79,13 +79,12 @@ ModuleComponents['hr-salary'] = (container) => {
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Starting Cash loan</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Ending Cash loan</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Starting Losses/ Damages</th>
-                                <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Ending Losses/ Damages</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">PDF File</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="salary-overview-tbody">
-                            <tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
+                            <tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -916,8 +915,7 @@ ModuleComponents['hr-salary'] = (container) => {
                 netPay: parseFloat(cells[20]?.textContent) || 0,
                 startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
                 endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                startingLosses: parseFloat(cells[23]?.textContent) || 0,
-                endingLosses: parseFloat(cells[24]?.textContent) || 0
+                startingLosses: parseFloat(cells[23]?.textContent) || 0
             };
         });
 
@@ -948,8 +946,7 @@ ModuleComponents['hr-salary'] = (container) => {
                         total_losses_damages: Number(payroll.total_losses_damages) || row.totalLossesDeductions,
                         starting_cash_loan: Number(payroll.starting_cash_loan) || row.startingCashLoan,
                         ending_cash_loan: Number(payroll.ending_cash_loan) || row.endingCashLoan,
-                        starting_losses_damages: Number(payroll.starting_losses_damages) || row.startingLosses,
-                        ending_losses_damages: Number(payroll.ending_losses_damages) || row.endingLosses
+                        starting_losses_damages: Number(payroll.starting_losses_damages) || row.startingLosses
                     };
                 });
             } catch (e) {
@@ -1032,6 +1029,13 @@ ModuleComponents['hr-salary'] = (container) => {
             return;
         }
 
+        const fmtNum = (val) => {
+            const n = Number(val) || 0;
+            return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const fmt = (val) => Number(val || 0).toFixed(2);
+
         contentEl.innerHTML = `
             <div style="font-family: Arial, sans-serif; color: #000;">
                 <h2 style="text-align: center; margin-bottom: 2px; font-size: 16px;">GOLDEN FIELD</h2>
@@ -1094,34 +1098,33 @@ ModuleComponents['hr-salary'] = (container) => {
                                     <td style="border: 1px solid #ddd; padding: 6px;">${row.employeeId || ''}</td>
                                     <td style="border: 1px solid #ddd; padding: 6px;">${row.lastName || ''}</td>
                                     <td style="border: 1px solid #ddd; padding: 6px;">${row.firstName || ''}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalDays || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalOvertime || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalAllowance || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalLeaves || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.regularHoliday || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.specialHoliday || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${(row.grossPay || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalTax || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalSss || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalSssLoan || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalPhilhealth || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalPagibig || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalPagibigLoan || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalCashLoanDeductions || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.totalLossesDeductions || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${(row.grossDeduction || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${(row.netPay || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.startingCashLoan || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.endingCashLoan || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.startingLosses || 0).toFixed(2)}</td>
-                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${(row.endingLosses || 0).toFixed(2)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalDays)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalOvertime)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalAllowance)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalLeaves)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.regularHoliday)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.specialHoliday)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${fmt(row.grossPay)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalTax)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalSss)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalSssLoan)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalPhilhealth)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalPagibig)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalPagibigLoan)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalCashLoanDeductions)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.totalLossesDeductions)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${fmt(row.grossDeduction)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-weight: 600;">${fmt(row.netPay)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.startingCashLoan)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.endingCashLoan)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.startingLosses)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 </div>
             </div>
-    `;
+        `;
     };
 
     const renderAcknowledgementContent = (contentEl, summaryData, tableData) => {
@@ -1141,8 +1144,6 @@ ModuleComponents['hr-salary'] = (container) => {
         for (let i = 0; i < tableData.length; i += 6) {
             pages.push(tableData.slice(i, i + 6));
         }
-
-        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
         contentEl.innerHTML = pages.map(page => {
             const rows = page.map(row => {
@@ -1171,7 +1172,7 @@ ModuleComponents['hr-salary'] = (container) => {
                 earningsRows.push(`<tr>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT</td>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">2nd</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                 </tr>`);
 
@@ -1179,7 +1180,7 @@ ModuleComponents['hr-salary'] = (container) => {
                     earningsRows.push(`<tr>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOthers)}</td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                     </tr>`);
                 }
@@ -1222,8 +1223,8 @@ ModuleComponents['hr-salary'] = (container) => {
                             <thead>
                                 <tr>
                                     <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 35%;">EARNINGS</th>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 25%;">AMOUNT</th>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 20%;">DEDUCTIONS</th>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 25%;">DEDUCTIONS</th>
                                     <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
                                 </tr>
                             </thead>
@@ -1233,18 +1234,20 @@ ModuleComponents['hr-salary'] = (container) => {
                                 ${noDeductionsRow}
                             </tbody>
                         </table>
-                        <div class="acknowledgement-totals" style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px;">
-                            <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
-                            <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
-                            <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                        <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
+                            <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
+                                <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                            </div>
                         </div>
+                        <div style="height: 20px;"></div>
                         <div class="acknowledgement-signature" style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px;">
                             <div>
                                 <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Authorized Signature</div>
                             </div>
                             <div>
                                 <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Date</div>
-                                <div style="text-align: center;">${today}</div>
                             </div>
                         </div>
                     </div>
@@ -2106,7 +2109,7 @@ function initializeModule(contentArea) {
             const payrolls = await res.json();
 
             if (!payrolls || payrolls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
                 const employeeCountEl = document.getElementById('salary-overview-employee-count');
                 const grossPayEl = document.getElementById('salary-overview-gross-pay');
                 const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2154,7 +2157,6 @@ function initializeModule(contentArea) {
                         <td>${fmt(p.starting_cash_loan)}</td>
                         <td>${fmt(p.ending_cash_loan)}</td>
                         <td>${fmt(p.starting_losses_damages)}</td>
-                        <td>${fmt(p.ending_losses_damages)}</td>
                         <td style="text-align: center;"><a href="/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
                         <td style="text-align: center;"><button class="btn-danger" data-payroll-id="${p.payroll_id}" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Delete</button></td>
                     </tr>
@@ -2207,7 +2209,7 @@ function initializeModule(contentArea) {
             });
         } catch (err) {
             console.error('Failed to load pending payrolls:', err);
-            tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">Failed to load payrolls</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">Failed to load payrolls</td></tr>';
             const employeeCountEl = document.getElementById('salary-overview-employee-count');
             const grossPayEl = document.getElementById('salary-overview-gross-pay');
             const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2458,8 +2460,7 @@ function initializeModule(contentArea) {
                     netPay: parseFloat(cells[20]?.textContent) || 0,
                     startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
                     endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                    startingLosses: parseFloat(cells[23]?.textContent) || 0,
-                    endingLosses: parseFloat(cells[24]?.textContent) || 0
+                    startingLosses: parseFloat(cells[23]?.textContent) || 0
                 };
             });
 
@@ -2473,9 +2474,21 @@ function initializeModule(contentArea) {
             if (batchPrintPreviewModal) {
                 batchPrintPreviewModal.style.display = 'flex';
                 setBatchPrintTab('summary');
-                requestAnimationFrame(() => {
+
+                const contentEl = document.getElementById('batch-print-preview-content');
+                if (contentEl) {
+                    contentEl.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #666; font-size: 14px;">Loading batch payroll summary...</div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
+                }
+
+                (async () => {
+                    const gathered = await gatherBatchPrintData();
+                    if (gathered) {
+                        batchPrintSummaryData = gathered.summaryData;
+                        batchPrintTableData = gathered.tableData;
+                    }
                     renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
-                });
+                })();
+
                 const batchConfirmAfterPrintBtn = document.getElementById('batch-confirm-after-print-btn');
                 if (batchConfirmAfterPrintBtn) {
                     batchConfirmAfterPrintBtn.addEventListener('click', async () => {

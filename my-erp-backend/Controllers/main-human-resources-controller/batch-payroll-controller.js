@@ -330,8 +330,6 @@ class BatchPayrollController {
             pages.push(items.slice(i, i + 6));
         }
 
-        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
         const previewHtml = `
             <!DOCTYPE html>
             <html>
@@ -350,7 +348,6 @@ class BatchPayrollController {
                     .acknowledgement-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; }
                     .acknowledgement-table th, .acknowledgement-table td { border: 1px solid #000; padding: 2px 4px; font-size: 9px; }
                     .acknowledgement-table th { background: #f0f0f0; font-weight: bold; }
-                    .acknowledgement-totals { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px; }
                     .acknowledgement-signature { display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px; }
                     .acknowledgement-signature .sign-line { border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px; }
                 </style>
@@ -383,7 +380,7 @@ class BatchPayrollController {
                         earningsRows.push(`<tr>
                             <td style="text-align: left;">OT</td>
                             <td style="text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td>
-                            <td style="text-align: center;">2nd</td>
+                            <td style="text-align: left;"></td>
                             <td style="text-align: right;"></td>
                         </tr>`);
 
@@ -391,7 +388,7 @@ class BatchPayrollController {
                             earningsRows.push(`<tr>
                                 <td style="text-align: left;">Others</td>
                                 <td style="text-align: right;">${fmtNum(item.total_others || 0)}</td>
-                                <td style="text-align: center;"></td>
+                                <td style="text-align: left;"></td>
                                 <td style="text-align: right;"></td>
                             </tr>`);
                         }
@@ -434,8 +431,8 @@ class BatchPayrollController {
                                     <thead>
                                         <tr>
                                             <th style="width: 35%;">EARNINGS</th>
-                                            <th style="width: 25%; text-align: right;">AMOUNT</th>
-                                            <th style="width: 20%;">DEDUCTIONS</th>
+                                            <th style="width: 20%; text-align: right;">AMOUNT</th>
+                                            <th style="width: 25%;">DEDUCTIONS</th>
                                             <th style="width: 20%; text-align: right;">AMOUNT</th>
                                         </tr>
                                     </thead>
@@ -445,18 +442,20 @@ class BatchPayrollController {
                                         ${noDeductionsRow}
                                     </tbody>
                                 </table>
-                                <div class="acknowledgement-totals">
-                                    <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
-                                    <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
-                                    <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
+                                    <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
+                                        <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                        <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                        <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                    </div>
                                 </div>
+                                <div style="height: 20px;"></div>
                                 <div class="acknowledgement-signature">
                                     <div>
                                         <div class="sign-line">Authorized Signature</div>
                                     </div>
                                     <div>
                                         <div class="sign-line">Date</div>
-                                        <div style="text-align: center;">${today}</div>
                                     </div>
                                 </div>
                             </div>
