@@ -101,6 +101,8 @@ ModuleComponents['finance-loans'] = (container) => {
                                 <th>Borrow</th>
                                 <th>Pay Principal</th>
                                 <th>Pay Interest</th>
+                                <th>Source Account</th>
+                                <th>Check Number</th>
                                 <th>Remaining Balance</th>
                             </tr>
                         </thead>
@@ -278,6 +280,18 @@ ModuleComponents['finance-loans'] = (container) => {
                     <div class="modal-field">
                         <label>Amount</label>
                         <input type="number" id="repay-loan-amount" placeholder="P 0.00" step="0.01" min="0" />
+                    </div>
+                </div>
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Source Account</label>
+                        <select id="repay-loan-source-account" class="modal-select">
+                            <option value="">Select Source Account</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label>Check Number</label>
+                        <input type="text" id="repay-loan-check-number" placeholder="Enter check number" />
                     </div>
                 </div>
                 <div class="modal-tab-actions">
@@ -664,6 +678,22 @@ ModuleComponents['finance-loans'] = (container) => {
         }
     }
 
+    async function loadBankAccountsForDropdown(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        try {
+            const res = await fetch('/api/bank-accounts', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const accounts = await res.json();
+            const activeAccounts = accounts.filter(a => a.status === 'Active');
+            select.innerHTML = '<option value="">Select Source Account</option>' +
+                activeAccounts.map(a => `<option value="${a.bank_account_id}">${a.bank} - ${a.bank_account_number}</option>`).join('');
+        } catch (err) {
+            console.error('Failed to load bank accounts for dropdown:', err);
+        }
+    }
+
     const applyLoanBtn = document.getElementById('apply-loan-btn');
     const applyLoanModal = document.getElementById('apply-loan-modal');
     const closeApplyLoanBtn = document.getElementById('close-apply-loan-modal');
@@ -743,6 +773,7 @@ ModuleComponents['finance-loans'] = (container) => {
             repayLoanModal.classList.remove('hidden');
             loadNextLoanPaymentId();
             loadLoanAccountsForDropdown('repay-loan-account');
+            loadBankAccountsForDropdown('repay-loan-source-account');
         });
     }
 
@@ -766,6 +797,8 @@ ModuleComponents['finance-loans'] = (container) => {
             const loanAccount = document.getElementById('repay-loan-account').value;
             const paymentType = document.getElementById('repay-loan-payment-type').value;
             const amount = document.getElementById('repay-loan-amount').value;
+            const sourceAccount = document.getElementById('repay-loan-source-account').value;
+            const checkNumber = document.getElementById('repay-loan-check-number').value.trim();
 
             if (!loanPayId || !date || !loanAccount || !amount) {
                 alert('All fields are required');
@@ -786,7 +819,9 @@ ModuleComponents['finance-loans'] = (container) => {
                         loan_account_id: loanAccount,
                         borrow_amount: 0,
                         payment_interest_amount: isInterest ? parseFloat(amount) : 0,
-                        payment_principal_amount: isInterest ? 0 : parseFloat(amount)
+                        payment_principal_amount: isInterest ? 0 : parseFloat(amount),
+                        source_account: sourceAccount || null,
+                        check_number: checkNumber || null
                     })
                 });
 
@@ -854,6 +889,8 @@ ModuleComponents['finance-loans'] = (container) => {
                     <td>${t.borrow_amount ? fmt(t.borrow_amount) : '-'}</td>
                     <td>${t.payment_principal_amount ? fmt(t.payment_principal_amount) : '-'}</td>
                     <td>${t.payment_interest_amount ? fmt(t.payment_interest_amount) : '-'}</td>
+                    <td>${t.source_account || '-'}</td>
+                    <td>${t.check_number || '-'}</td>
                     <td>${fmt(runningBalance + balance)}</td>
                 </tr>
             `;
@@ -862,7 +899,7 @@ ModuleComponents['finance-loans'] = (container) => {
         // Fill remaining rows to always show 5
         const emptyRowsNeeded = loanTransactionsPerPage - pageData.length;
         for (let i = 0; i < emptyRowsNeeded; i++) {
-            rows += '<tr class="empty-row"><td colspan="7" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
+            rows += '<tr class="empty-row"><td colspan="9" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
         }
 
         tbody.innerHTML = rows;
