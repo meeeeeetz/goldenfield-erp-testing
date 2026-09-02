@@ -474,7 +474,8 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                     total_late_minutes,
                     total_early_out_minutes,
                     total_deductable_time,
-                    actual_payable_hours
+                    actual_payable_hours,
+                    created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return u.id || null; } catch(e) { return null; } })()
                 });
             });
 
@@ -804,6 +805,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (!query) {
             renderAttendanceHistory(allAttendanceHistoryLogs);
+            applyAttendanceSort();
             return;
         }
         const filtered = allAttendanceHistoryLogs.filter(log => {
@@ -813,6 +815,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
             return fullName.includes(query) || formattedDate.includes(query) || status.includes(query);
         });
         renderAttendanceHistory(filtered);
+        applyAttendanceSort();
     }
 
     const attendanceSortState = { col: null, dir: 1 };
@@ -847,13 +850,17 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         const arrow = document.querySelector(`th.sortable[data-sort="${attendanceSortState.col}"] .sort-arrow`);
         if (arrow) arrow.textContent = attendanceSortState.dir === 1 ? '▲' : '▼';
     };
-    document.querySelectorAll('th.sortable').forEach(th => {
-        th.onclick = () => {
-            const col = th.dataset.sort;
-            if (attendanceSortState.col === col) attendanceSortState.dir *= -1;
-            else { attendanceSortState.col = col; attendanceSortState.dir = 1; }
-            applyAttendanceSort();
-        };
+
+    // Use event delegation for sorting (works with dynamically rendered tables)
+    document.addEventListener('click', (e) => {
+        const th = e.target.closest('th.sortable');
+        if (!th) return;
+        const tbody = document.getElementById('attendance-history-tbody');
+        if (!tbody) return;
+        const col = th.dataset.sort;
+        if (attendanceSortState.col === col) attendanceSortState.dir *= -1;
+        else { attendanceSortState.col = col; attendanceSortState.dir = 1; }
+        applyAttendanceSort();
     });
 
     loadPendingAttendanceLogs();
@@ -1406,7 +1413,8 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                         total_late_minutes: computed.totalLateMinutes,
                         total_early_out_minutes: computed.totalEarlyOutMinutes,
                         total_deductable_time: computed.totalDeductableTime,
-                        actual_payable_hours: computed.actualPayableHours
+                        actual_payable_hours: computed.actualPayableHours,
+                        created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return u.id || null; } catch(e) { return null; } })()
                     });
                 });
 
