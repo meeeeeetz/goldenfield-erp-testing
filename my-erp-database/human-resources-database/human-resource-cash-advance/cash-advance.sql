@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS cash_advance (
 -- Sequence for generating cash advance IDs
 CREATE SEQUENCE IF NOT EXISTS cash_advance_seq START 1;
 
+SELECT setval('cash_advance_seq', COALESCE(MAX(CAST(SUBSTRING(cashadvance_id FROM 7) AS INTEGER)), 0), true) FROM cash_advance;
+
 -- Function to generate cash advance ID in CaID-00000001 format
 CREATE OR REPLACE FUNCTION generate_cashadvance_id()
 RETURNS TEXT AS $$

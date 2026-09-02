@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS cash_advance_repayment (
 -- Sequence for generating cash advance repayment IDs
 CREATE SEQUENCE IF NOT EXISTS cash_advance_repayment_seq START 1;
 
+SELECT setval('cash_advance_repayment_seq', COALESCE(MAX(CAST(SUBSTRING(cashadvance_repayment_id FROM 9) AS INTEGER)), 0), true) FROM cash_advance_repayment;
+
 -- Function to generate cash advance repayment ID in CaPayID-000000001 format
 CREATE OR REPLACE FUNCTION generate_cashadvance_repayment_id()
 RETURNS TEXT AS $$
