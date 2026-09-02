@@ -104,6 +104,7 @@ ModuleComponents['finance-loans'] = (container) => {
                                 <th>Source Account</th>
                                 <th>Check Number</th>
                                 <th>Remaining Balance</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody id="loan-transactions-table-body">
@@ -892,6 +893,7 @@ ModuleComponents['finance-loans'] = (container) => {
                     <td>${t.source_account || '-'}</td>
                     <td>${t.check_number || '-'}</td>
                     <td>${fmt(runningBalance + balance)}</td>
+                    <td><button class="delete-btn" data-id="${t.loan_transaction_id}" title="Delete Transaction" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:18px; padding:4px 8px;">&times;</button></td>
                 </tr>
             `;
         }).join('');
@@ -899,14 +901,44 @@ ModuleComponents['finance-loans'] = (container) => {
         // Fill remaining rows to always show 5
         const emptyRowsNeeded = loanTransactionsPerPage - pageData.length;
         for (let i = 0; i < emptyRowsNeeded; i++) {
-            rows += '<tr class="empty-row"><td colspan="9" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
+            rows += '<tr class="empty-row"><td colspan="10" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
         }
 
         tbody.innerHTML = rows;
 
+        // Add delete event listeners
+        tbody.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const transactionId = btn.dataset.id;
+                deleteLoanTransaction(transactionId);
+            });
+        });
+
         // Render pagination
         const totalPages = Math.max(1, Math.ceil(loanTransactionsData.length / loanTransactionsPerPage));
         renderLoanTransactionsPagination(totalPages);
+    }
+
+    async function deleteLoanTransaction(transactionId) {
+        if (!confirm('Are you sure you want to delete this transaction?')) return;
+
+        try {
+            const res = await fetch(API_BASE_LOAN_TRANSACTIONS + '/' + encodeURIComponent(transactionId), {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete transaction');
+            }
+
+            alert('Transaction deleted successfully');
+            loadLoanTransactionsTable();
+            loadLoanSummaryTable();
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
     }
 
     function renderLoanTransactionsPagination(totalPages) {

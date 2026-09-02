@@ -90,4 +90,17 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const result = await controller.deleteTransaction(req.params.id);
+        if (result) {
+            res.json({ message: 'Transaction deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Transaction not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
