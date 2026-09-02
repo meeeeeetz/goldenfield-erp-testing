@@ -825,8 +825,12 @@ ModuleComponents['hr-salary'] = (container) => {
                     <button id="batch-tab-acknowledgement" class="modal-tab" type="button">Pay slip Acknowledgement Receipt</button>
                 </div>
                 <div id="batch-print-preview-content" style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 16px;"></div>
-                <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                    <button id="batch-print-btn" class="btn-primary" type="button" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">Print Preview</button>
+                <div id="batch-print-tab-action-row" style="display: flex; gap: 12px; justify-content: flex-end; margin-bottom: 12px;">
+                    <button id="batch-print-btn" class="btn-primary" type="button" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">Print Summary</button>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid #e5e0d2;">
+                    <button id="batch-print-status-label" type="button" disabled style="padding: 10px 16px; font-size: 13px; cursor: default; background: transparent; color: #888; border: none;">Print both the summary and the acknowledgement to enable Final Confirm</button>
+                    <button id="batch-final-confirm-btn" class="btn-primary" type="button" disabled style="padding: 10px 20px; font-size: 14px; cursor: not-allowed; background: #b8c2cc; color: #fff; border: none; border-radius: 4px; opacity: 0.6;">Final Confirm</button>
                 </div>
             </div>
         </div>
@@ -850,10 +854,39 @@ ModuleComponents['hr-salary'] = (container) => {
     let currentBatchIdForPrint = null;
     let batchPrintSummaryData = null;
     let batchPrintTableData = null;
+    let batchPrintSummaryPrinted = false;
+    let batchPrintAcknowledgementPrinted = false;
     const batchTabSummaryBtn = document.getElementById('batch-tab-summary');
     const batchTabAcknowledgementBtn = document.getElementById('batch-tab-acknowledgement');
     const batchPrintBtn = document.getElementById('batch-print-btn');
     const batchPrintPreviewContent = document.getElementById('batch-print-preview-content');
+    const batchFinalConfirmBtn = document.getElementById('batch-final-confirm-btn');
+    const batchPrintStatusLabel = document.getElementById('batch-print-status-label');
+
+    const updateBatchFinalConfirmState = () => {
+        if (!batchFinalConfirmBtn) return;
+        const canFinalConfirm = batchPrintSummaryPrinted && batchPrintAcknowledgementPrinted;
+        batchFinalConfirmBtn.disabled = !canFinalConfirm;
+        if (canFinalConfirm) {
+            batchFinalConfirmBtn.style.cursor = 'pointer';
+            batchFinalConfirmBtn.style.background = '';
+            batchFinalConfirmBtn.style.opacity = '1';
+        } else {
+            batchFinalConfirmBtn.style.cursor = 'not-allowed';
+            batchFinalConfirmBtn.style.background = '#b8c2cc';
+            batchFinalConfirmBtn.style.opacity = '0.6';
+        }
+        if (batchPrintStatusLabel) {
+            if (canFinalConfirm) {
+                batchPrintStatusLabel.textContent = 'Both printables completed. You may now finalize the batch.';
+            } else {
+                const missing = [];
+                if (!batchPrintSummaryPrinted) missing.push('Summary');
+                if (!batchPrintAcknowledgementPrinted) missing.push('Acknowledgement');
+                batchPrintStatusLabel.textContent = `Print ${missing.join(' and ')} to enable Final Confirm`;
+            }
+        }
+    };
 
     const setBatchPrintTab = (tab) => {
         batchPrintActiveTab = tab;
@@ -861,7 +894,16 @@ ModuleComponents['hr-salary'] = (container) => {
             batchTabSummaryBtn.classList.toggle('active', tab === 'summary');
             batchTabAcknowledgementBtn.classList.toggle('active', tab === 'acknowledgement');
         }
+        if (batchPrintBtn) {
+            if (tab === 'acknowledgement') {
+                batchPrintBtn.textContent = 'Print Acknowledgement';
+            } else {
+                batchPrintBtn.textContent = 'Print Summary';
+            }
+        }
     };
+
+    updateBatchFinalConfirmState();
 
     const gatherBatchPrintData = async () => {
         const overviewTbody = document.getElementById('salary-overview-tbody');
@@ -1261,12 +1303,17 @@ ModuleComponents['hr-salary'] = (container) => {
         batchPrintBtn.addEventListener('click', () => {
             if (batchPrintActiveTab === 'acknowledgement') {
                 if (currentBatchIdForPrint) {
+                    batchPrintAcknowledgementPrinted = true;
+                    updateBatchFinalConfirmState();
                     window.open(`/api/batch-payroll/${currentBatchIdForPrint}/acknowledgement-pdf`, '_blank');
                 } else {
                     alert('Please confirm the batch payroll first to generate the acknowledgement receipt.');
                 }
                 return;
             }
+
+            batchPrintSummaryPrinted = true;
+            updateBatchFinalConfirmState();
 
             const existingStyle = document.getElementById('batch-print-isolation-style');
             if (existingStyle) existingStyle.remove();
@@ -2488,6 +2535,40 @@ function initializeModule(contentArea) {
                     console.error('Failed to gather batch print data:', e);
                 }
 
+                currentBatchIdForPrint = null;
+                batchPrintSummaryPrinted = false;
+                batchPrintAcknowledgementPrinted = false;
+                updateBatchFinalConfirmState();
+
+                batchPrintPreviewModal.style.display = 'flex';
+                setBatchPrintTab('summary');
+
+                renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
+            } catch (err) {
+                console.error('Open batch print preview error:', err);
+                alert(err.message || 'Failed to open batch payroll preview');
+            } finally {
+                confirmBatchPayrollBtn.disabled = false;
+            }
+        });
+    }
+
+    if (batchFinalConfirmBtn) {
+        batchFinalConfirmBtn.addEventListener('click', async () => {
+            if (batchFinalConfirmBtn.disabled) return;
+            if (!pendingBatchConfirmData) {
+                alert('No batch payroll data available to confirm.');
+                return;
+            }
+
+            const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
+            const previousLabel = batchFinalConfirmBtn.textContent;
+            batchFinalConfirmBtn.disabled = true;
+            batchFinalConfirmBtn.textContent = 'Confirming...';
+            batchFinalConfirmBtn.style.cursor = 'not-allowed';
+            batchFinalConfirmBtn.style.opacity = '0.6';
+
+            try {
                 const res = await fetch('/api/batch-payroll/confirm', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2509,26 +2590,29 @@ function initializeModule(contentArea) {
                     currentBatchIdForPrint = result.batch.batch_payroll_id;
                 }
 
-                batchPrintPreviewModal.style.display = 'flex';
-                setBatchPrintTab('acknowledgement');
-
-                const contentEl = document.getElementById('batch-print-preview-content');
-                if (contentEl) {
-                    contentEl.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #666; font-size: 14px;">Loading acknowledgement receipt...</div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
-                }
-
-                renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
-
                 await loadPendingPayrolls();
                 await loadBatchPayrolls();
                 await loadSalaryHistory();
                 await loadMonthlySalaryComparison();
                 pendingBatchConfirmData = null;
+                batchPrintSummaryPrinted = false;
+                batchPrintAcknowledgementPrinted = false;
+                updateBatchFinalConfirmState();
+
+                if (batchPrintPreviewModal) batchPrintPreviewModal.style.display = 'none';
+
+                const confirmedModal = document.getElementById('batch-confirmed-modal');
+                if (confirmedModal) {
+                    confirmedModal.style.display = 'flex';
+                } else {
+                    alert('Batch payroll confirmed successfully.');
+                }
             } catch (err) {
-                console.error('Confirm batch payroll error:', err);
+                console.error('Final confirm batch payroll error:', err);
                 alert(err.message || 'Failed to confirm batch payroll');
             } finally {
-                confirmBatchPayrollBtn.disabled = false;
+                batchFinalConfirmBtn.textContent = previousLabel;
+                updateBatchFinalConfirmState();
             }
         });
     }
