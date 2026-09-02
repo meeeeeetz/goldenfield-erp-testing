@@ -358,9 +358,9 @@ class BatchPayrollController {
             <body>
                 ${pages.map(page => {
                     const rows = page.map(item => {
-                        const grossPay = (Number(item.total_days_worked) || 0) + (Number(item.total_overtime_hours) || 0) + (Number(item.total_allowance) || 0) + (Number(item.total_leaves_usage) || 0) + (Number(item.regular_holiday) || 0) + (Number(item.special_holiday) || 0);
+                        const grossPay = Number(item.gross_pay) || 0;
                         const grossDeduction = (Number(item.total_income_tax) || 0) + (Number(item.total_sss_payment) || 0) + (Number(item.total_sss_loan_payment) || 0) + (Number(item.total_philhealth_payment) || 0) + (Number(item.total_pagibig_payment) || 0) + (Number(item.total_pagibig_loan_payment) || 0) + (Number(item.total_cash_loan_deductions) || 0) + (Number(item.total_losses_damages) || 0);
-                        const netPay = grossPay - grossDeduction;
+                        const netPay = Number(item.net_pay) || 0;
 
                         const deductions = [];
                         if ((Number(item.total_sss_payment) || 0) > 0) deductions.push({ label: 'SSS', amount: item.total_sss_payment });
@@ -375,6 +375,8 @@ class BatchPayrollController {
                                 <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
                             </tr>
                         `).join('');
+
+                        const basicAmount = grossPay - (Number(item.total_allowance) || 0) - (Number(item.total_overtime_hours) || 0) - (Number(item.regular_holiday) || 0) - (Number(item.special_holiday) || 0) - (Number(item.total_leaves_usage) || 0);
 
                         return `
                             <div class="acknowledgement-page">
@@ -391,9 +393,8 @@ class BatchPayrollController {
                                 <table class="acknowledgement-table">
                                     <thead>
                                         <tr>
-                                            <th style="width: 30%;">EARNINGS</th>
-                                            <th style="width: 15%; text-align: center;">AMOUNT</th>
-                                            <th style="width: 15%; text-align: center;">ADJUSTMENTS</th>
+                                            <th style="width: 35%;">EARNINGS</th>
+                                            <th style="width: 25%; text-align: right;">AMOUNT</th>
                                             <th style="width: 20%;">DEDUCTIONS</th>
                                             <th style="width: 20%; text-align: right;">AMOUNT</th>
                                         </tr>
@@ -401,33 +402,29 @@ class BatchPayrollController {
                                     <tbody>
                                         <tr>
                                             <td style="text-align: left;">Basic ${item.total_days_worked ? Number(item.total_days_worked).toFixed(2) : '0.00'}</td>
-                                            <td style="text-align: right;">${fmtNum(grossPay)}</td>
-                                            <td style="text-align: center;"></td>
+                                            <td style="text-align: right;">${fmtNum(basicAmount)}</td>
                                             <td style="text-align: left;"></td>
                                             <td style="text-align: right;"></td>
                                         </tr>
                                         <tr>
                                             <td style="text-align: left;">Allowance</td>
                                             <td style="text-align: right;">${fmtNum(item.total_allowance || 0)}</td>
-                                            <td style="text-align: center;">1st</td>
                                             <td style="text-align: left;"></td>
                                             <td style="text-align: right;"></td>
                                         </tr>
                                         <tr>
                                             <td style="text-align: left;">OT ${item.total_overtime_hours ? Number(item.total_overtime_hours).toFixed(2) : '0.00'}</td>
                                             <td style="text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td>
-                                            <td style="text-align: center;">2nd</td>
                                             <td style="text-align: left;"></td>
                                             <td style="text-align: right;"></td>
                                         </tr>
                                         <tr>
                                             <td style="text-align: left;">Others</td>
                                             <td style="text-align: right;">${fmtNum(0)}</td>
-                                            <td style="text-align: center;"></td>
                                             <td style="text-align: left;"></td>
                                             <td style="text-align: right;"></td>
                                         </tr>
-                                        ${deductionRows.length > 0 ? deductionRows : '<tr><td style="text-align: left;" colspan="3"></td><td style="text-align: left;">No deductions</td><td style="text-align: right;"></td></tr>'}
+                                        ${deductionRows.length > 0 ? deductionRows : '<tr><td style="text-align: left;" colspan="2"></td><td style="text-align: left;">No deductions</td><td style="text-align: right;"></td></tr>'}
                                     </tbody>
                                 </table>
                                 <div class="acknowledgement-totals">

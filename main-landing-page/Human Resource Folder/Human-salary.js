@@ -868,7 +868,7 @@ ModuleComponents['hr-salary'] = (container) => {
         }
     };
 
-    const gatherBatchPrintData = () => {
+    const gatherBatchPrintData = async () => {
         const overviewTbody = document.getElementById('salary-overview-tbody');
         if (!overviewTbody) return null;
 
@@ -887,36 +887,13 @@ ModuleComponents['hr-salary'] = (container) => {
         const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
         const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
 
-        const startDates = rows.map(row => {
-            const cells = row.querySelectorAll('td');
-            return cells[4]?.textContent.trim();
-        }).filter(Boolean).map(d => new Date(d).getTime()).filter(t => !isNaN(t));
-        const endDates = rows.map(row => {
-            const cells = row.querySelectorAll('td');
-            return cells[5]?.textContent.trim();
-        }).filter(Boolean).map(d => new Date(d).getTime()).filter(t => !isNaN(t));
-
-        const formatDateShort = (date) => {
-            if (!date || isNaN(date.getTime())) return '';
-            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        };
-
-        const startingPayPeriod = startDates.length ? new Date(Math.min(...startDates)) : null;
-        const endingPayPeriod = endDates.length ? new Date(Math.max(...endDates)) : null;
-
-        const summaryData = {
-            payPeriod: startingPayPeriod && endingPayPeriod ? `${formatDateShort(startingPayPeriod)} - ${formatDateShort(endingPayPeriod)}` : '-',
-            payPeriodFrom: startingPayPeriod ? formatDateShort(startingPayPeriod) : '',
-            payPeriodTo: endingPayPeriod ? formatDateShort(endingPayPeriod) : '',
-            employeeCount: employeeCountEl?.value || rows.length,
-            grossPay: grossPayEl?.value || '0.00',
-            grossDeduction: grossDeductionEl?.value || '0.00',
-            netPay: netPayEl?.value || '0.00'
-        };
-
+        const payrollIds = [];
         const tableData = rows.map(row => {
             const cells = row.querySelectorAll('td');
+            const payrollId = cells[0]?.textContent.trim() || '';
+            if (payrollId) payrollIds.push(payrollId);
             return {
+                payrollId,
                 employeeId: cells[1]?.textContent.trim() || '',
                 lastName: cells[2]?.textContent.trim() || '',
                 firstName: cells[3]?.textContent.trim() || '',
@@ -944,14 +921,76 @@ ModuleComponents['hr-salary'] = (container) => {
             };
         });
 
-        return { summaryData, tableData };
+        let enrichedTableData = tableData;
+        if (payrollIds.length > 0) {
+            try {
+                const payrollPromises = payrollIds.map(id => fetch(`/api/payroll/${encodeURIComponent(id)}`).then(res => res.ok ? res.json() : null).catch(() => null));
+                const payrollRecords = await Promise.all(payrollPromises);
+                const payrollMap = {};
+                payrollRecords.forEach(p => { if (p && p.payroll_id) payrollMap[p.payroll_id] = p; });
+
+                enrichedTableData = tableData.map(row => {
+                    const payroll = payrollMap[row.payrollId];
+                    if (!payroll) return row;
+                    return {
+                        ...row,
+                        date_start: payroll.date_start || '',
+                        date_end: payroll.date_end || '',
+                        gross_pay: Number(payroll.gross_pay) || row.grossPay,
+                        net_pay: Number(payroll.net_pay) || row.netPay,
+                        total_income_tax: Number(payroll.total_income_tax) || row.totalTax,
+                        total_sss_payment: Number(payroll.total_sss_payment) || row.totalSss,
+                        total_sss_loan_payment: Number(payroll.total_sss_loan_payment) || row.totalSssLoan,
+                        total_philhealth_payment: Number(payroll.total_philhealth_payment) || row.totalPhilhealth,
+                        total_pagibig_payment: Number(payroll.total_pagibig_payment) || row.totalPagibig,
+                        total_pagibig_loan_payment: Number(payroll.total_pagibig_loan_payment) || row.totalPagibigLoan,
+                        total_cash_loan_deductions: Number(payroll.total_cash_loan_deductions) || row.totalCashLoanDeductions,
+                        total_losses_damages: Number(payroll.total_losses_damages) || row.totalLossesDeductions,
+                        starting_cash_loan: Number(payroll.starting_cash_loan) || row.startingCashLoan,
+                        ending_cash_loan: Number(payroll.ending_cash_loan) || row.endingCashLoan,
+                        starting_losses_damages: Number(payroll.starting_losses_damages) || row.startingLosses,
+                        ending_losses_damages: Number(payroll.ending_losses_damages) || row.endingLosses
+                    };
+                });
+            } catch (e) {
+                console.error('Failed to fetch payroll details for print preview:', e);
+            }
+        }
+
+        const formatDateShort = (d) => {
+            if (!d || isNaN(new Date(d).getTime())) return '';
+            const date = new Date(d);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const startDates = enrichedTableData.map(row => row.date_start).filter(Boolean);
+        const endDates = enrichedTableData.map(row => row.date_end).filter(Boolean);
+        const startingPayPeriod = startDates.length ? new Date(Math.min(...startDates.map(d => new Date(d).getTime()))) : null;
+        const endingPayPeriod = endDates.length ? new Date(Math.max(...endDates.map(d => new Date(d).getTime()))) : null;
+
+        const formatPayPeriod = (date) => {
+            if (!date || isNaN(date.getTime())) return '';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+
+        const summaryData = {
+            payPeriod: startingPayPeriod && endingPayPeriod ? `${formatPayPeriod(startingPayPeriod)} - ${formatPayPeriod(endingPayPeriod)}` : '-',
+            payPeriodFrom: startingPayPeriod ? formatPayPeriod(startingPayPeriod) : '',
+            payPeriodTo: endingPayPeriod ? formatPayPeriod(endingPayPeriod) : '',
+            employeeCount: employeeCountEl?.value || rows.length,
+            grossPay: grossPayEl?.value || '0.00',
+            grossDeduction: grossDeductionEl?.value || '0.00',
+            netPay: netPayEl?.value || '0.00'
+        };
+
+        return { summaryData, tableData: enrichedTableData };
     };
 
     if (batchTabSummaryBtn) {
-        batchTabSummaryBtn.addEventListener('click', () => {
+        batchTabSummaryBtn.addEventListener('click', async () => {
             setBatchPrintTab('summary');
             if (!batchPrintSummaryData || !batchPrintTableData) {
-                const gathered = gatherBatchPrintData();
+                const gathered = await gatherBatchPrintData();
                 if (gathered) {
                     batchPrintSummaryData = gathered.summaryData;
                     batchPrintTableData = gathered.tableData;
@@ -962,10 +1001,10 @@ ModuleComponents['hr-salary'] = (container) => {
     }
 
     if (batchTabAcknowledgementBtn) {
-        batchTabAcknowledgementBtn.addEventListener('click', () => {
+        batchTabAcknowledgementBtn.addEventListener('click', async () => {
             setBatchPrintTab('acknowledgement');
             if (!batchPrintSummaryData || !batchPrintTableData) {
-                const gathered = gatherBatchPrintData();
+                const gathered = await gatherBatchPrintData();
                 if (gathered) {
                     batchPrintSummaryData = gathered.summaryData;
                     batchPrintTableData = gathered.tableData;
@@ -1004,9 +1043,9 @@ ModuleComponents['hr-salary'] = (container) => {
 
             contentEl.innerHTML = pages.map(page => {
                 const rows = page.map(row => {
-                    const grossPay = (row.totalDays || 0) + (row.totalOvertime || 0) + (row.totalAllowance || 0) + (row.totalLeaves || 0) + (row.regularHoliday || 0) + (row.specialHoliday || 0);
-                    const grossDeduction = (row.totalTax || 0) + (row.totalSss || 0) + (row.totalSssLoan || 0) + (row.totalPhilhealth || 0) + (row.totalPagibig || 0) + (row.totalPagibigLoan || 0) + (row.totalCashLoanDeductions || 0) + (row.totalLossesDeductions || 0);
-                    const netPay = grossPay - grossDeduction;
+                    const grossPay = Number(row.gross_pay || row.grossPay) || 0;
+                    const grossDeduction = Number(row.grossDeduction) || 0;
+                    const netPay = Number(row.net_pay || row.netPay) || 0;
 
                     const deductions = [];
                     if ((row.totalSss || 0) > 0) deductions.push({ label: 'SSS', amount: row.totalSss });
@@ -1024,6 +1063,8 @@ ModuleComponents['hr-salary'] = (container) => {
 
                     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+                    const basicAmount = grossPay - (Number(row.totalAllowance) || 0) - (Number(row.totalOvertime) || 0) - (Number(row.regularHoliday) || 0) - (Number(row.specialHoliday) || 0) - (Number(row.totalLeaves) || 0);
+
                     return `
                         <div class="acknowledgement-page" style="border: 1px solid #000; padding: 10mm; margin-bottom: 5mm;">
                             <div class="acknowledgement-header">
@@ -1039,9 +1080,8 @@ ModuleComponents['hr-salary'] = (container) => {
                             <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
                                 <thead>
                                     <tr>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 30%;">EARNINGS</th>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center; width: 15%;">AMOUNT</th>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center; width: 15%;">ADJUSTMENTS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 35%;">EARNINGS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 25%;">AMOUNT</th>
                                         <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 20%;">DEDUCTIONS</th>
                                         <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
                                     </tr>
@@ -1049,33 +1089,29 @@ ModuleComponents['hr-salary'] = (container) => {
                                 <tbody>
                                     <tr>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Basic ${row.totalDays ? Number(row.totalDays).toFixed(2) : '0.00'}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(grossPay)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(basicAmount)}</td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                                     </tr>
                                     <tr>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Allowance</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum((row.totalAllowance || 0))}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">1st</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalAllowance || 0)}</td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                                     </tr>
                                     <tr>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT ${row.totalOvertime ? Number(row.totalOvertime).toFixed(2) : '0.00'}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum((row.totalOvertime || 0))}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">2nd</td>
+                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                                     </tr>
                                     <tr>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(0)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
                                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                                     </tr>
-                                    ${deductionRows.length > 0 ? deductionRows : '<tr><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="3"></td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td></tr>'}
+                                    ${deductionRows.length > 0 ? deductionRows : '<tr><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="2"></td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td></tr>'}
                                 </tbody>
                             </table>
                             <div class="acknowledgement-totals" style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px;">
