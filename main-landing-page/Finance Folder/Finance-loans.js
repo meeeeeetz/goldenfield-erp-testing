@@ -805,14 +805,6 @@ ModuleComponents['finance-loans'] = (container) => {
         });
     }
 
-                alert('Loan payment created successfully');
-                repayLoanModal.classList.add('hidden');
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        });
-    }
-
     // Loan Transactions Table
     var loanTransactionsData = [];
     var loanTransactionsCurrentPage = 1;
