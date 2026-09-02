@@ -361,6 +361,40 @@ class BatchPayrollController {
                         const grossPay = Number(item.gross_pay) || 0;
                         const grossDeduction = (Number(item.total_income_tax) || 0) + (Number(item.total_sss_payment) || 0) + (Number(item.total_sss_loan_payment) || 0) + (Number(item.total_philhealth_payment) || 0) + (Number(item.total_pagibig_payment) || 0) + (Number(item.total_pagibig_loan_payment) || 0) + (Number(item.total_cash_loan_deductions) || 0) + (Number(item.total_losses_damages) || 0);
                         const netPay = Number(item.net_pay) || 0;
+                        const basicAmount = grossPay - (Number(item.total_allowance) || 0) - (Number(item.total_overtime_hours) || 0) - (Number(item.regular_holiday) || 0) - (Number(item.special_holiday) || 0) - (Number(item.total_leaves_usage) || 0);
+
+                        const earningsRows = [];
+                        earningsRows.push(`<tr>
+                            <td style="text-align: left;">Basic</td>
+                            <td style="text-align: right;">${fmtNum(basicAmount)}</td>
+                            <td style="text-align: left;"></td>
+                            <td style="text-align: right;"></td>
+                        </tr>`);
+
+                        if ((Number(item.total_allowance) || 0) > 0) {
+                            earningsRows.push(`<tr>
+                                <td style="text-align: left;">Allowance</td>
+                                <td style="text-align: right;">${fmtNum(item.total_allowance || 0)}</td>
+                                <td style="text-align: left;"></td>
+                                <td style="text-align: right;"></td>
+                            </tr>`);
+                        }
+
+                        earningsRows.push(`<tr>
+                            <td style="text-align: left;">OT</td>
+                            <td style="text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td>
+                            <td style="text-align: center;">2nd</td>
+                            <td style="text-align: right;"></td>
+                        </tr>`);
+
+                        if ((Number(item.total_others || 0)) > 0) {
+                            earningsRows.push(`<tr>
+                                <td style="text-align: left;">Others</td>
+                                <td style="text-align: right;">${fmtNum(item.total_others || 0)}</td>
+                                <td style="text-align: center;"></td>
+                                <td style="text-align: right;"></td>
+                            </tr>`);
+                        }
 
                         const deductions = [];
                         if ((Number(item.total_sss_payment) || 0) > 0) deductions.push({ label: 'SSS', amount: item.total_sss_payment });
@@ -371,12 +405,18 @@ class BatchPayrollController {
 
                         const deductionRows = deductions.map(d => `
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
+                                <td style="text-align: left;"></td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: left;">${d.label}</td>
+                                <td style="text-align: right;">${fmtNum(d.amount)}</td>
                             </tr>
                         `).join('');
 
-                        const basicAmount = grossPay - (Number(item.total_allowance) || 0) - (Number(item.total_overtime_hours) || 0) - (Number(item.regular_holiday) || 0) - (Number(item.special_holiday) || 0) - (Number(item.total_leaves_usage) || 0);
+                        const noDeductionsRow = deductions.length === 0 ? `<tr>
+                            <td style="text-align: left;" colspan="2"></td>
+                            <td style="text-align: left;">No deductions</td>
+                            <td style="text-align: right;"></td>
+                        </tr>` : '';
 
                         return `
                             <div class="acknowledgement-page">
@@ -400,31 +440,9 @@ class BatchPayrollController {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td style="text-align: left;">Basic ${item.total_days_worked ? Number(item.total_days_worked).toFixed(2) : '0.00'}</td>
-                                            <td style="text-align: right;">${fmtNum(basicAmount)}</td>
-                                            <td style="text-align: left;"></td>
-                                            <td style="text-align: right;"></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="text-align: left;">Allowance</td>
-                                            <td style="text-align: right;">${fmtNum(item.total_allowance || 0)}</td>
-                                            <td style="text-align: left;"></td>
-                                            <td style="text-align: right;"></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="text-align: left;">OT ${item.total_overtime_hours ? Number(item.total_overtime_hours).toFixed(2) : '0.00'}</td>
-                                            <td style="text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td>
-                                            <td style="text-align: left;"></td>
-                                            <td style="text-align: right;"></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="text-align: left;">Others</td>
-                                            <td style="text-align: right;">${fmtNum(0)}</td>
-                                            <td style="text-align: left;"></td>
-                                            <td style="text-align: right;"></td>
-                                        </tr>
-                                        ${deductionRows.length > 0 ? deductionRows : '<tr><td style="text-align: left;" colspan="2"></td><td style="text-align: left;">No deductions</td><td style="text-align: right;"></td></tr>'}
+                                        ${earningsRows.join('')}
+                                        ${deductionRows}
+                                        ${noDeductionsRow}
                                     </tbody>
                                 </table>
                                 <div class="acknowledgement-totals">
@@ -445,13 +463,13 @@ class BatchPayrollController {
                         `;
                     }).join('');
 
-                    return `<div>${rows}</div>`;
-                }).join('')}
-            </body>
-            </html>
-        `;
+                return `<div>${rows}</div>`;
+            }).join('')}
+        </body>
+        </html>
+    `;
 
-        const browser = await puppeteer.launch({
+    const browser = await puppeteer.launch({
             headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });

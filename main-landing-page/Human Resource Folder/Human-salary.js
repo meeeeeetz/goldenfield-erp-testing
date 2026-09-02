@@ -1024,116 +1024,11 @@ ModuleComponents['hr-salary'] = (container) => {
         }
 
         if (tab === 'acknowledgement') {
-            const fmtNum = (val) => {
-                const n = Number(val) || 0;
-                return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            };
+            contentEl.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #666; font-size: 14px;">Loading acknowledgement receipt...</div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
 
-            const formatDateShort = (d) => {
-                if (!d) return '-';
-                const date = new Date(d);
-                if (isNaN(date.getTime())) return '-';
-                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-            };
-
-            const pages = [];
-            for (let i = 0; i < tableData.length; i += 6) {
-                pages.push(tableData.slice(i, i + 6));
-            }
-
-            contentEl.innerHTML = pages.map(page => {
-                const rows = page.map(row => {
-                    const grossPay = Number(row.gross_pay || row.grossPay) || 0;
-                    const grossDeduction = Number(row.grossDeduction) || 0;
-                    const netPay = Number(row.net_pay || row.netPay) || 0;
-
-                    const deductions = [];
-                    if ((row.totalSss || 0) > 0) deductions.push({ label: 'SSS', amount: row.totalSss });
-                    if ((row.totalPhilhealth || 0) > 0) deductions.push({ label: 'PhilHealth', amount: row.totalPhilhealth });
-                    if ((row.totalPagibig || 0) > 0) deductions.push({ label: 'Pag-IBIG', amount: row.totalPagibig });
-                    if ((row.totalCashLoanDeductions || 0) > 0) deductions.push({ label: 'Cash Loan', amount: row.totalCashLoanDeductions });
-                    if ((row.totalLossesDeductions || 0) > 0) deductions.push({ label: 'Losses/Damages', amount: row.totalLossesDeductions });
-
-                    const deductionRows = deductions.map(d => `
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
-                            <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
-                        </tr>
-                    `).join('');
-
-                    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-                    const basicAmount = grossPay - (Number(row.totalAllowance) || 0) - (Number(row.totalOvertime) || 0) - (Number(row.regularHoliday) || 0) - (Number(row.specialHoliday) || 0) - (Number(row.totalLeaves) || 0);
-
-                    return `
-                        <div class="acknowledgement-page" style="border: 1px solid #000; padding: 10mm; margin-bottom: 5mm;">
-                            <div class="acknowledgement-header">
-                                <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
-                                <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
-                            </div>
-                            <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
-                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
-                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
-                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">From:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodFrom)}</span></div>
-                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">To:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodTo)}</span></div>
-                            </div>
-                            <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
-                                <thead>
-                                    <tr>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 35%;">EARNINGS</th>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 25%;">AMOUNT</th>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 20%;">DEDUCTIONS</th>
-                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Basic ${row.totalDays ? Number(row.totalDays).toFixed(2) : '0.00'}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(basicAmount)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Allowance</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalAllowance || 0)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT ${row.totalOvertime ? Number(row.totalOvertime).toFixed(2) : '0.00'}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(0)}</td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
-                                    </tr>
-                                    ${deductionRows.length > 0 ? deductionRows : '<tr><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="2"></td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td><td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td></tr>'}
-                                </tbody>
-                            </table>
-                            <div class="acknowledgement-totals" style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px;">
-                                <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
-                                <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
-                                <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
-                            </div>
-                            <div class="acknowledgement-signature" style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px;">
-                                <div>
-                                    <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Authorized Signature</div>
-                                </div>
-                                <div>
-                                    <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Date</div>
-                                    <div style="text-align: center;">${today}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                return `<div>${rows}</div>`;
-            }).join('');
+            setTimeout(() => {
+                renderAcknowledgementContent(contentEl, summaryData, tableData);
+            }, 100);
             return;
         }
 
@@ -1227,6 +1122,137 @@ ModuleComponents['hr-salary'] = (container) => {
                 </div>
             </div>
     `;
+    };
+
+    const renderAcknowledgementContent = (contentEl, summaryData, tableData) => {
+        const fmtNum = (val) => {
+            const n = Number(val) || 0;
+            return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const formatDateShort = (d) => {
+            if (!d) return '-';
+            const date = new Date(d);
+            if (isNaN(date.getTime())) return '-';
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const pages = [];
+        for (let i = 0; i < tableData.length; i += 6) {
+            pages.push(tableData.slice(i, i + 6));
+        }
+
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        contentEl.innerHTML = pages.map(page => {
+            const rows = page.map(row => {
+                const grossPay = Number(row.gross_pay || row.grossPay) || 0;
+                const grossDeduction = Number(row.grossDeduction) || 0;
+                const netPay = Number(row.net_pay || row.netPay) || 0;
+                const basicAmount = grossPay - (Number(row.totalAllowance) || 0) - (Number(row.totalOvertime) || 0) - (Number(row.regularHoliday) || 0) - (Number(row.specialHoliday) || 0) - (Number(row.totalLeaves) || 0);
+
+                const earningsRows = [];
+                earningsRows.push(`<tr>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Basic</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(basicAmount)}</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                </tr>`);
+
+                if ((row.totalAllowance || 0) > 0) {
+                    earningsRows.push(`<tr>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Allowance</td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalAllowance)}</td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                    </tr>`);
+                }
+
+                earningsRows.push(`<tr>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;">2nd</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                </tr>`);
+
+                if ((row.totalOthers || 0) > 0) {
+                    earningsRows.push(`<tr>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOthers)}</td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: center;"></td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                    </tr>`);
+                }
+
+                const deductions = [];
+                if ((row.totalSss || 0) > 0) deductions.push({ label: 'SSS', amount: row.totalSss });
+                if ((row.totalPhilhealth || 0) > 0) deductions.push({ label: 'PhilHealth', amount: row.totalPhilhealth });
+                if ((row.totalPagibig || 0) > 0) deductions.push({ label: 'Pag-IBIG', amount: row.totalPagibig });
+                if ((row.totalCashLoanDeductions || 0) > 0) deductions.push({ label: 'Cash Loan', amount: row.totalCashLoanDeductions });
+                if ((row.totalLossesDeductions || 0) > 0) deductions.push({ label: 'Losses/Damages', amount: row.totalLossesDeductions });
+
+                const deductionRows = deductions.map(d => `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
+                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
+                    </tr>
+                `).join('');
+
+                const noDeductionsRow = deductions.length === 0 ? `<tr>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="2"></td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                </tr>` : '';
+
+                return `
+                    <div class="acknowledgement-page" style="border: 1px solid #000; padding: 10mm; margin-bottom: 5mm;">
+                        <div class="acknowledgement-header">
+                            <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
+                            <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
+                        </div>
+                        <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
+                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
+                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">From:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodFrom)}</span></div>
+                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">To:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodTo)}</span></div>
+                        </div>
+                        <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 35%;">EARNINGS</th>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 25%;">AMOUNT</th>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 20%;">DEDUCTIONS</th>
+                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${earningsRows.join('')}
+                                ${deductionRows}
+                                ${noDeductionsRow}
+                            </tbody>
+                        </table>
+                        <div class="acknowledgement-totals" style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px;">
+                            <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                            <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                            <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                        </div>
+                        <div class="acknowledgement-signature" style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px;">
+                            <div>
+                                <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Authorized Signature</div>
+                            </div>
+                            <div>
+                                <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Date</div>
+                                <div style="text-align: center;">${today}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `<div>${rows}</div>`;
+        }).join('');
     };
 
     if (batchPrintBtn && batchPrintPreviewContent) {
