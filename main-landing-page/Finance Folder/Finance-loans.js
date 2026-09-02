@@ -122,18 +122,16 @@ ModuleComponents['finance-loans'] = (container) => {
                     <table class="data-table product-table">
                         <thead>
                             <tr>
-                                <th>Account ID</th>
-                                <th>Name</th>
+                                <th>Loan Account ID</th>
+                                <th>Company/Individual</th>
+                                <th>Contact Details</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>ACC-001</td><td>ABC Bank</td><td>Active</td></tr>
-                            <tr><td>ACC-002</td><td>Private Lender A</td><td>Active</td></tr>
-                            <tr><td>ACC-003</td><td>Supplier Credit</td><td>Active</td></tr>
-                            <tr><td>ACC-004</td><td>Equipment Finance</td><td>Closed</td></tr>
+                        <tbody id="loan-accounts-table-body">
                         </tbody>
                     </table>
+                    <div class="pagination" id="loan-accounts-pagination"></div>
                 </div>
             </div>
         </div>
@@ -221,6 +219,76 @@ ModuleComponents['finance-loans'] = (container) => {
         }
     };
 
+    // Loan Accounts Table
+    var loanAccountsData = [];
+    var loanAccountsCurrentPage = 1;
+    var loanAccountsPerPage = 5;
+
+    async function loadLoanAccountsTable() {
+        const tbody = document.getElementById('loan-accounts-table-body');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(API_BASE + '?search=Active', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch loan accounts');
+            loanAccountsData = await res.json();
+            // Filter only active accounts
+            loanAccountsData = loanAccountsData.filter(a => a.status === 'Active');
+            renderLoanAccountsTable();
+        } catch (err) {
+            console.error('Failed to load loan accounts', err);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+        }
+    }
+
+    function renderLoanAccountsTable() {
+        const tbody = document.getElementById('loan-accounts-table-body');
+        if (!tbody) return;
+
+        const start = (loanAccountsCurrentPage - 1) * loanAccountsPerPage;
+        const end = start + loanAccountsPerPage;
+        const pageData = loanAccountsData.slice(start, end);
+
+        let rows = pageData.map(account => `
+            <tr>
+                <td>${account.loan_account_id || '-'}</td>
+                <td>${account.company_individual || '-'}</td>
+                <td>${account.contact_details || '-'}</td>
+                <td>${account.status || '-'}</td>
+            </tr>
+        `).join('');
+
+        // Fill remaining rows to always show 5
+        const emptyRowsNeeded = loanAccountsPerPage - pageData.length;
+        for (let i = 0; i < emptyRowsNeeded; i++) {
+            rows += '<tr class="empty-row"><td colspan="4" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
+        }
+
+        tbody.innerHTML = rows;
+
+        // Render pagination
+        const totalPages = Math.max(1, Math.ceil(loanAccountsData.length / loanAccountsPerPage));
+        renderLoanAccountsPagination(totalPages);
+    }
+
+    function renderLoanAccountsPagination(totalPages) {
+        const container = document.getElementById('loan-accounts-pagination');
+        if (!container || totalPages < 2) {
+            if (container) container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="page-btn" ${loanAccountsCurrentPage === 1 ? 'disabled' : ''} onclick="loanAccountsCurrentPage--; renderLoanAccountsTable();">&lt;</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn ${i === loanAccountsCurrentPage ? 'active' : ''}" onclick="loanAccountsCurrentPage=${i}; renderLoanAccountsTable();">${i}</button>`;
+        }
+        html += `<button class="page-btn" ${loanAccountsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanAccountsCurrentPage++; renderLoanAccountsTable();">&gt;</button>`;
+        container.innerHTML = html;
+    }
+
     // Load next ID
     async function loadNextLoanAccountId() {
         try {
@@ -273,6 +341,7 @@ ModuleComponents['finance-loans'] = (container) => {
                 document.getElementById('create-loan-contact').value = '';
                 document.getElementById('create-loan-status').value = 'Active';
                 loadNextLoanAccountId();
+                loadLoanAccountsTable();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -378,6 +447,7 @@ ModuleComponents['finance-loans'] = (container) => {
                 }
 
                 alert('Loan account updated successfully');
+                loadLoanAccountsTable();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -447,6 +517,9 @@ ModuleComponents['finance-loans'] = (container) => {
 
     setupContactNumber(document.getElementById('create-loan-contact'));
     setupContactNumber(document.getElementById('edit-loan-contact'));
+
+    // Load loan accounts table on init
+    loadLoanAccountsTable();
 };
 
 function initializeModule(contentArea) {
