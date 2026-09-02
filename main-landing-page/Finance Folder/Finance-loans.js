@@ -204,6 +204,95 @@ ModuleComponents['finance-loans'] = (container) => {
                 </div>
             </div>
         </div>
+
+        <!-- Apply for Loan Modal -->
+        <div id="apply-loan-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px; width: 95%;">
+                <div class="modal-header-row">
+                    <h3>Loan Application</h3>
+                    <button class="modal-close-btn" id="close-apply-loan-modal">&times;</button>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Application ID</label>
+                    <input type="text" id="apply-loan-id" readonly />
+                </div>
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Date Start</label>
+                        <input type="date" id="apply-loan-date-start" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Date End</label>
+                        <input type="date" id="apply-loan-date-end" />
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Account</label>
+                    <select id="apply-loan-account" class="modal-select">
+                        <option value="">Select Loan Account</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Balance</label>
+                    <input type="text" id="apply-loan-balance" readonly placeholder="P 0.00" />
+                </div>
+                <div class="modal-field">
+                    <label>Amount</label>
+                    <input type="number" id="apply-loan-amount" placeholder="P 0.00" step="0.01" min="0" />
+                </div>
+                <div class="modal-tab-actions">
+                    <button id="save-apply-loan-btn" class="btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repay Loan Modal -->
+        <div id="repay-loan-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px; width: 95%;">
+                <div class="modal-header-row">
+                    <h3>Loan Payments</h3>
+                    <button class="modal-close-btn" id="close-repay-loan-modal">&times;</button>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Payment ID</label>
+                    <input type="text" id="repay-loan-id" readonly />
+                </div>
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Date Start</label>
+                        <input type="date" id="repay-loan-date-start" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Date End</label>
+                        <input type="date" id="repay-loan-date-end" />
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Account</label>
+                    <select id="repay-loan-account" class="modal-select">
+                        <option value="">Select Loan Account</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>Loan Balance</label>
+                    <input type="text" id="repay-loan-balance" readonly placeholder="P 0.00" />
+                </div>
+                <div class="modal-field">
+                    <label>Payment Type</label>
+                    <select id="repay-loan-payment-type" class="modal-select">
+                        <option value="Principal">Principal</option>
+                        <option value="Interest">Interest</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>Amount</label>
+                    <input type="number" id="repay-loan-amount" placeholder="P 0.00" step="0.01" min="0" />
+                </div>
+                <div class="modal-tab-actions">
+                    <button id="save-repay-loan-btn" class="btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
     `;
 
     const API_BASE = '/api/loan-accounts';
@@ -517,6 +606,187 @@ ModuleComponents['finance-loans'] = (container) => {
 
     setupContactNumber(document.getElementById('create-loan-contact'));
     setupContactNumber(document.getElementById('edit-loan-contact'));
+
+    // Apply for Loan Modal
+    const API_BASE_LOAN_APPLY = '/api/loan-applications';
+    const API_BASE_LOAN_REPAY = '/api/loan-repayments';
+
+    async function loadNextLoanApplicationId() {
+        try {
+            const res = await fetch(API_BASE_LOAN_APPLY + '/next-id', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const data = await res.json();
+            document.getElementById('apply-loan-id').value = data.loan_application_id || 'LoAppID-1';
+        } catch (err) {
+            document.getElementById('apply-loan-id').value = 'LoAppID-1';
+        }
+    }
+
+    async function loadNextLoanPaymentId() {
+        try {
+            const res = await fetch(API_BASE_LOAN_REPAY + '/next-id', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const data = await res.json();
+            document.getElementById('repay-loan-id').value = data.loan_payment_id || 'LoPayID-1';
+        } catch (err) {
+            document.getElementById('repay-loan-id').value = 'LoPayID-1';
+        }
+    }
+
+    async function loadLoanAccountsForDropdown(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        try {
+            const res = await fetch(API_BASE, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const accounts = await res.json();
+            const activeAccounts = accounts.filter(a => a.status === 'Active');
+            select.innerHTML = '<option value="">Select Loan Account</option>' +
+                activeAccounts.map(a => `<option value="${a.loan_account_id}">${a.loan_account_id} - ${a.company_individual}</option>`).join('');
+        } catch (err) {
+            console.error('Failed to load loan accounts for dropdown:', err);
+        }
+    }
+
+    const applyLoanBtn = document.getElementById('apply-loan-btn');
+    const applyLoanModal = document.getElementById('apply-loan-modal');
+    const closeApplyLoanBtn = document.getElementById('close-apply-loan-modal');
+
+    if (applyLoanBtn) {
+        applyLoanBtn.addEventListener('click', () => {
+            applyLoanModal.classList.remove('hidden');
+            loadNextLoanApplicationId();
+            loadLoanAccountsForDropdown('apply-loan-account');
+        });
+    }
+
+    if (closeApplyLoanBtn) {
+        closeApplyLoanBtn.addEventListener('click', () => {
+            applyLoanModal.classList.add('hidden');
+        });
+    }
+
+    if (applyLoanModal) {
+        applyLoanModal.addEventListener('click', (e) => {
+            if (e.target === applyLoanModal) applyLoanModal.classList.add('hidden');
+        });
+    }
+
+    const saveApplyLoanBtn = document.getElementById('save-apply-loan-btn');
+    if (saveApplyLoanBtn) {
+        saveApplyLoanBtn.addEventListener('click', async () => {
+            const loanAppId = document.getElementById('apply-loan-id').value.trim();
+            const dateStart = document.getElementById('apply-loan-date-start').value;
+            const dateEnd = document.getElementById('apply-loan-date-end').value;
+            const loanAccount = document.getElementById('apply-loan-account').value;
+            const amount = document.getElementById('apply-loan-amount').value;
+
+            if (!loanAppId || !dateStart || !dateEnd || !loanAccount || !amount) {
+                alert('All fields are required');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE_LOAN_APPLY, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        loan_application_id: loanAppId,
+                        date_start: dateStart,
+                        date_end: dateEnd,
+                        loan_account_id: loanAccount,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to create loan application');
+                }
+
+                alert('Loan application created successfully');
+                applyLoanModal.classList.add('hidden');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    }
+
+    // Repay Loan Modal
+    const repayLoanBtn = document.getElementById('repay-loan-btn');
+    const repayLoanModal = document.getElementById('repay-loan-modal');
+    const closeRepayLoanBtn = document.getElementById('close-repay-loan-modal');
+
+    if (repayLoanBtn) {
+        repayLoanBtn.addEventListener('click', () => {
+            repayLoanModal.classList.remove('hidden');
+            loadNextLoanPaymentId();
+            loadLoanAccountsForDropdown('repay-loan-account');
+        });
+    }
+
+    if (closeRepayLoanBtn) {
+        closeRepayLoanBtn.addEventListener('click', () => {
+            repayLoanModal.classList.add('hidden');
+        });
+    }
+
+    if (repayLoanModal) {
+        repayLoanModal.addEventListener('click', (e) => {
+            if (e.target === repayLoanModal) repayLoanModal.classList.add('hidden');
+        });
+    }
+
+    const saveRepayLoanBtn = document.getElementById('save-repay-loan-btn');
+    if (saveRepayLoanBtn) {
+        saveRepayLoanBtn.addEventListener('click', async () => {
+            const loanPayId = document.getElementById('repay-loan-id').value.trim();
+            const dateStart = document.getElementById('repay-loan-date-start').value;
+            const dateEnd = document.getElementById('repay-loan-date-end').value;
+            const loanAccount = document.getElementById('repay-loan-account').value;
+            const paymentType = document.getElementById('repay-loan-payment-type').value;
+            const amount = document.getElementById('repay-loan-amount').value;
+
+            if (!loanPayId || !dateStart || !dateEnd || !loanAccount || !amount) {
+                alert('All fields are required');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE_LOAN_REPAY, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        loan_payment_id: loanPayId,
+                        date_start: dateStart,
+                        date_end: dateEnd,
+                        loan_account_id: loanAccount,
+                        payment_type: paymentType,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to create loan payment');
+                }
+
+                alert('Loan payment created successfully');
+                repayLoanModal.classList.add('hidden');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    }
 
     // Load loan accounts table on init
     loadLoanAccountsTable();
