@@ -386,3 +386,9 @@ ModuleComponents['systems-user-management'] = (container) => {
 
     loadCurrentUser();
 };
+
+function initializeModule(contentArea) {
+    const currentTab = window.__currentTabId || 'systems';
+    const render = ModuleComponents[currentTab] || ModuleComponents['systems'];
+    render(contentArea);
+}
