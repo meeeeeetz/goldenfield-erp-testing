@@ -17,7 +17,7 @@ ModuleComponents['finance-loans'] = (container) => {
                 </button>
                 <button id="loan-account-btn" class="btn-icon-circle">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                    <span class="btn-label">Add/remove loan account</span>
+                    <span class="btn-label">Loan Account Management</span>
                 </button>
             </div>
             <div class="tracking-cards-row">
@@ -137,7 +137,278 @@ ModuleComponents['finance-loans'] = (container) => {
                 </div>
             </div>
         </div>
+
+        <!-- Loan Account Management Modal -->
+        <div id="loan-account-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 700px; width: 95%;">
+                <div class="modal-header-row">
+                    <h3>Loan Account Management</h3>
+                    <button class="modal-close-btn" id="close-loan-account-modal">&times;</button>
+                </div>
+                <div class="modal-tabs">
+                    <button class="modal-tab active" id="tab-create-loan-account" onclick="switchLoanAccountTab('create')">Create New Loan Account</button>
+                    <button class="modal-tab" id="tab-edit-loan-account" onclick="switchLoanAccountTab('edit')">Edit Loan Account</button>
+                </div>
+                <div id="panel-create-loan-account" class="modal-tab-panel" style="display: block;">
+                    <div class="modal-field">
+                        <label>Loan Account ID</label>
+                        <input type="text" id="create-loan-account-id" readonly />
+                    </div>
+                    <div class="modal-field">
+                        <label>Company/Individual</label>
+                        <input type="text" id="create-loan-company" placeholder="Enter company or individual name" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Contact Details</label>
+                        <input type="text" id="create-loan-contact" placeholder="Enter contact details" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Status</label>
+                        <select id="create-loan-status" class="modal-select">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="modal-tab-actions">
+                        <button id="save-create-loan-account-btn" class="btn-primary">Save</button>
+                    </div>
+                </div>
+                <div id="panel-edit-loan-account" class="modal-tab-panel" style="display: none;">
+                    <div class="modal-field">
+                        <label>Search Account</label>
+                        <div style="position: relative;">
+                            <input type="text" id="edit-loan-account-search" placeholder="Search by company/individual name..." style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;" />
+                            <div id="edit-loan-account-search-results" style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>Loan Account ID</label>
+                        <input type="text" id="edit-loan-account-id" readonly />
+                    </div>
+                    <div class="modal-field">
+                        <label>Company/Individual</label>
+                        <input type="text" id="edit-loan-company" placeholder="Enter company or individual name" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Contact Details</label>
+                        <input type="text" id="edit-loan-contact" placeholder="Enter contact details" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Status</label>
+                        <select id="edit-loan-status" class="modal-select">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="modal-tab-actions">
+                        <button id="save-edit-loan-account-btn" class="btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
+
+    const API_BASE = '/api/loan-accounts';
+
+    // Tab switching
+    window.switchLoanAccountTab = function(tab) {
+        document.querySelectorAll('#loan-account-modal .modal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#loan-account-modal .modal-tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('tab-' + tab + '-loan-account').classList.add('active');
+        document.getElementById('panel-' + tab + '-loan-account').style.display = 'block';
+        if (tab === 'create') {
+            loadNextLoanAccountId();
+        }
+    };
+
+    // Load next ID
+    async function loadNextLoanAccountId() {
+        try {
+            const res = await fetch(API_BASE + '/next-id', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const data = await res.json();
+            document.getElementById('create-loan-account-id').value = data.loan_account_id || '';
+        } catch (err) {
+            console.error('Failed to load next ID:', err);
+        }
+    }
+
+    // Create new loan account
+    const saveCreateBtn = document.getElementById('save-create-loan-account-btn');
+    if (saveCreateBtn) {
+        saveCreateBtn.addEventListener('click', async () => {
+            const loanAccountId = document.getElementById('create-loan-account-id').value.trim();
+            const company = document.getElementById('create-loan-company').value.trim();
+            const contact = document.getElementById('create-loan-contact').value.trim();
+            const status = document.getElementById('create-loan-status').value;
+
+            if (!loanAccountId || !company) {
+                alert('Loan Account ID and Company/Individual are required');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        loan_account_id: loanAccountId,
+                        company_individual: company,
+                        contact_details: contact,
+                        status: status
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to create loan account');
+                }
+
+                alert('Loan account created successfully');
+                document.getElementById('create-loan-company').value = '';
+                document.getElementById('create-loan-contact').value = '';
+                document.getElementById('create-loan-status').value = 'Active';
+                loadNextLoanAccountId();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    }
+
+    // Edit loan account - search
+    const searchInput = document.getElementById('edit-loan-account-search');
+    const searchResults = document.getElementById('edit-loan-account-search-results');
+    let searchTimeout = null;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(API_BASE + '?search=' + encodeURIComponent(query), {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    const accounts = await res.json();
+                    if (accounts.length === 0) {
+                        searchResults.innerHTML = '<div style="padding: 8px; color: #666;">No results found</div>';
+                    } else {
+                        searchResults.innerHTML = accounts.map(a => `
+                            <div class="search-result-item" data-id="${a.loan_account_id}" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;">
+                                <strong>${a.loan_account_id}</strong> - ${a.company_individual}
+                            </div>
+                        `).join('');
+                        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                loadAccountForEdit(item.dataset.id);
+                                searchResults.style.display = 'none';
+                                searchInput.value = item.textContent.trim();
+                            });
+                        });
+                    }
+                    searchResults.style.display = 'block';
+                } catch (err) {
+                    console.error('Search failed:', err);
+                }
+            }, 300);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    // Load account for editing
+    async function loadAccountForEdit(accountId) {
+        try {
+            const res = await fetch(API_BASE + '/' + encodeURIComponent(accountId), {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            const account = await res.json();
+            document.getElementById('edit-loan-account-id').value = account.loan_account_id || '';
+            document.getElementById('edit-loan-company').value = account.company_individual || '';
+            document.getElementById('edit-loan-contact').value = account.contact_details || '';
+            document.getElementById('edit-loan-status').value = account.status || 'Active';
+        } catch (err) {
+            console.error('Failed to load account:', err);
+        }
+    }
+
+    // Save edited loan account
+    const saveEditBtn = document.getElementById('save-edit-loan-account-btn');
+    if (saveEditBtn) {
+        saveEditBtn.addEventListener('click', async () => {
+            const loanAccountId = document.getElementById('edit-loan-account-id').value.trim();
+            const company = document.getElementById('edit-loan-company').value.trim();
+            const contact = document.getElementById('edit-loan-contact').value.trim();
+            const status = document.getElementById('edit-loan-status').value;
+
+            if (!loanAccountId || !company) {
+                alert('Loan Account ID and Company/Individual are required');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + '/' + encodeURIComponent(loanAccountId), {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        company_individual: company,
+                        contact_details: contact,
+                        status: status
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to update loan account');
+                }
+
+                alert('Loan account updated successfully');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    }
+
+    // Modal controls
+    const loanAccountBtn = document.getElementById('loan-account-btn');
+    const loanAccountModal = document.getElementById('loan-account-modal');
+    const closeLoanAccountBtn = document.getElementById('close-loan-account-modal');
+
+    if (loanAccountBtn) {
+        loanAccountBtn.addEventListener('click', () => {
+            loanAccountModal.classList.remove('hidden');
+            loadNextLoanAccountId();
+        });
+    }
+
+    if (closeLoanAccountBtn) {
+        closeLoanAccountBtn.addEventListener('click', () => {
+            loanAccountModal.classList.add('hidden');
+        });
+    }
+
+    if (loanAccountModal) {
+        loanAccountModal.addEventListener('click', (e) => {
+            if (e.target === loanAccountModal) {
+                loanAccountModal.classList.add('hidden');
+            }
+        });
+    }
 };
 
 function initializeModule(contentArea) {

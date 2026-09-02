@@ -60,6 +60,7 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const miscSuppliersRoutes = require('./routes/purchasingRoutes/misc-suppliers-routes');
     const orderMiscRoutes = require('./routes/purchasingRoutes/order-misc-routes');
     const orderMiscRepaymentsRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
+    const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
     const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
@@ -134,6 +135,7 @@ app.use('/api/order-rtl-repayments', orderRtlRepaymentsRoutes);
 app.use('/api/miscellaneous-suppliers', miscSuppliersRoutes);
 app.use('/api/order-misc', orderMiscRoutes);
 app.use('/api/order-misc-repayments', orderMiscRepaymentsRoutes);
+app.use('/api/loan-accounts', loanAccountRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/upload', uploadRoutes);
 // Note: File uploads now use Google Cloud Storage
