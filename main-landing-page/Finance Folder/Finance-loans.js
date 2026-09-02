@@ -160,7 +160,7 @@ ModuleComponents['finance-loans'] = (container) => {
                     </div>
                     <div class="modal-field">
                         <label>Contact Details</label>
-                        <input type="text" id="create-loan-contact" placeholder="Enter contact details" />
+                        <input type="text" id="create-loan-contact" placeholder="+63 XXX-XXX-XXXX" maxlength="16" />
                     </div>
                     <div class="modal-field">
                         <label>Status</label>
@@ -191,7 +191,7 @@ ModuleComponents['finance-loans'] = (container) => {
                     </div>
                     <div class="modal-field">
                         <label>Contact Details</label>
-                        <input type="text" id="edit-loan-contact" placeholder="Enter contact details" />
+                        <input type="text" id="edit-loan-contact" placeholder="+63 XXX-XXX-XXXX" maxlength="16" />
                     </div>
                     <div class="modal-field">
                         <label>Status</label>
@@ -409,6 +409,44 @@ ModuleComponents['finance-loans'] = (container) => {
             }
         });
     }
+
+    // Contact number formatting
+    function formatContactNumber(e) {
+        let val = e.target.value.replace(/[^0-9+]/g, '');
+        if (val.startsWith('+63')) {
+            val = val.substring(3);
+        } else if (val.startsWith('63')) {
+            val = val.substring(2);
+        } else if (val.startsWith('0')) {
+            val = val.substring(1);
+        }
+        val = val.slice(0, 10);
+        let formatted = '+63 ';
+        if (val.length > 0) formatted += val.substring(0, 3);
+        if (val.length > 3) formatted += '-' + val.substring(3, 6);
+        if (val.length > 6) formatted += '-' + val.substring(6, 10);
+        e.target.value = formatted;
+    }
+
+    function setupContactNumber(input) {
+        if (!input) return;
+        input.addEventListener('input', formatContactNumber);
+        input.addEventListener('blur', (e) => {
+            let val = e.target.value.replace(/[^0-9+]/g, '');
+            if (val.startsWith('+63')) val = val.substring(3);
+            else if (val.startsWith('63')) val = val.substring(2);
+            else if (val.startsWith('0')) val = val.substring(1);
+            val = val.slice(0, 10);
+            let formatted = '+63 ';
+            if (val.length > 0) formatted += val.substring(0, 3);
+            if (val.length > 3) formatted += '-' + val.substring(3, 6);
+            if (val.length > 6) formatted += '-' + val.substring(6, 10);
+            e.target.value = formatted;
+        });
+    }
+
+    setupContactNumber(document.getElementById('create-loan-contact'));
+    setupContactNumber(document.getElementById('edit-loan-contact'));
 };
 
 function initializeModule(contentArea) {
