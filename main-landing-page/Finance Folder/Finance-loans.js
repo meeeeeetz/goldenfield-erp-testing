@@ -75,18 +75,19 @@ ModuleComponents['finance-loans'] = (container) => {
                         <table class="data-table product-table">
                             <thead>
                                 <tr>
-                                    <th>Lender Name</th>
-                                    <th>Original Loan</th>
-                                    <th>Remaining Loan</th>
-                                    <th>Current Status</th>
-                                    <th>Next Pay Date</th>
+                                    <th>Loan Account</th>
+                                    <th>Account Name</th>
+                                    <th>Total Loans</th>
+                                    <th>Total Principal Paid</th>
+                                    <th>Total Interest Paid</th>
+                                    <th>Total Balance</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>ABC Bank</td><td>P 15,000,000.00</td><td>P 10,000,000.00</td><td>Active</td><td>2026-08-01</td></tr>
-                                <tr><td>Private Lender A</td><td>P 8,000,000.00</td><td>P 6,500,000.00</td><td>Active</td><td>2026-07-28</td></tr>
-                                <tr><td>Supplier Credit</td><td>P 7,000,000.00</td><td>P 5,200,000.00</td><td>Active</td><td>2026-08-05</td></tr>
-                                <tr><td>Equipment Finance</td><td>P 4,567,890.00</td><td>P 2,867,890.00</td><td>Active</td><td>2026-07-30</td></tr>
+                                <tr><td>LoAcID-1</td><td>ABC Bank</td><td>P 15,000,000.00</td><td>P 3,000,000.00</td><td>P 500,000.00</td><td>P 11,500,000.00</td></tr>
+                                <tr><td>LoAcID-2</td><td>Private Lender A</td><td>P 8,000,000.00</td><td>P 1,000,000.00</td><td>P 200,000.00</td><td>P 6,800,000.00</td></tr>
+                                <tr><td>LoAcID-3</td><td>Supplier Credit</td><td>P 7,000,000.00</td><td>P 1,500,000.00</td><td>P 300,000.00</td><td>P 5,200,000.00</td></tr>
+                                <tr><td>LoAcID-4</td><td>Equipment Finance</td><td>P 4,567,890.00</td><td>P 1,000,000.00</td><td>P 150,000.00</td><td>P 3,417,890.00</td></tr>
                             </tbody>
                         </table>
                     </div>
