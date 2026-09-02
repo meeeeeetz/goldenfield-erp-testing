@@ -155,11 +155,12 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                                     <th style="width: 140px; padding: 2px; font-size: 15px; text-align: center;">Installment Amount</th>
                                     <th style="width: 100px; padding: 2px; font-size: 15px; text-align: center;">Status</th>
                                     <th style="width: 100px; padding: 2px; font-size: 15px; text-align: center;">Created by</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px; text-align: center;">Action</th>
-                                </tr>
-                            </thead>
+                                     <th style="width: 120px; padding: 2px; font-size: 15px; text-align: center;">Action</th>
+                                     <th style="width: 100px; padding: 2px; font-size: 15px; text-align: center;">Delete</th>
+                                 </tr>
+                             </thead>
                     <tbody id="cash-loan-history-tbody">
-                        <tr><td colspan="16" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
+                        <tr><td colspan="17" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -354,7 +355,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
             const logs = await res.json();
 
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 20px; color: #999;">No cash loan history</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 20px; color: #999;">No cash loan history</td></tr>';
                 return;
             }
 
@@ -377,6 +378,9 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                     <td style="padding: 2px; margin: 0; text-align: center;">${log.created_by || ''}</td>
                     <td style="padding: 2px; margin: 0; text-align: center;">
                         ${log.status === 'Approved' ? `<button class="reject-history-cash-loan-btn" data-cash-loan-id="${log.cashadvance_id}" style="padding: 4px 10px; font-size: 12px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">Reject</button>` : ''}
+                    </td>
+                    <td style="padding: 2px; margin: 0; text-align: center;">
+                        <button class="delete-history-cash-loan-btn" data-cash-loan-id="${log.cashadvance_id}" style="padding: 4px 10px; font-size: 12px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">Delete</button>
                     </td>
                 </tr>
             `).join('');
@@ -407,9 +411,36 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                     }
                 });
             });
+
+            tbody.querySelectorAll('.delete-history-cash-loan-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const cashLoanId = e.target.getAttribute('data-cash-loan-id');
+                    if (!cashLoanId) return;
+
+                    if (!confirm(`Are you sure you want to permanently delete cash advance ${cashLoanId}? This action cannot be undone.`)) return;
+
+                    try {
+                        const res = await fetch(`/api/cash-advances/${encodeURIComponent(cashLoanId)}`, {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+
+                        if (!res.ok) {
+                            const errorData = await res.json().catch(() => ({}));
+                            throw new Error(errorData.error || 'Failed to delete cash advance');
+                        }
+
+                        alert(`Cash advance ${cashLoanId} deleted successfully`);
+                        await loadCashLoanHistory();
+                    } catch (err) {
+                        console.error('Delete error:', err);
+                        alert(err.message || 'Failed to delete cash advance');
+                    }
+                });
+            });
         } catch (err) {
             console.error('Failed to load cash loan history:', err);
-            tbody.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 20px; color: #999;">Failed to load cash loan history</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 20px; color: #999;">Failed to load cash loan history</td></tr>';
         }
     }
 

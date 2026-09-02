@@ -143,6 +143,22 @@ class CashAdvanceController {
         const result = await this.db.query(query, [cashAdvanceId]);
         return result.rows[0];
     }
+
+    async deleteCashAdvance(cashAdvanceId) {
+        const client = await this.db.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('DELETE FROM cash_advance_repayment WHERE cashadvance_id = $1', [cashAdvanceId]);
+            await client.query('DELETE FROM cash_advance WHERE cashadvance_id = $1', [cashAdvanceId]);
+            await client.query('COMMIT');
+            return { success: true };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 module.exports = CashAdvanceController;

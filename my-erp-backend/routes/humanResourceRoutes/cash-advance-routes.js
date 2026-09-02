@@ -99,4 +99,14 @@ router.put('/:id/reject', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    try {
+        const cashAdvanceId = req.params.id;
+        await controller.deleteCashAdvance(cashAdvanceId);
+        res.json({ message: 'Cash advance deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
