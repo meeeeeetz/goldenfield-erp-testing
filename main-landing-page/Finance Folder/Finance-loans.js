@@ -214,29 +214,27 @@ ModuleComponents['finance-loans'] = (container) => {
                     <h3>Loan Application</h3>
                     <button class="modal-close-btn" id="close-apply-loan-modal">&times;</button>
                 </div>
-                <div class="modal-field">
-                    <label>Loan Application ID</label>
-                    <input type="text" id="apply-loan-id" readonly />
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Loan Application ID</label>
+                        <input type="text" id="apply-loan-id" readonly />
+                    </div>
+                    <div class="modal-field">
+                        <label>Date</label>
+                        <input type="date" id="apply-loan-date" />
+                    </div>
                 </div>
                 <div class="modal-meta-row">
                     <div class="modal-field">
-                        <label>Date Start</label>
-                        <input type="date" id="apply-loan-date-start" />
+                        <label>Loan Account</label>
+                        <select id="apply-loan-account" class="modal-select">
+                            <option value="">Select Loan Account</option>
+                        </select>
                     </div>
                     <div class="modal-field">
-                        <label>Date End</label>
-                        <input type="date" id="apply-loan-date-end" />
+                        <label>Loan Balance</label>
+                        <input type="text" id="apply-loan-balance" readonly placeholder="P 0.00" />
                     </div>
-                </div>
-                <div class="modal-field">
-                    <label>Loan Account</label>
-                    <select id="apply-loan-account" class="modal-select">
-                        <option value="">Select Loan Account</option>
-                    </select>
-                </div>
-                <div class="modal-field">
-                    <label>Loan Balance</label>
-                    <input type="text" id="apply-loan-balance" readonly placeholder="P 0.00" />
                 </div>
                 <div class="modal-field">
                     <label>Amount</label>
@@ -255,40 +253,40 @@ ModuleComponents['finance-loans'] = (container) => {
                     <h3>Loan Payments</h3>
                     <button class="modal-close-btn" id="close-repay-loan-modal">&times;</button>
                 </div>
-                <div class="modal-field">
-                    <label>Loan Payment ID</label>
-                    <input type="text" id="repay-loan-id" readonly />
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Loan Payment ID</label>
+                        <input type="text" id="repay-loan-id" readonly />
+                    </div>
+                    <div class="modal-field">
+                        <label>Date</label>
+                        <input type="date" id="repay-loan-date" />
+                    </div>
                 </div>
                 <div class="modal-meta-row">
                     <div class="modal-field">
-                        <label>Date Start</label>
-                        <input type="date" id="repay-loan-date-start" />
+                        <label>Loan Account</label>
+                        <select id="repay-loan-account" class="modal-select">
+                            <option value="">Select Loan Account</option>
+                        </select>
                     </div>
                     <div class="modal-field">
-                        <label>Date End</label>
-                        <input type="date" id="repay-loan-date-end" />
+                        <label>Loan Balance</label>
+                        <input type="text" id="repay-loan-balance" readonly placeholder="P 0.00" />
                     </div>
                 </div>
-                <div class="modal-field">
-                    <label>Loan Account</label>
-                    <select id="repay-loan-account" class="modal-select">
-                        <option value="">Select Loan Account</option>
-                    </select>
-                </div>
-                <div class="modal-field">
-                    <label>Loan Balance</label>
-                    <input type="text" id="repay-loan-balance" readonly placeholder="P 0.00" />
-                </div>
-                <div class="modal-field">
-                    <label>Payment Type</label>
-                    <select id="repay-loan-payment-type" class="modal-select">
-                        <option value="Principal">Principal</option>
-                        <option value="Interest">Interest</option>
-                    </select>
-                </div>
-                <div class="modal-field">
-                    <label>Amount</label>
-                    <input type="number" id="repay-loan-amount" placeholder="P 0.00" step="0.01" min="0" />
+                <div class="modal-meta-row">
+                    <div class="modal-field">
+                        <label>Payment Type</label>
+                        <select id="repay-loan-payment-type" class="modal-select">
+                            <option value="Principal">Principal</option>
+                            <option value="Interest">Interest</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label>Amount</label>
+                        <input type="number" id="repay-loan-amount" placeholder="P 0.00" step="0.01" min="0" />
+                    </div>
                 </div>
                 <div class="modal-tab-actions">
                     <button id="save-repay-loan-btn" class="btn-primary">Save</button>
@@ -619,9 +617,9 @@ ModuleComponents['finance-loans'] = (container) => {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
             });
             const data = await res.json();
-            document.getElementById('apply-loan-id').value = data.loan_application_id || 'LoAppID-1';
+            document.getElementById('apply-loan-id').value = data.loan_application_id || 'LoApID-1';
         } catch (err) {
-            document.getElementById('apply-loan-id').value = 'LoAppID-1';
+            document.getElementById('apply-loan-id').value = 'LoApID-1';
         }
     }
 
@@ -681,12 +679,11 @@ ModuleComponents['finance-loans'] = (container) => {
     if (saveApplyLoanBtn) {
         saveApplyLoanBtn.addEventListener('click', async () => {
             const loanAppId = document.getElementById('apply-loan-id').value.trim();
-            const dateStart = document.getElementById('apply-loan-date-start').value;
-            const dateEnd = document.getElementById('apply-loan-date-end').value;
+            const date = document.getElementById('apply-loan-date').value;
             const loanAccount = document.getElementById('apply-loan-account').value;
             const amount = document.getElementById('apply-loan-amount').value;
 
-            if (!loanAppId || !dateStart || !dateEnd || !loanAccount || !amount) {
+            if (!loanAppId || !date || !loanAccount || !amount) {
                 alert('All fields are required');
                 return;
             }
@@ -700,8 +697,7 @@ ModuleComponents['finance-loans'] = (container) => {
                     },
                     body: JSON.stringify({
                         loan_application_id: loanAppId,
-                        date_start: dateStart,
-                        date_end: dateEnd,
+                        date: date,
                         loan_account_id: loanAccount,
                         amount: parseFloat(amount)
                     })
@@ -749,13 +745,12 @@ ModuleComponents['finance-loans'] = (container) => {
     if (saveRepayLoanBtn) {
         saveRepayLoanBtn.addEventListener('click', async () => {
             const loanPayId = document.getElementById('repay-loan-id').value.trim();
-            const dateStart = document.getElementById('repay-loan-date-start').value;
-            const dateEnd = document.getElementById('repay-loan-date-end').value;
+            const date = document.getElementById('repay-loan-date').value;
             const loanAccount = document.getElementById('repay-loan-account').value;
             const paymentType = document.getElementById('repay-loan-payment-type').value;
             const amount = document.getElementById('repay-loan-amount').value;
 
-            if (!loanPayId || !dateStart || !dateEnd || !loanAccount || !amount) {
+            if (!loanPayId || !date || !loanAccount || !amount) {
                 alert('All fields are required');
                 return;
             }
@@ -769,8 +764,7 @@ ModuleComponents['finance-loans'] = (container) => {
                     },
                     body: JSON.stringify({
                         loan_payment_id: loanPayId,
-                        date_start: dateStart,
-                        date_end: dateEnd,
+                        date: date,
                         loan_account_id: loanAccount,
                         payment_type: paymentType,
                         amount: parseFloat(amount)
