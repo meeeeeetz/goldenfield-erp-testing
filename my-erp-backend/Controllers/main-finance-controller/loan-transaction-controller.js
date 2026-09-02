@@ -127,6 +127,17 @@ class LoanTransactionController {
         const result = await this.db.query(query, [transactionId]);
         return result.rows[0];
     }
+
+    async getAccountBalance(accountId) {
+        const query = `
+            SELECT 
+                COALESCE(SUM(borrow_amount), 0) - COALESCE(SUM(payment_principal_amount), 0) as balance
+            FROM loan_transactions
+            WHERE loan_account_id = $1
+        `;
+        const result = await this.db.query(query, [accountId]);
+        return result.rows[0]?.balance || 0;
+    }
 }
 
 module.exports = LoanTransactionController;
