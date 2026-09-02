@@ -79,12 +79,13 @@ ModuleComponents['hr-salary'] = (container) => {
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Starting Cash loan</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Ending Cash loan</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Starting Losses/ Damages</th>
+                                <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Ending Losses/ Damages</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">PDF File</th>
                                 <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="salary-overview-tbody">
-                            <tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
+                            <tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -913,10 +914,11 @@ ModuleComponents['hr-salary'] = (container) => {
                 totalLossesDeductions: parseFloat(cells[18]?.textContent) || 0,
                 grossDeduction: parseFloat(cells[19]?.textContent) || 0,
                 netPay: parseFloat(cells[20]?.textContent) || 0,
-                startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
-                endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                startingLosses: parseFloat(cells[23]?.textContent) || 0
-            };
+                    startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
+                    endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
+                    startingLosses: parseFloat(cells[23]?.textContent) || 0,
+                    endingLosses: parseFloat(cells[24]?.textContent) || 0
+                };
         });
 
         let enrichedTableData = tableData;
@@ -946,7 +948,8 @@ ModuleComponents['hr-salary'] = (container) => {
                         total_losses_damages: Number(payroll.total_losses_damages) || row.totalLossesDeductions,
                         starting_cash_loan: Number(payroll.starting_cash_loan) || row.startingCashLoan,
                         ending_cash_loan: Number(payroll.ending_cash_loan) || row.endingCashLoan,
-                        starting_losses_damages: Number(payroll.starting_losses_damages) || row.startingLosses
+                        starting_losses_damages: Number(payroll.starting_losses_damages) || row.startingLosses,
+                        ending_losses_damages: Number(payroll.ending_losses_damages) || row.endingLosses
                     };
                 });
             } catch (e) {
@@ -1118,6 +1121,7 @@ ModuleComponents['hr-salary'] = (container) => {
                                     <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.startingCashLoan)}</td>
                                     <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.endingCashLoan)}</td>
                                     <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.startingLosses)}</td>
+                                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${fmt(row.endingLosses)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -2109,7 +2113,7 @@ function initializeModule(contentArea) {
             const payrolls = await res.json();
 
             if (!payrolls || payrolls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
                 const employeeCountEl = document.getElementById('salary-overview-employee-count');
                 const grossPayEl = document.getElementById('salary-overview-gross-pay');
                 const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2157,6 +2161,7 @@ function initializeModule(contentArea) {
                         <td>${fmt(p.starting_cash_loan)}</td>
                         <td>${fmt(p.ending_cash_loan)}</td>
                         <td>${fmt(p.starting_losses_damages)}</td>
+                        <td>${fmt(p.ending_losses_damages)}</td>
                         <td style="text-align: center;"><a href="/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
                         <td style="text-align: center;"><button class="btn-danger" data-payroll-id="${p.payroll_id}" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Delete</button></td>
                     </tr>
@@ -2209,7 +2214,7 @@ function initializeModule(contentArea) {
             });
         } catch (err) {
             console.error('Failed to load pending payrolls:', err);
-            tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">Failed to load payrolls</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">Failed to load payrolls</td></tr>';
             const employeeCountEl = document.getElementById('salary-overview-employee-count');
             const grossPayEl = document.getElementById('salary-overview-gross-pay');
             const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2460,7 +2465,8 @@ function initializeModule(contentArea) {
                     netPay: parseFloat(cells[20]?.textContent) || 0,
                     startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
                     endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                    startingLosses: parseFloat(cells[23]?.textContent) || 0
+                    startingLosses: parseFloat(cells[23]?.textContent) || 0,
+                    endingLosses: parseFloat(cells[24]?.textContent) || 0
                 };
             });
 
@@ -2481,10 +2487,14 @@ function initializeModule(contentArea) {
                 }
 
                 (async () => {
-                    const gathered = await gatherBatchPrintData();
-                    if (gathered) {
-                        batchPrintSummaryData = gathered.summaryData;
-                        batchPrintTableData = gathered.tableData;
+                    try {
+                        const gathered = await gatherBatchPrintData();
+                        if (gathered) {
+                            batchPrintSummaryData = gathered.summaryData;
+                            batchPrintTableData = gathered.tableData;
+                        }
+                    } catch (e) {
+                        console.error('Failed to enrich batch print data:', e);
                     }
                     renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
                 })();
