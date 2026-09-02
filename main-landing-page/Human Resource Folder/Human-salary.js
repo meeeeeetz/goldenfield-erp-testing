@@ -827,7 +827,6 @@ ModuleComponents['hr-salary'] = (container) => {
                 <div id="batch-print-preview-content" style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 16px;"></div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
                     <button id="batch-print-btn" class="btn-primary" type="button" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">Print Preview</button>
-                    <button id="batch-confirm-after-print-btn" class="btn-primary" type="button" style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #28a745; border-color: #28a745;">Confirm Batch Payroll</button>
                 </div>
             </div>
         </div>
@@ -854,7 +853,6 @@ ModuleComponents['hr-salary'] = (container) => {
     const batchTabSummaryBtn = document.getElementById('batch-tab-summary');
     const batchTabAcknowledgementBtn = document.getElementById('batch-tab-acknowledgement');
     const batchPrintBtn = document.getElementById('batch-print-btn');
-    const batchConfirmAfterPrintBtn = document.getElementById('batch-confirm-after-print-btn');
     const batchPrintPreviewContent = document.getElementById('batch-print-preview-content');
 
     const setBatchPrintTab = (tab) => {
@@ -862,9 +860,6 @@ ModuleComponents['hr-salary'] = (container) => {
         if (batchTabSummaryBtn && batchTabAcknowledgementBtn) {
             batchTabSummaryBtn.classList.toggle('active', tab === 'summary');
             batchTabAcknowledgementBtn.classList.toggle('active', tab === 'acknowledgement');
-        }
-        if (batchConfirmAfterPrintBtn) {
-            batchConfirmAfterPrintBtn.style.display = tab === 'summary' ? 'inline-block' : 'none';
         }
     };
 
@@ -2477,91 +2472,63 @@ function initializeModule(contentArea) {
             }
 
             const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
-            if (batchPrintPreviewModal) {
+            if (!batchPrintPreviewModal) return;
+
+            if (confirmBatchPayrollBtn.disabled) return;
+            confirmBatchPayrollBtn.disabled = true;
+
+            try {
+                try {
+                    const gathered = await gatherBatchPrintData();
+                    if (gathered) {
+                        batchPrintSummaryData = gathered.summaryData;
+                        batchPrintTableData = gathered.tableData;
+                    }
+                } catch (e) {
+                    console.error('Failed to gather batch print data:', e);
+                }
+
+                const res = await fetch('/api/batch-payroll/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payroll_ids: pendingBatchConfirmData.payrollIds,
+                        pay_period_start: pendingBatchConfirmData.payPeriodStart,
+                        pay_period_end: pendingBatchConfirmData.payPeriodEnd
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Failed to confirm batch payroll');
+                }
+
+                const result = await res.json();
+
+                if (result.batch && result.batch.batch_payroll_id) {
+                    currentBatchIdForPrint = result.batch.batch_payroll_id;
+                }
+
                 batchPrintPreviewModal.style.display = 'flex';
-                setBatchPrintTab('summary');
+                setBatchPrintTab('acknowledgement');
 
                 const contentEl = document.getElementById('batch-print-preview-content');
                 if (contentEl) {
-                    contentEl.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #666; font-size: 14px;">Loading batch payroll summary...</div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
+                    contentEl.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #666; font-size: 14px;">Loading acknowledgement receipt...</div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
                 }
 
-                (async () => {
-                    try {
-                        const gathered = await gatherBatchPrintData();
-                        if (gathered) {
-                            batchPrintSummaryData = gathered.summaryData;
-                            batchPrintTableData = gathered.tableData;
-                        }
-                    } catch (e) {
-                        console.error('Failed to enrich batch print data:', e);
-                    }
-                    renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
-                })();
+                renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
 
-                const batchConfirmAfterPrintBtn = document.getElementById('batch-confirm-after-print-btn');
-                if (batchConfirmAfterPrintBtn) {
-                    batchConfirmAfterPrintBtn.addEventListener('click', async () => {
-                        if (!pendingBatchConfirmData || pendingBatchConfirmData.payrollIds.length === 0) {
-                            alert('No payroll data to confirm');
-                            return;
-                        }
-
-                        const overviewTbody = document.getElementById('salary-overview-tbody');
-                        if (overviewTbody) {
-                            const rows = Array.from(overviewTbody.querySelectorAll('tr')).filter(row => {
-                                const firstCell = row.querySelector('td');
-                                const payrollId = firstCell?.textContent.trim();
-                                return payrollId && payrollId !== 'No pending payrolls' && payrollId !== 'Failed to load payrolls';
-                            });
-                            const negativeRow = rows.find(row => {
-                                const cells = row.querySelectorAll('td');
-                                const netPay = parseFloat(cells[20]?.textContent) || 0;
-                                return netPay < 0;
-                            });
-                            if (negativeRow) {
-                                const cells = negativeRow.querySelectorAll('td');
-                                alert(`Cannot confirm batch payroll: Employee ${cells[1]?.textContent.trim() || ''} has negative Net Pay.`);
-                                return;
-                            }
-                        }
-
-                        try {
-                            const res = await fetch('/api/batch-payroll/confirm', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    payroll_ids: pendingBatchConfirmData.payrollIds,
-                                    pay_period_start: pendingBatchConfirmData.payPeriodStart,
-                                    pay_period_end: pendingBatchConfirmData.payPeriodEnd
-                                })
-                            });
-
-                            if (!res.ok) {
-                                const err = await res.json();
-                                throw new Error(err.error || 'Failed to confirm batch payroll');
-                            }
-
-                             const result = await res.json();
-                             alert('Batch payroll confirmed successfully!');
-
-                             if (result.batch && result.batch.batch_payroll_id) {
-                                 currentBatchIdForPrint = result.batch.batch_payroll_id;
-                                 setBatchPrintTab('acknowledgement');
-                                 renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'acknowledgement');
-                             }
-
-                             await loadPendingPayrolls();
-                             await loadBatchPayrolls();
-                             await loadSalaryHistory();
-                             await loadMonthlySalaryComparison();
-                             pendingBatchConfirmData = null;
-                        } catch (err) {
-                            console.error('Confirm batch payroll error:', err);
-                            alert(err.message || 'Failed to confirm batch payroll');
-                        }
-                    }, { once: true });
-                }
+                await loadPendingPayrolls();
+                await loadBatchPayrolls();
+                await loadSalaryHistory();
+                await loadMonthlySalaryComparison();
+                pendingBatchConfirmData = null;
+            } catch (err) {
+                console.error('Confirm batch payroll error:', err);
+                alert(err.message || 'Failed to confirm batch payroll');
+            } finally {
+                confirmBatchPayrollBtn.disabled = false;
             }
         });
     }
