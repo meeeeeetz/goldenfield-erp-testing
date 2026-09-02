@@ -820,9 +820,9 @@ ModuleComponents['hr-salary'] = (container) => {
                 <button class="modal-close-btn" id="close-batch-print-preview">&times;</button>
             </div>
             <div style="padding: 16px;">
-                <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px;">
-                    <button id="batch-tab-summary" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer;">Batch Payroll Summary</button>
-                    <button id="batch-tab-acknowledgement" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer; background: #6c757d; border-color: #6c757d;">Pay slip Acknowledgement Receipt</button>
+                <div id="batch-print-tabs" class="modal-tabs" style="display: flex; gap: 6px; border-bottom: 1px solid #d6cfbf; padding-bottom: 0; margin-bottom: 12px;">
+                    <button id="batch-tab-summary" class="modal-tab active" type="button">Batch Payroll Summary</button>
+                    <button id="batch-tab-acknowledgement" class="modal-tab" type="button">Pay slip Acknowledgement Receipt</button>
                 </div>
                 <div id="batch-print-preview-content" style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 16px;"></div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
@@ -849,6 +849,8 @@ ModuleComponents['hr-salary'] = (container) => {
 
     let batchPrintActiveTab = 'summary';
     let currentBatchIdForPrint = null;
+    let batchPrintSummaryData = null;
+    let batchPrintTableData = null;
     const batchTabSummaryBtn = document.getElementById('batch-tab-summary');
     const batchTabAcknowledgementBtn = document.getElementById('batch-tab-acknowledgement');
     const batchPrintBtn = document.getElementById('batch-print-btn');
@@ -858,17 +860,8 @@ ModuleComponents['hr-salary'] = (container) => {
     const setBatchPrintTab = (tab) => {
         batchPrintActiveTab = tab;
         if (batchTabSummaryBtn && batchTabAcknowledgementBtn) {
-            if (tab === 'summary') {
-                batchTabSummaryBtn.style.background = '#007bff';
-                batchTabSummaryBtn.style.borderColor = '#007bff';
-                batchTabAcknowledgementBtn.style.background = '#6c757d';
-                batchTabAcknowledgementBtn.style.borderColor = '#6c757d';
-            } else {
-                batchTabSummaryBtn.style.background = '#6c757d';
-                batchTabSummaryBtn.style.borderColor = '#6c757d';
-                batchTabAcknowledgementBtn.style.background = '#007bff';
-                batchTabAcknowledgementBtn.style.borderColor = '#007bff';
-            }
+            batchTabSummaryBtn.classList.toggle('active', tab === 'summary');
+            batchTabAcknowledgementBtn.classList.toggle('active', tab === 'acknowledgement');
         }
         if (batchConfirmAfterPrintBtn) {
             batchConfirmAfterPrintBtn.style.display = tab === 'summary' ? 'inline-block' : 'none';
@@ -1109,209 +1102,104 @@ ModuleComponents['hr-salary'] = (container) => {
 
     if (batchPrintBtn && batchPrintPreviewContent) {
         batchPrintBtn.addEventListener('click', () => {
+            if (batchPrintActiveTab === 'acknowledgement') {
+                if (currentBatchIdForPrint) {
+                    window.open(`/api/batch-payroll/${currentBatchIdForPrint}/acknowledgement-pdf`, '_blank');
+                } else {
+                    alert('Please confirm the batch payroll first to generate the acknowledgement receipt.');
+                }
+                return;
+            }
+
             const existingStyle = document.getElementById('batch-print-isolation-style');
             if (existingStyle) existingStyle.remove();
 
             const style = document.createElement('style');
             style.id = 'batch-print-isolation-style';
-
-            if (batchPrintActiveTab === 'acknowledgement') {
-                style.textContent = `
-                    @media print {
-                        @page { size: A4 portrait; margin: 10mm; }
-                        body > *:not(#batch-print-preview-modal) { display: none !important; }
-                        #batch-print-preview-modal {
-                            position: static !important;
-                            display: block !important;
-                            background: #fff !important;
-                            max-width: none !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            overflow: visible !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-content {
-                            max-width: none !important;
-                            width: 100% !important;
-                            max-height: none !important;
-                            overflow: visible !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-header-row {
-                            display: none !important;
-                        }
-                        #batch-tab-summary, #batch-tab-acknowledgement {
-                            display: none !important;
-                        }
-                        #batch-print-preview-content {
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        .acknowledgement-page {
-                            page-break-after: always;
-                            border: 1px solid #000 !important;
-                            padding: 10mm !important;
-                            margin-bottom: 5mm !important;
-                        }
-                        .acknowledgement-page:last-child {
-                            page-break-after: auto;
-                        }
-                        .acknowledgement-header {
-                            text-align: center;
-                            margin-bottom: 8px;
-                        }
-                        .acknowledgement-header h2 {
-                            font-size: 14px !important;
-                            margin: 0 !important;
-                        }
-                        .acknowledgement-header .subtitle {
-                            font-size: 10px !important;
-                            color: #333 !important;
-                        }
-                        .acknowledgement-grid {
-                            display: grid !important;
-                            grid-template-columns: 1fr 1fr !important;
-                            gap: 4px !important;
-                            margin-bottom: 6px !important;
-                        }
-                        .acknowledgement-grid .field {
-                            font-size: 9px !important;
-                        }
-                        .acknowledgement-grid .field-label {
-                            font-weight: bold;
-                            font-size: 9px !important;
-                        }
-                        .acknowledgement-grid .field-value {
-                            font-size: 9px !important;
-                        }
-                        .acknowledgement-table {
-                            width: 100% !important;
-                            border-collapse: collapse !important;
-                            font-size: 9px !important;
-                            margin-bottom: 6px !important;
-                        }
-                        .acknowledgement-table th,
-                        .acknowledgement-table td {
-                            border: 1px solid #000 !important;
-                            padding: 2px 4px !important;
-                            font-size: 9px !important;
-                        }
-                        .acknowledgement-table th {
-                            background: #f0f0f0 !important;
-                            font-weight: bold !important;
-                        }
-                        .acknowledgement-totals {
-                            display: flex !important;
-                            justify-content: space-between !important;
-                            font-size: 9px !important;
-                            margin-bottom: 6px !important;
-                        }
-                        .acknowledgement-signature {
-                            display: flex !important;
-                            justify-content: space-between !important;
-                            font-size: 9px !important;
-                            margin-top: 8px !important;
-                        }
-                        .acknowledgement-signature .sign-line {
-                            border-top: 1px solid #000 !important;
-                            width: 120px !important;
-                            text-align: center !important;
-                            padding-top: 2px !important;
-                        }
+            style.textContent = `
+                @media print {
+                    @page { size: landscape; margin: 0.3in; }
+                    body > *:not(#batch-print-preview-modal) { display: none !important; }
+                    #batch-print-preview-modal {
+                        position: static !important;
+                        display: block !important;
+                        background: #fff !important;
+                        max-width: none !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
                     }
-                `;
-            } else {
-                style.textContent = `
-                    @media print {
-                        @page { size: landscape; margin: 0.3in; }
-                        body > *:not(#batch-print-preview-modal) { display: none !important; }
-                        #batch-print-preview-modal {
-                            position: static !important;
-                            display: block !important;
-                            background: #fff !important;
-                            max-width: none !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            overflow: visible !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-content {
-                            max-width: none !important;
-                            width: 100% !important;
-                            max-height: none !important;
-                            overflow: visible !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-header-row {
-                            display: none !important;
-                        }
-                        #batch-tab-summary, #batch-tab-acknowledgement {
-                            display: none !important;
-                        }
-                        #batch-print-preview-content {
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        .print-summary {
-                            display: flex !important;
-                            flex-wrap: nowrap !important;
-                            gap: 8px !important;
-                            margin-bottom: 8px !important;
-                        }
-                        .print-summary > div {
-                            flex: 1 1 0 !important;
-                            min-width: 100px !important;
-                            padding: 6px !important;
-                        }
-                        .print-summary label {
-                            font-size: 9px !important;
-                            margin-bottom: 2px !important;
-                        }
-                        .print-summary input {
-                            font-size: 11px !important;
-                        }
-                        .print-table-wrap {
-                            overflow-x: visible !important;
-                        }
-                        table {
-                            font-size: 9px !important;
-                            width: 100% !important;
-                            table-layout: fixed !important;
-                            border-collapse: collapse !important;
-                        }
-                        th, td {
-                            padding: 3px 2px !important;
-                            border: 1px solid #ddd !important;
-                            word-wrap: break-word !important;
-                            overflow: hidden !important;
-                        }
-                        th {
-                            font-size: 9px !important;
-                            font-weight: 700 !important;
-                            background: #f4f4f4 !important;
-                        }
-                        h2 {
-                            font-size: 16px !important;
-                            margin-bottom: 2px !important;
-                        }
-                        .print-subtitle {
-                            font-size: 11px !important;
-                            margin-bottom: 10px !important;
-                        }
+                    #batch-print-preview-modal .modal-content {
+                        max-width: none !important;
+                        width: 100% !important;
+                        max-height: none !important;
+                        overflow: visible !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
                     }
-                `;
-            }
-
+                    #batch-print-preview-modal .modal-header-row {
+                        display: none !important;
+                    }
+                    #batch-tab-summary, #batch-tab-acknowledgement {
+                        display: none !important;
+                    }
+                    #batch-print-preview-content {
+                        border: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .print-summary {
+                        display: flex !important;
+                        flex-wrap: nowrap !important;
+                        gap: 8px !important;
+                        margin-bottom: 8px !important;
+                    }
+                    .print-summary > div {
+                        flex: 1 1 0 !important;
+                        min-width: 100px !important;
+                        padding: 6px !important;
+                    }
+                    .print-summary label {
+                        font-size: 9px !important;
+                        margin-bottom: 2px !important;
+                    }
+                    .print-summary input {
+                        font-size: 11px !important;
+                    }
+                    .print-table-wrap {
+                        overflow-x: visible !important;
+                    }
+                    table {
+                        font-size: 9px !important;
+                        width: 100% !important;
+                        table-layout: fixed !important;
+                        border-collapse: collapse !important;
+                    }
+                    th, td {
+                        padding: 3px 2px !important;
+                        border: 1px solid #ddd !important;
+                        word-wrap: break-word !important;
+                        overflow: hidden !important;
+                    }
+                    th {
+                        font-size: 9px !important;
+                        font-weight: 700 !important;
+                        background: #f4f4f4 !important;
+                    }
+                    h2 {
+                        font-size: 16px !important;
+                        margin-bottom: 2px !important;
+                    }
+                    .print-subtitle {
+                        font-size: 11px !important;
+                        margin-bottom: 10px !important;
+                    }
+                }
+            `;
             document.head.appendChild(style);
 
             setTimeout(() => {
@@ -2374,7 +2262,7 @@ function initializeModule(contentArea) {
             const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
             const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
 
-            const batchPrintSummaryData = {
+            batchPrintSummaryData = {
                 payPeriod: startingPayPeriodEl?.value && endingPayPeriodEl?.value ? `${startingPayPeriodEl.value} - ${endingPayPeriodEl.value}` : '-',
                 payPeriodFrom: startingPayPeriodEl?.value || '',
                 payPeriodTo: endingPayPeriodEl?.value || '',
@@ -2390,7 +2278,7 @@ function initializeModule(contentArea) {
                 payPeriodEnd: endingPayPeriodEl?.value || ''
             };
 
-            const batchPrintTableData = rows.map(row => {
+            batchPrintTableData = rows.map(row => {
                 const cells = row.querySelectorAll('td');
                 return {
                     employeeId: cells[1]?.textContent.trim() || '',
