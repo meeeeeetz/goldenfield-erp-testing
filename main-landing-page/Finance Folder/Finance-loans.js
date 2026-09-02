@@ -83,11 +83,7 @@ ModuleComponents['finance-loans'] = (container) => {
                                     <th>Total Balance</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr><td>LoAcID-1</td><td>ABC Bank</td><td>P 15,000,000.00</td><td>P 3,000,000.00</td><td>P 500,000.00</td><td>P 11,500,000.00</td></tr>
-                                <tr><td>LoAcID-2</td><td>Private Lender A</td><td>P 8,000,000.00</td><td>P 1,000,000.00</td><td>P 200,000.00</td><td>P 6,800,000.00</td></tr>
-                                <tr><td>LoAcID-3</td><td>Supplier Credit</td><td>P 7,000,000.00</td><td>P 1,500,000.00</td><td>P 300,000.00</td><td>P 5,200,000.00</td></tr>
-                                <tr><td>LoAcID-4</td><td>Equipment Finance</td><td>P 4,567,890.00</td><td>P 1,000,000.00</td><td>P 150,000.00</td><td>P 3,417,890.00</td></tr>
+                            <tbody id="loan-summary-table-body">
                             </tbody>
                         </table>
                     </div>
@@ -106,16 +102,12 @@ ModuleComponents['finance-loans'] = (container) => {
                                 <th>Pay Principal</th>
                                 <th>Pay Interest</th>
                                 <th>Remaining Balance</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>TRX-001</td><td>2026-06-15</td><td>LoAcID-1</td><td>P 10,000,000.00</td><td>P 2,000,000.00</td><td>P 500,000.00</td><td>P 8,000,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-002</td><td>2026-05-20</td><td>LoAcID-1</td><td>P 8,000,000.00</td><td>P 1,500,000.00</td><td>P 400,000.00</td><td>P 6,500,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-003</td><td>2026-04-10</td><td>LoAcID-1</td><td>P 7,000,000.00</td><td>P 1,800,000.00</td><td>P 350,000.00</td><td>P 5,200,000.00</td><td>Approved</td></tr>
-                            <tr><td>TRX-004</td><td>2026-03-05</td><td>LoAcID-1</td><td>P 4,567,890.00</td><td>P 1,000,000.00</td><td>P 228,394.50</td><td>P 2,867,890.00</td><td>Pending</td></tr>
+                        <tbody id="loan-transactions-table-body">
                         </tbody>
                     </table>
+                    <div class="pagination" id="loan-transactions-pagination"></div>
                 </div>
             </div>
             <div class="card graph-placeholder loan-accounts-card">
@@ -296,6 +288,7 @@ ModuleComponents['finance-loans'] = (container) => {
     `;
 
     const API_BASE = '/api/loan-accounts';
+    const API_BASE_LOAN_TRANSACTIONS = '/api/loan-transactions';
 
     // Tab switching
     window.switchLoanAccountTab = function(tab) {
@@ -608,16 +601,15 @@ ModuleComponents['finance-loans'] = (container) => {
     setupContactNumber(document.getElementById('edit-loan-contact'));
 
     // Apply for Loan Modal
-    const API_BASE_LOAN_APPLY = '/api/loan-applications';
-    const API_BASE_LOAN_REPAY = '/api/loan-repayments';
+    const API_BASE_LOAN_TRANSACTIONS = '/api/loan-transactions';
 
     async function loadNextLoanApplicationId() {
         try {
-            const res = await fetch(API_BASE_LOAN_APPLY + '/next-id', {
+            const res = await fetch(API_BASE_LOAN_TRANSACTIONS + '/next-id?prefix=LoApID', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
             });
             const data = await res.json();
-            document.getElementById('apply-loan-id').value = data.loan_application_id || 'LoApID-1';
+            document.getElementById('apply-loan-id').value = data.next_id || 'LoApID-1';
         } catch (err) {
             document.getElementById('apply-loan-id').value = 'LoApID-1';
         }
@@ -625,11 +617,11 @@ ModuleComponents['finance-loans'] = (container) => {
 
     async function loadNextLoanPaymentId() {
         try {
-            const res = await fetch(API_BASE_LOAN_REPAY + '/next-id', {
+            const res = await fetch(API_BASE_LOAN_TRANSACTIONS + '/next-id?prefix=LoPayID', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
             });
             const data = await res.json();
-            document.getElementById('repay-loan-id').value = data.loan_payment_id || 'LoPayID-1';
+            document.getElementById('repay-loan-id').value = data.next_id || 'LoPayID-1';
         } catch (err) {
             document.getElementById('repay-loan-id').value = 'LoPayID-1';
         }
@@ -646,6 +638,28 @@ ModuleComponents['finance-loans'] = (container) => {
             const activeAccounts = accounts.filter(a => a.status === 'Active');
             select.innerHTML = '<option value="">Select Loan Account</option>' +
                 activeAccounts.map(a => `<option value="${a.loan_account_id}">${a.loan_account_id} - ${a.company_individual}</option>`).join('');
+
+            // Add onchange handler to update balance
+            select.onchange = async function() {
+                const accountId = this.value;
+                const balanceInput = document.getElementById(selectId.replace('-account', '-balance'));
+                if (!balanceInput) return;
+
+                if (!accountId) {
+                    balanceInput.value = 'P 0.00';
+                    return;
+                }
+
+                try {
+                    const balanceRes = await fetch(API_BASE_LOAN_TRANSACTIONS + '/account-balance/' + encodeURIComponent(accountId), {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    const balanceData = await balanceRes.json();
+                    balanceInput.value = 'P ' + Number(balanceData.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } catch (err) {
+                    balanceInput.value = 'P 0.00';
+                }
+            };
         } catch (err) {
             console.error('Failed to load loan accounts for dropdown:', err);
         }
@@ -689,17 +703,19 @@ ModuleComponents['finance-loans'] = (container) => {
             }
 
             try {
-                const res = await fetch(API_BASE_LOAN_APPLY, {
+                const res = await fetch(API_BASE_LOAN_TRANSACTIONS, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                     },
                     body: JSON.stringify({
-                        loan_application_id: loanAppId,
+                        loan_transaction_id: loanAppId,
                         date: date,
                         loan_account_id: loanAccount,
-                        amount: parseFloat(amount)
+                        borrow_amount: parseFloat(amount),
+                        payment_interest_amount: 0,
+                        payment_principal_amount: 0
                     })
                 });
 
@@ -710,6 +726,8 @@ ModuleComponents['finance-loans'] = (container) => {
 
                 alert('Loan application created successfully');
                 applyLoanModal.classList.add('hidden');
+                loadLoanTransactionsTable();
+                loadLoanSummaryTable();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -756,18 +774,20 @@ ModuleComponents['finance-loans'] = (container) => {
             }
 
             try {
-                const res = await fetch(API_BASE_LOAN_REPAY, {
+                const isInterest = paymentType === 'Interest';
+                const res = await fetch(API_BASE_LOAN_TRANSACTIONS, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                     },
                     body: JSON.stringify({
-                        loan_payment_id: loanPayId,
+                        loan_transaction_id: loanPayId,
                         date: date,
                         loan_account_id: loanAccount,
-                        payment_type: paymentType,
-                        amount: parseFloat(amount)
+                        borrow_amount: 0,
+                        payment_interest_amount: isInterest ? parseFloat(amount) : 0,
+                        payment_principal_amount: isInterest ? 0 : parseFloat(amount)
                     })
                 });
 
@@ -778,14 +798,150 @@ ModuleComponents['finance-loans'] = (container) => {
 
                 alert('Loan payment created successfully');
                 repayLoanModal.classList.add('hidden');
+                loadLoanTransactionsTable();
+                loadLoanSummaryTable();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
         });
     }
 
+                alert('Loan payment created successfully');
+                repayLoanModal.classList.add('hidden');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    }
+
+    // Loan Transactions Table
+    var loanTransactionsData = [];
+    var loanTransactionsCurrentPage = 1;
+    var loanTransactionsPerPage = 5;
+
+    async function loadLoanTransactionsTable() {
+        const tbody = document.getElementById('loan-transactions-table-body');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(API_BASE_LOAN_TRANSACTIONS, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch loan transactions');
+            loanTransactionsData = await res.json();
+            renderLoanTransactionsTable();
+        } catch (err) {
+            console.error('Failed to load loan transactions', err);
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+        }
+    }
+
+    function renderLoanTransactionsTable() {
+        const tbody = document.getElementById('loan-transactions-table-body');
+        if (!tbody) return;
+
+        const start = (loanTransactionsCurrentPage - 1) * loanTransactionsPerPage;
+        const end = start + loanTransactionsPerPage;
+        const pageData = loanTransactionsData.slice(start, end);
+
+        let runningBalance = 0;
+        const fmt = (val) => 'P ' + Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Calculate running balance from all transactions
+        loanTransactionsData.forEach(t => {
+            runningBalance += (t.borrow_amount || 0) - (t.payment_principal_amount || 0);
+        });
+
+        let rows = pageData.map(t => {
+            const balance = (t.borrow_amount || 0) - (t.payment_principal_amount || 0);
+            runningBalance -= balance;
+            return `
+                <tr>
+                    <td>${t.loan_transaction_id || '-'}</td>
+                    <td>${t.date ? new Date(t.date).toLocaleDateString() : '-'}</td>
+                    <td>${t.loan_account_id || '-'}</td>
+                    <td>${t.borrow_amount ? fmt(t.borrow_amount) : '-'}</td>
+                    <td>${t.payment_principal_amount ? fmt(t.payment_principal_amount) : '-'}</td>
+                    <td>${t.payment_interest_amount ? fmt(t.payment_interest_amount) : '-'}</td>
+                    <td>${fmt(runningBalance + balance)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        // Fill remaining rows to always show 5
+        const emptyRowsNeeded = loanTransactionsPerPage - pageData.length;
+        for (let i = 0; i < emptyRowsNeeded; i++) {
+            rows += '<tr class="empty-row"><td colspan="7" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
+        }
+
+        tbody.innerHTML = rows;
+
+        // Render pagination
+        const totalPages = Math.max(1, Math.ceil(loanTransactionsData.length / loanTransactionsPerPage));
+        renderLoanTransactionsPagination(totalPages);
+    }
+
+    function renderLoanTransactionsPagination(totalPages) {
+        const container = document.getElementById('loan-transactions-pagination');
+        if (!container || totalPages < 2) {
+            if (container) container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="page-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''} onclick="loanTransactionsCurrentPage--; renderLoanTransactionsTable();">&lt;</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn ${i === loanTransactionsCurrentPage ? 'active' : ''}" onclick="loanTransactionsCurrentPage=${i}; renderLoanTransactionsTable();">${i}</button>`;
+        }
+        html += `<button class="page-btn" ${loanTransactionsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanTransactionsCurrentPage++; renderLoanTransactionsTable();">&gt;</button>`;
+        container.innerHTML = html;
+    }
+
+    // Loan Summary Table
+    async function loadLoanSummaryTable() {
+        const tbody = document.getElementById('loan-summary-table-body');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(API_BASE_LOAN_TRANSACTIONS + '/account-summary', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch loan summary');
+            const summaries = await res.json();
+            renderLoanSummaryTable(summaries);
+        } catch (err) {
+            console.error('Failed to load loan summary', err);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+        }
+    }
+
+    function renderLoanSummaryTable(summaries) {
+        const tbody = document.getElementById('loan-summary-table-body');
+        if (!tbody) return;
+
+        const fmt = (val) => 'P ' + Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        if (summaries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #94a3b8;">No active loan accounts</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = summaries.map(s => `
+            <tr>
+                <td>${s.loan_account_id || '-'}</td>
+                <td>${s.account_name || '-'}</td>
+                <td>${fmt(s.total_loans)}</td>
+                <td>${fmt(s.total_principal_paid)}</td>
+                <td>${fmt(s.total_interest_paid)}</td>
+                <td>${fmt(s.total_balance)}</td>
+            </tr>
+        `).join('');
+    }
+
     // Load loan accounts table on init
     loadLoanAccountsTable();
+    loadLoanTransactionsTable();
+    loadLoanSummaryTable();
 };
 
 function initializeModule(contentArea) {
