@@ -2805,14 +2805,13 @@ function initializeModule(contentArea) {
 
             batchPrintSummaryPrinted = false;
             batchPrintAcknowledgementPrinted = false;
-            batchPrint.updateBatchFinalConfirmState();
 
             if (readOnly) {
-                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = 'none';
-                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = 'none';
+                if (batchPrint.batchPrintStatusLabel) batchPrint.batchPrintStatusLabel.style.display = 'none';
+                if (batchPrint.batchFinalConfirmBtn) batchPrint.batchFinalConfirmBtn.style.display = 'none';
             } else {
-                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = '';
-                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = '';
+                if (batchPrint.batchPrintStatusLabel) batchPrint.batchPrintStatusLabel.style.display = '';
+                if (batchPrint.batchFinalConfirmBtn) batchPrint.batchFinalConfirmBtn.style.display = '';
             }
 
             setBatchPrintTab('summary');
