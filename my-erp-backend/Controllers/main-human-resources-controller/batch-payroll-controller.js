@@ -101,8 +101,8 @@ class BatchPayrollController {
                 await client.query("UPDATE payroll SET status = 'Paid', updated_at = CURRENT_TIMESTAMP WHERE payroll_id = $1", [payroll.payroll_id]);
 
                 await client.query(
-                    'INSERT INTO batch_payroll_items (batch_payroll_id, payroll_id) VALUES ($1, $2)',
-                    [batch.batch_payroll_id, payroll.payroll_id]
+                    'INSERT INTO batch_payroll_items (batch_id, batch_payroll_id, payroll_id, employee_id) VALUES ($1, $2, $3, $4)',
+                    [batchReference, batch.batch_payroll_id, payroll.payroll_id, payroll.employee_id]
                 );
 
                 if (Number(payroll.total_cash_loan_deductions) > 0) {
