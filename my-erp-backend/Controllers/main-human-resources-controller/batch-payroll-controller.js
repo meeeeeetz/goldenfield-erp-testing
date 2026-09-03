@@ -1,6 +1,5 @@
 const pool = require('../../config/database');
 const puppeteer = require('puppeteer');
-const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 
 class BatchPayrollController {
     constructor(dbConnection) {
@@ -349,9 +348,7 @@ class BatchPayrollController {
         });
         await browser.close();
 
-        await uploadFile(pdfBuffer, gcsPath, { contentType: 'application/pdf' });
-
-        return { publicUrl: getPublicUrl(gcsPath), filename, gcsPath };
+        return { buffer: pdfBuffer, filename };
     }
 
     async generateAcknowledgementPdf(batchId) {
@@ -579,9 +576,7 @@ class BatchPayrollController {
         });
         await browser.close();
 
-        await uploadFile(pdfBuffer, gcsPath, { contentType: 'application/pdf' });
-
-        return { publicUrl: getPublicUrl(gcsPath), filename, gcsPath };
+        return { buffer: pdfBuffer, filename };
     }
 
     async _createCashLoanRepayments(client, employeeId, payrollId, totalDeduction) {

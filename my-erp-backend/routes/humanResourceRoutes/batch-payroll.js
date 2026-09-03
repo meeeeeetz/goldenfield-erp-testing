@@ -68,22 +68,7 @@ router.get('/:batchId/pdf', async (req, res) => {
         const result = await controller.generateBatchPdf(batchId, null);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
-        const https = require('https');
-        const http = require('http');
-        const url = require('url');
-        const parsed = url.parse(result.publicUrl);
-        const client = parsed.protocol === 'https:' ? https : http;
-        client.get(parsed.href, (response) => {
-            if (response.statusCode === 301 || response.statusCode === 302) {
-                client.get(response.headers.location, (finalRes) => {
-                    finalRes.pipe(res);
-                });
-            } else {
-                response.pipe(res);
-            }
-        }).on('error', () => {
-            res.redirect(result.publicUrl);
-        });
+        res.send(result.buffer);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -95,22 +80,7 @@ router.get('/:batchId/acknowledgement-pdf', async (req, res) => {
         const result = await controller.generateAcknowledgementPdf(batchId);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
-        const https = require('https');
-        const http = require('http');
-        const url = require('url');
-        const parsed = url.parse(result.publicUrl);
-        const client = parsed.protocol === 'https:' ? https : http;
-        client.get(parsed.href, (response) => {
-            if (response.statusCode === 301 || response.statusCode === 302) {
-                client.get(response.headers.location, (finalRes) => {
-                    finalRes.pipe(res);
-                });
-            } else {
-                response.pipe(res);
-            }
-        }).on('error', () => {
-            res.redirect(result.publicUrl);
-        });
+        res.send(result.buffer);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
