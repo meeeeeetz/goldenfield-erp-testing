@@ -468,18 +468,30 @@ ModuleComponents['hr-employees'] = (container) => {
         </div>
 
         <div id="compensation-upload-modal" class="modal" style="display:none; align-items: flex-start; padding-top: 20px; overflow-y: auto;">
-            <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-content" style="max-width: 1100px; width: 95%;">
                 <div class="modal-header-row">
                     <h3>Employee Compensation Upload (Admin)</h3>
                     <button class="modal-close-btn" id="close-compensation-upload-modal">&times;</button>
                 </div>
-                <div class="modal-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button id="download-compensation-template-btn" class="btn-primary" type="button">Download Template</button>
-                        <input type="file" id="compensation-upload-file-input" accept=".csv" style="padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;">
-                        <button id="upload-compensation-btn" class="btn-primary" type="button">Upload</button>
+                <div style="display: flex; gap: 16px; align-items: stretch;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div id="compensation-upload-drop-zone" style="border: 2px dashed #D6D6D6; border-radius: 8px; padding: 40px 20px; text-align: center; background: #fafafa; transition: border-color 0.2s, background 0.2s; cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <p style="margin-top: 12px; color: #555; font-weight: 600;">Drag and drop Excel or CSV file here</p>
+                            <p style="margin-top: 6px; color: #888; font-size: 13px;">or click to browse</p>
+                            <input type="file" id="compensation-upload-file-input" accept=".xlsx,.xls,.csv" style="display: none;" />
+                        </div>
+                        <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <button id="download-compensation-template-btn" class="btn-primary">Download Template</button>
+                            <button id="upload-compensation-btn" class="btn-success">Save</button>
+                        </div>
                     </div>
-                    <div id="compensation-upload-message" style="font-size: 13px;"></div>
+                    <div style="flex: 1; min-width: 0; border: 1px solid #D6D6D6; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column;">
+                        <div style="background: #f5f5f5; padding: 10px 14px; border-bottom: 1px solid #e5e5e5; font-weight: 600; color: #1a1f2e;">File Preview</div>
+                        <div id="compensation-upload-preview" style="padding: 14px; overflow: auto; max-height: 400px; flex: 1; background: #fff;">
+                            <p style="color: #999; text-align: center; margin-top: 40px;">No file selected</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -768,26 +780,23 @@ function initializeModule(contentArea) {
     }
 
     const compensationUploadModal = document.getElementById('compensation-upload-modal');
-    const closeCompensationUploadModal = document.getElementById('close-compensation-upload-modal');
-    const compensationUploadBtn = document.getElementById('compensation-upload-btn');
-    const downloadCompensationTemplateBtn = document.getElementById('download-compensation-template-btn');
-    const uploadCompensationBtn = document.getElementById('upload-compensation-btn');
+    const compensationUploadDropZone = document.getElementById('compensation-upload-drop-zone');
     const compensationUploadFileInput = document.getElementById('compensation-upload-file-input');
-    const compensationUploadMessage = document.getElementById('compensation-upload-message');
+    const compensationUploadPreview = document.getElementById('compensation-upload-preview');
+    let compensationUploadFile = null;
+    let compensationUploadRows = [];
 
-    if (compensationUploadBtn && compensationUploadModal) {
-        compensationUploadBtn.addEventListener('click', () => {
+    document.getElementById('compensation-upload-btn')?.addEventListener('click', () => {
+        if (compensationUploadModal) {
             compensationUploadModal.style.display = 'flex';
-            if (compensationUploadMessage) compensationUploadMessage.textContent = '';
-            if (compensationUploadFileInput) compensationUploadFileInput.value = '';
-        });
-    }
+        }
+    });
 
-    if (closeCompensationUploadModal && compensationUploadModal) {
-        closeCompensationUploadModal.addEventListener('click', () => {
+    document.getElementById('close-compensation-upload-modal')?.addEventListener('click', () => {
+        if (compensationUploadModal) {
             compensationUploadModal.style.display = 'none';
-        });
-    }
+        }
+    });
 
     if (compensationUploadModal) {
         compensationUploadModal.addEventListener('click', (e) => {
@@ -795,43 +804,179 @@ function initializeModule(contentArea) {
         });
     }
 
-    if (downloadCompensationTemplateBtn) {
-        downloadCompensationTemplateBtn.addEventListener('click', () => {
-            window.open('/api/employee-compensation/template', '_blank');
+    if (compensationUploadDropZone) {
+        compensationUploadDropZone.addEventListener('click', () => {
+            compensationUploadFileInput?.click();
+        });
+
+        compensationUploadDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            compensationUploadDropZone.style.borderColor = '#16a34a';
+            compensationUploadDropZone.style.background = '#f0fdf4';
+        });
+
+        compensationUploadDropZone.addEventListener('dragleave', () => {
+            compensationUploadDropZone.style.borderColor = '#D6D6D6';
+            compensationUploadDropZone.style.background = '#fafafa';
+        });
+
+        compensationUploadDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            compensationUploadDropZone.style.borderColor = '#D6D6D6';
+            compensationUploadDropZone.style.background = '#fafafa';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleCompensationUploadFile(files[0]);
+            }
         });
     }
 
-    if (uploadCompensationBtn && compensationUploadFileInput) {
-        uploadCompensationBtn.addEventListener('click', async () => {
-            const file = compensationUploadFileInput.files[0];
-            if (!file) {
-                if (compensationUploadMessage) compensationUploadMessage.textContent = 'Please select a CSV file to upload.';
-                if (compensationUploadMessage) compensationUploadMessage.style.color = '#dc3545';
-                return;
-            }
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                if (compensationUploadMessage) compensationUploadMessage.textContent = 'Uploading...';
-                if (compensationUploadMessage) compensationUploadMessage.style.color = '#2563eb';
-                const res = await fetch('/api/employee-compensation/bulk-upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await res.json();
-                if (!res.ok) {
-                    throw new Error(result.error || 'Upload failed');
-                }
-                if (compensationUploadMessage) compensationUploadMessage.textContent = `Upload successful. ${result.inserted} record(s) inserted.`;
-                if (compensationUploadMessage) compensationUploadMessage.style.color = '#16a34a';
-                if (compensationUploadFileInput) compensationUploadFileInput.value = '';
-            } catch (err) {
-                console.error('Upload error:', err);
-                if (compensationUploadMessage) compensationUploadMessage.textContent = err.message || 'Upload failed';
-                if (compensationUploadMessage) compensationUploadMessage.style.color = '#dc3545';
+    if (compensationUploadFileInput) {
+        compensationUploadFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleCompensationUploadFile(e.target.files[0]);
             }
         });
     }
+
+    async function handleCompensationUploadFile(file) {
+        compensationUploadFile = file;
+        compensationUploadRows = [];
+        const validTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'text/csv',
+            'text/plain'
+        ];
+        const validExtensions = ['.xlsx', '.xls', '.csv'];
+        const fileName = file.name || '';
+        const fileExtension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+
+        if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+            alert('Please upload a valid Excel or CSV file');
+            return;
+        }
+
+        if (compensationUploadPreview) {
+            compensationUploadPreview.innerHTML = '<p style="color: #555; text-align: center; margin-top: 20px;">Loading preview...</p>';
+        }
+
+        try {
+            const text = await file.text();
+            let html = '<div style="overflow-x: auto;"><table style="border-collapse: collapse; font-size: 13px; width: 100%;">';
+
+            if (fileExtension === '.csv') {
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                const headers = lines[0] ? lines[0].split(',') : [];
+                
+                lines.forEach((line, index) => {
+                    const cells = line.split(',');
+                    const tag = index === 0 ? 'th' : 'td';
+                    const style = 'border: 1px solid #e5e5e5; padding: 8px 10px; text-align: left; background: ' + (index === 0 ? '#f5f5f5' : '#fff') + ';';
+                    html += '<tr>' + cells.map(cell => `<${tag} style="${style}">${escapeHtml(cell.trim())}</${tag}>`).join('') + '</tr>';
+                });
+
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    const row = {};
+                    headers.forEach((header, idx) => {
+                        row[header.trim()] = (values[idx] || '').trim();
+                    });
+                    compensationUploadRows.push(row);
+                }
+            } else {
+                html += '<tr><td style="border: 1px solid #e5e5e5; padding: 20px; text-align: center; color: #666;">Excel preview not available. Please download the template and open in Excel.</td></tr>';
+            }
+
+            html += '</table></div>';
+            if (compensationUploadPreview) {
+                compensationUploadPreview.innerHTML = html;
+            }
+        } catch (err) {
+            console.error('Failed to read file', err);
+            if (compensationUploadPreview) {
+                compensationUploadPreview.innerHTML = '<p style="color: #e74c3c; text-align: center; margin-top: 20px;">Failed to load file preview</p>';
+            }
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.getElementById('download-compensation-template-btn')?.addEventListener('click', () => {
+        const headers = [
+            'compensation_id',
+            'employee_id',
+            'salary_pay_mode',
+            'salary_amount',
+            'allowance_pay_mode',
+            'allowance_amount',
+            'pay_frequency',
+            'payout_method',
+            'department',
+            'role',
+            'yearly_sick_leave',
+            'yearly_vacation_leave',
+            'created_at',
+            'updated_at',
+            'sss_contribution_amount',
+            'sss_loan_payment_mode',
+            'sss_loan_amount',
+            'philhealth_contribution_mode',
+            'philhealth_contribution_amount',
+            'pagibig_contribution_mode',
+            'pagibig_contribution_amount',
+            'pagibig_loan_payment_mode',
+            'pagibig_loan_amount',
+            'sss_contribution_mode',
+            'shift_policy'
+        ];
+        const csvContent = headers.join(',') + '\n';
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'employee_compensation_template.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('upload-compensation-btn')?.addEventListener('click', async () => {
+        if (!compensationUploadFile) {
+            alert('Please select a file first');
+            return;
+        }
+        if (compensationUploadRows.length === 0) {
+            alert('No data rows found in file');
+            return;
+        }
+        try {
+            const formData = new FormData();
+            formData.append('file', compensationUploadFile);
+            const res = await fetch('/api/employee-compensation/bulk-upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.error || 'Upload failed');
+            }
+            alert(`Upload successful. ${result.inserted} record(s) inserted.`);
+            if (compensationUploadModal) compensationUploadModal.style.display = 'none';
+            if (compensationUploadFileInput) compensationUploadFileInput.value = '';
+            compensationUploadFile = null;
+            compensationUploadRows = [];
+            if (compensationUploadPreview) compensationUploadPreview.innerHTML = '<p style="color: #999; text-align: center; margin-top: 40px;">No file selected</p>';
+        } catch (err) {
+            console.error('Upload error:', err);
+            alert(err.message || 'Upload failed');
+        }
+    });
 
     if (employeeProfileModal) {
         let modalMouseDown = false;
