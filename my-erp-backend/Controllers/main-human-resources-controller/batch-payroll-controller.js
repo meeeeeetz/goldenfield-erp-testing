@@ -337,16 +337,18 @@ class BatchPayrollController {
                 <meta charset="utf-8">
                 <style>
                     body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #000; }
-                    .acknowledgement-page { display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm; }
-                    .acknowledgement-header { text-align: center; margin-bottom: 8px; }
-                    .acknowledgement-header h2 { margin: 0; font-size: 14px; font-weight: bold; }
-                    .acknowledgement-header .subtitle { font-size: 10px; color: #333; }
-                    .acknowledgement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
-                    .acknowledgement-grid .field { font-size: 9px; }
-                    .acknowledgement-grid .field-label { font-weight: bold; font-size: 9px; }
-                    .acknowledgement-grid .field-value { font-size: 9px; }
-                    .acknowledgement-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; }
-                    .acknowledgement-table th, .acknowledgement-table td { border: 1px solid #000; padding: 2px 4px; font-size: 9px; }
+                    .acknowledgement-page { display: flex; gap: 0; border: 1px solid #000; padding: 0; margin: 0; height: 57.4mm; page-break-inside: avoid; box-sizing: border-box; }
+                    .acknowledgement-page > div:first-child { flex: 0 0 60%; border-right: 2px dashed #000; padding: 3mm; box-sizing: border-box; }
+                    .acknowledgement-page > div:last-child { flex: 0 0 40%; padding: 3mm; box-sizing: border-box; }
+                    .acknowledgement-header { text-align: center; margin-bottom: 4px; }
+                    .acknowledgement-header h2 { margin: 0; font-size: 12px; font-weight: bold; }
+                    .acknowledgement-header .subtitle { font-size: 9px; color: #333; }
+                    .acknowledgement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 4px; }
+                    .acknowledgement-grid .field { font-size: 8px; }
+                    .acknowledgement-grid .field-label { font-weight: bold; font-size: 8px; }
+                    .acknowledgement-grid .field-value { font-size: 8px; }
+                    .acknowledgement-table { width: 100%; border-collapse: collapse; font-size: 8px; margin-bottom: 4px; }
+                    .acknowledgement-table th, .acknowledgement-table td { border: 1px solid #000; padding: 1px 2px; font-size: 8px; }
                     .acknowledgement-table th { background: #f0f0f0; font-weight: bold; }
                 </style>
             </head>
@@ -415,7 +417,7 @@ class BatchPayrollController {
 
                         return `
                             <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
-                                <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
+                                <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 3mm; display: flex; flex-direction: column;">
                                     <div class="acknowledgement-grid">
                                         <div class="field"><span class="field-label">Name:</span> <span class="field-value">${item.last_name || ''}, ${item.first_name || ''}</span></div>
                                         <div class="field"><span class="field-label">Code:</span> <span class="field-value">${item.employee_id || ''}</span></div>
@@ -462,7 +464,7 @@ class BatchPayrollController {
                                         </div>
                                     </div>
                                 </div>
-                                <div style="flex: 0 0 40%; padding: 10mm; display: flex; flex-direction: column; background: #fff;">
+                                <div style="flex: 0 0 40%; padding: 3mm; display: flex; flex-direction: column; background: #fff;">
                                     <div style="font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 6px; border-bottom: 1px solid #000; padding-bottom: 4px;">TEAR-OUT SECTION</div>
                                     <div style="font-size: 9px; margin-bottom: 6px;">
                                         <div><strong>Employee:</strong> ${item.last_name || ''}, ${item.first_name || ''}</div>

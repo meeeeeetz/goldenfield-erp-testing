@@ -1239,7 +1239,7 @@ ModuleComponents['hr-salary'] = (container) => {
 
                 return `
                     <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
-                        <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
+                        <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 3mm; display: flex; flex-direction: column;">
                             <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
                                 <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
                                 <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
@@ -1286,7 +1286,7 @@ ModuleComponents['hr-salary'] = (container) => {
                                 </div>
                             </div>
                         </div>
-                        <div style="flex: 0 0 40%; padding: 10mm; display: flex; flex-direction: column; background: #fff;">
+                        <div style="flex: 0 0 40%; padding: 3mm; display: flex; flex-direction: column; background: #fff;">
                             <div style="font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 6px; border-bottom: 1px solid #000; padding-bottom: 4px;">TEAR-OUT SECTION</div>
                             <div style="font-size: 9px; margin-bottom: 6px;">
                                 <div><strong>Employee:</strong> ${row.lastName || ''}, ${row.firstName || ''}</div>
@@ -1373,20 +1373,21 @@ ModuleComponents['hr-salary'] = (container) => {
                             gap: 0 !important;
                             border: 1px solid #000 !important;
                             padding: 0 !important;
-                            margin-bottom: 5mm !important;
-                            page-break-after: always;
-                        }
-                        .acknowledgement-page:last-child {
-                            page-break-after: auto;
+                            margin: 0 !important;
+                            height: 57.4mm !important;
+                            page-break-inside: avoid;
+                            box-sizing: border-box !important;
                         }
                         .acknowledgement-page > div:first-child {
                             flex: 0 0 60% !important;
                             border-right: 2px dashed #000 !important;
-                            padding: 10mm !important;
+                            padding: 3mm !important;
+                            box-sizing: border-box !important;
                         }
                         .acknowledgement-page > div:last-child {
                             flex: 0 0 40% !important;
-                            padding: 10mm !important;
+                            padding: 3mm !important;
+                            box-sizing: border-box !important;
                         }
                         .acknowledgement-header {
                             display: none !important;
