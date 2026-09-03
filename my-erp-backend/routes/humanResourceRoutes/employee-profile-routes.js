@@ -165,6 +165,20 @@ router.get('/:id/compensation', async (req, res) => {
     }
 });
 
+router.get('/:id/13th-month', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const year = req.query.year;
+        if (!year) {
+            return res.status(400).json({ error: 'Year query parameter is required' });
+        }
+        const data = await controller.get13thMonthData(id, year);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const profile = await controller.getProfileById(req.params.id);

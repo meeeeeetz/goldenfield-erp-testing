@@ -165,6 +165,84 @@ class EmployeeProfileController {
         return result.rows[0];
     }
 
+    async get13thMonthData(employeeId, year) {
+        const profile = await this.getProfileById(employeeId);
+        if (!profile) {
+            throw new Error('Employee not found');
+        }
+
+        const yearInt = parseInt(year, 10);
+        if (!yearInt || yearInt < 2000 || yearInt > 2100) {
+            throw new Error('Invalid year');
+        }
+
+        const startDate = `${yearInt}-01-01`;
+        const endDate = `${yearInt}-12-31`;
+
+        const attendanceQuery = `
+            SELECT 
+                EXTRACT(MONTH FROM date)::int AS month,
+                COUNT(*) AS days_worked
+            FROM attendance_log
+            WHERE employee_id = $1
+                AND date >= $2
+                AND date <= $3
+                AND time_in IS NOT NULL
+                AND time_out IS NOT NULL
+            GROUP BY EXTRACT(MONTH FROM date)
+            ORDER BY month ASC
+        `;
+        const attendanceResult = await this.db.query(attendanceQuery, [employeeId, startDate, endDate]);
+        const attendanceByMonth = new Map();
+        attendanceResult.rows.forEach(row => {
+            attendanceByMonth.set(row.month, Number(row.days_worked) || 0);
+        });
+
+        const compensation = await this.getLatestCompensation(employeeId);
+        const salaryAmount = Number(compensation.salary_amount) || 0;
+        const salaryPayMode = compensation.salary_pay_mode || 'Monthly';
+        const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
+
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        const monthlyData = months.map((name, index) => {
+            const monthNum = index + 1;
+            const daysWorked = attendanceByMonth.get(monthNum) || 0;
+            const salary = salaryAmount;
+            const thirteenthMonth = daysWorked * dailyRate / 12;
+            return {
+                month: name,
+                daysWorked,
+                salary,
+                thirteenthMonth: parseFloat(thirteenthMonth.toFixed(2))
+            };
+        });
+
+        const totalThirteenthMonth = monthlyData.reduce((sum, row) => sum + row.thirteenthMonth, 0);
+
+        return {
+            employee: {
+                employee_id: profile.employee_id,
+                last_name: profile.last_name,
+                first_name: profile.first_name,
+                middle_name: profile.middle_name,
+                date_of_hire: profile.date_of_hire,
+                employment_status: profile.employment_status
+            },
+            compensation: {
+                salary_amount: salaryAmount,
+                salary_pay_mode: salaryPayMode,
+                daily_rate: parseFloat(dailyRate.toFixed(2))
+            },
+            photo: await this.findEmployeePhoto(employeeId),
+            monthlyData,
+            totalThirteenthMonth: parseFloat(totalThirteenthMonth.toFixed(2))
+        };
+    }
+
     async addProfile(profileData) {
         const {
             employee_id,
