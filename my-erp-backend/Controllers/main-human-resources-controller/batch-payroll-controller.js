@@ -416,10 +416,6 @@ class BatchPayrollController {
                         return `
                             <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
                                 <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
-                                    <div class="acknowledgement-header">
-                                        <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
-                                        <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
-                                    </div>
                                     <div class="acknowledgement-grid">
                                         <div class="field"><span class="field-label">Name:</span> <span class="field-value">${item.last_name || ''}, ${item.first_name || ''}</span></div>
                                         <div class="field"><span class="field-label">Code:</span> <span class="field-value">${item.employee_id || ''}</span></div>
@@ -490,9 +486,6 @@ class BatchPayrollController {
                                     <div style="font-size: 9px; margin-top: auto; border-top: 1px solid #000; padding-top: 4px;">
                                         <div>Start Cash: ${fmtNum(Number(item.starting_cash_loan) || 0)}</div>
                                         <div>End Cash: ${fmtNum(Number(item.ending_cash_loan) || 0)}</div>
-                                    </div>
-                                    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #000;">
-                                        <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px; font-size: 9px;">Employee Signature</div>
                                     </div>
                                 </div>
                             </div>

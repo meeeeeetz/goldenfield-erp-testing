@@ -1240,10 +1240,6 @@ ModuleComponents['hr-salary'] = (container) => {
                 return `
                     <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
                         <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
-                            <div class="acknowledgement-header">
-                                <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
-                                <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
-                            </div>
                             <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
                                 <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
                                 <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
@@ -1315,8 +1311,6 @@ ModuleComponents['hr-salary'] = (container) => {
                                 <div>Start Cash: ${fmtNum(Number(row.startingCashLoan) || 0)}</div>
                                 <div>End Cash: ${fmtNum(Number(row.endingCashLoan) || 0)}</div>
                             </div>
-                            <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #000;">
-                                <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px; font-size: 9px;">Employee Signature</div>
                             </div>
                         </div>
                     </div>
@@ -1330,13 +1324,81 @@ ModuleComponents['hr-salary'] = (container) => {
     if (batchPrintBtn && batchPrintPreviewContent) {
         batchPrintBtn.addEventListener('click', () => {
             if (batchPrintActiveTab === 'acknowledgement') {
-                if (currentBatchIdForPrint) {
-                    batchPrintAcknowledgementPrinted = true;
-                    updateBatchFinalConfirmState();
-                    window.open(`/api/batch-payroll/${currentBatchIdForPrint}/acknowledgement-pdf`, '_blank');
-                } else {
-                    alert('Please confirm the batch payroll first to generate the acknowledgement receipt.');
-                }
+                batchPrintAcknowledgementPrinted = true;
+                updateBatchFinalConfirmState();
+
+                const existingStyle = document.getElementById('batch-print-isolation-style');
+                if (existingStyle) existingStyle.remove();
+
+                const style = document.createElement('style');
+                style.id = 'batch-print-isolation-style';
+                style.textContent = `
+                    @media print {
+                        @page { size: A4 portrait; margin: 10mm; }
+                        body > *:not(#batch-print-preview-modal) { display: none !important; }
+                        #batch-print-preview-modal {
+                            position: static !important;
+                            display: block !important;
+                            background: #fff !important;
+                            max-width: none !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-content {
+                            max-width: none !important;
+                            width: 100% !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            box-shadow: none !important;
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        #batch-print-preview-modal .modal-header-row {
+                            display: none !important;
+                        }
+                        #batch-tab-summary, #batch-tab-acknowledgement {
+                            display: none !important;
+                        }
+                        #batch-print-preview-content {
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        .acknowledgement-page {
+                            display: flex !important;
+                            gap: 0 !important;
+                            border: 1px solid #000 !important;
+                            padding: 0 !important;
+                            margin-bottom: 5mm !important;
+                            page-break-after: always;
+                        }
+                        .acknowledgement-page:last-child {
+                            page-break-after: auto;
+                        }
+                        .acknowledgement-page > div:first-child {
+                            flex: 0 0 60% !important;
+                            border-right: 2px dashed #000 !important;
+                            padding: 10mm !important;
+                        }
+                        .acknowledgement-page > div:last-child {
+                            flex: 0 0 40% !important;
+                            padding: 10mm !important;
+                        }
+                        .acknowledgement-header {
+                            display: none !important;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                setTimeout(() => {
+                    window.print();
+                    setTimeout(() => style.remove(), 100);
+                }, 300);
                 return;
             }
 
