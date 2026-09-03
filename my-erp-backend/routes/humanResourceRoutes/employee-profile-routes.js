@@ -53,7 +53,7 @@ router.post('/upload-documents', upload.array('files', 50), async (req, res) => 
 router.get('/', async (req, res) => {
     try {
         const query = req.query.search;
-        const status = req.query.status === 'inactive' ? 'inactive' : 'active';
+        const status = req.query.status;
         if (query) {
             const profiles = await controller.searchProfiles(query, status);
             return res.json(profiles);

@@ -15,7 +15,7 @@ class EmployeeProfileController {
 
     async searchProfiles(query, statusFilter) {
         const term = `%${query}%`;
-        const statusCondition = statusFilter === 'inactive' ? "AND ep.employment_status = 'Inactive'" : "AND ep.employment_status = 'Active'";
+        const statusCondition = statusFilter === 'inactive' ? "AND ep.employment_status = 'Inactive'" : (statusFilter === 'active' ? "AND ep.employment_status = 'Active'" : '');
         const sql = `
             SELECT DISTINCT ON (ep.employee_id)
                 ep.employee_id,
