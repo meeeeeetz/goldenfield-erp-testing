@@ -1,3 +1,4 @@
+// v2026-09-03-001: batch payroll print preview + final confirm flow
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
 ModuleComponents['hr-salary'] = (container) => {
