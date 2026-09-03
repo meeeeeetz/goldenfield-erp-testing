@@ -2647,9 +2647,10 @@ function initializeModule(contentArea) {
                 batchPrint.batchPrintAcknowledgementPrinted = false;
                 batchPrint.updateBatchFinalConfirmState();
 
-                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = '';
-                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = '';
+                if (batchPrint.batchPrintStatusLabel) batchPrint.batchPrintStatusLabel.style.display = '';
+                if (batchPrint.batchFinalConfirmBtn) batchPrint.batchFinalConfirmBtn.style.display = '';
 
+                const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
                 batchPrintPreviewModal.style.display = 'flex';
                 batchPrint.setBatchPrintTab('summary');
 
@@ -2799,12 +2800,12 @@ function initializeModule(contentArea) {
             }
             const { summaryData, tableData } = await res.json();
 
-            batchPrintSummaryData = summaryData;
-            batchPrintTableData = tableData;
-            currentBatchIdForPrint = batchId;
+            batchPrint.batchPrintSummaryData = summaryData;
+            batchPrint.batchPrintTableData = tableData;
+            batchPrint.currentBatchIdForPrint = batchId;
 
-            batchPrintSummaryPrinted = false;
-            batchPrintAcknowledgementPrinted = false;
+            batchPrint.batchPrintSummaryPrinted = false;
+            batchPrint.batchPrintAcknowledgementPrinted = false;
 
             if (readOnly) {
                 if (batchPrint.batchPrintStatusLabel) batchPrint.batchPrintStatusLabel.style.display = 'none';
@@ -2814,9 +2815,10 @@ function initializeModule(contentArea) {
                 if (batchPrint.batchFinalConfirmBtn) batchPrint.batchFinalConfirmBtn.style.display = '';
             }
 
-            setBatchPrintTab('summary');
-            renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
+            batchPrint.setBatchPrintTab('summary');
+            batchPrint.renderBatchPrintPreview(batchPrint.batchPrintSummaryData, batchPrint.batchPrintTableData, 'summary');
 
+            const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
             if (batchPrintPreviewModal) {
                 batchPrintPreviewModal.style.display = 'flex';
             }
