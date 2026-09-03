@@ -189,6 +189,7 @@ class EmployeeProfileController {
                 AND date <= $3
                 AND time_in IS NOT NULL
                 AND time_out IS NOT NULL
+                AND status NOT IN ('Rejected', 'Pending')
             GROUP BY EXTRACT(MONTH FROM date)
             ORDER BY month ASC
         `;
