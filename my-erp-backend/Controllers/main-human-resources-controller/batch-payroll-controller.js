@@ -164,7 +164,7 @@ class BatchPayrollController {
             }
 
             const batchResult = await client.query(
-                `INSERT INTO batch_payroll (batch_id, batch_reference, date_start, date_end, pay_period_start, pay_period_end, payroll_count, total_gross_pay, total_gross_deduction, total_net_pay, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Pending') RETURNING *`,
+                `INSERT INTO batch_payroll (batch_payroll_id, batch_id, batch_reference, date_start, date_end, pay_period_start, pay_period_end, payroll_count, total_gross_pay, total_gross_deduction, total_net_pay, status) VALUES (nextval('batch_payroll_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Pending') RETURNING *`,
                 [batchReference, batchReference, payPeriodStart, payPeriodEnd, payPeriodStart, payPeriodEnd, payrollData.rows.length, totalGrossPay.toFixed(2), totalGrossDeduction.toFixed(2), totalNetPay.toFixed(2)]
             );
             const batch = batchResult.rows[0];
