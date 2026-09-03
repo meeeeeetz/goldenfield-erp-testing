@@ -2049,15 +2049,6 @@ function initializeModule(contentArea) {
                 const payroll = await res.json();
                 alert(`Payroll saved successfully for employee ${employeeId}`);
                 if (typeof updatePayslipPreview === 'function') updatePayslipPreview();
-                try {
-                    const pdfRes = await fetch(`/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
-                    if (!pdfRes.ok) {
-                        const pdfError = await pdfRes.json().catch(() => ({}));
-                        console.error('PDF generation failed:', pdfError);
-                    }
-                } catch (pdfErr) {
-                    console.error('PDF generation error:', pdfErr);
-                }
                 if (salaryComputationModal) salaryComputationModal.style.display = 'none';
                 const clearFields = () => {
                     const fields = [
@@ -2539,8 +2530,7 @@ function initializeModule(contentArea) {
 
         const start = formatDateForFile(dateStart);
         const end = formatDateForFile(dateEnd);
-        const filename = `payslip_${employeeId}_${start}_to_${end}.pdf`;
-        const url = `/uploads/payslips/${encodeURIComponent(filename)}`;
+        const url = `/api/payroll/${encodeURIComponent(payrollId)}/pdf-file`;
 
         window.open(url, '_blank');
     });
@@ -3141,15 +3131,6 @@ function initializeModule(contentArea) {
                     }
 
                     const payroll = await res.json();
-
-                    try {
-                        const pdfRes = await fetch(`/api/payroll/${payroll.payroll_id}/pdf`, { method: 'POST' });
-                        if (!pdfRes.ok) {
-                            console.error(`PDF generation failed for ${row.employeeId}:`, await pdfRes.json().catch(() => ({})));
-                        }
-                    } catch (pdfErr) {
-                        console.error(`PDF generation error for ${row.employeeId}:`, pdfErr);
-                    }
 
                     savedCount++;
                 } catch (err) {

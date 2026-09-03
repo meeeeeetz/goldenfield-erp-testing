@@ -1143,8 +1143,6 @@ function initializeModule(contentArea) {
             });
         });
 
-        loadEmployeeCards();
-
      async function selectEmployee(empId) {
         if (!empId) return;
         const empIdInput = document.getElementById('employee-profile-emp-id');

@@ -155,21 +155,13 @@ router.get('/totals/monthly-comparison', async (req, res) => {
     }
 });
 
-router.post('/:payrollId/pdf', async (req, res) => {
-    try {
-        const { payrollId } = req.params;
-        const result = await controller.generatePayslipPdf(payrollId);
-        res.json({ success: true, filePath: result.filePath, filename: result.filename });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 router.get('/:payrollId/pdf-file', async (req, res) => {
     try {
         const { payrollId } = req.params;
-        const result = await controller.getPayslipPdfPath(payrollId);
-        res.sendFile(result.filePath);
+        const result = await controller.generatePayslipPdf(payrollId);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
+        res.send(result.buffer);
     } catch (error) {
         res.status(404).json({ error: error.message });
     }

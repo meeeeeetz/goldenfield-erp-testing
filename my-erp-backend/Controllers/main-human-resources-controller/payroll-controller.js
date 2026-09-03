@@ -1,7 +1,5 @@
 const pool = require('../../config/database');
 const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
 
 class PayrollController {
     constructor(dbConnection) {
@@ -207,11 +205,6 @@ class PayrollController {
             console.error('Failed to load employee name for PDF:', err);
         }
 
-        const outputDir = 'C:/Users/ADMIN/Documents/uploads/payslips';
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
         const formatDate = (d) => {
             const date = new Date(d);
             const y = date.getFullYear();
@@ -220,11 +213,10 @@ class PayrollController {
             return `${y}-${m}-${day}`;
         };
         const filename = `payslip_${payroll.employee_id}_${formatDate(payroll.date_start)}_to_${formatDate(payroll.date_end)}.pdf`;
-        const filePath = path.join(outputDir, filename);
 
         const doc = new PDFDocument({ size: 'A4', margin: 0 });
-        const stream = fs.createWriteStream(filePath);
-        doc.pipe(stream);
+        const chunks = [];
+        doc.on('data', chunk => chunks.push(chunk));
 
         const fmt = (val) => {
             const n = Number(val) || 0;
@@ -372,57 +364,14 @@ class PayrollController {
         doc.end();
 
         return new Promise((resolve, reject) => {
-            stream.on('finish', () => resolve({ filePath, filename }));
-            stream.on('error', reject);
+            doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), filename }));
+            doc.on('error', reject);
         });
     }
 
-    async getPayslipPdfPath(payrollId) {
-        const payroll = await this.getPayrollById(payrollId);
-        if (!payroll) {
-            throw new Error('Payroll not found');
-        }
-
-        const formatDate = (d) => {
-            const date = new Date(d);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
-        const filename = `payslip_${payroll.employee_id}_${formatDate(payroll.date_start)}_to_${formatDate(payroll.date_end)}.pdf`;
-        const filePath = path.join('C:/Users/ADMIN/Documents/uploads/payslips', filename);
-
-        if (!fs.existsSync(filePath)) {
-            throw new Error('PDF not found');
-        }
-
-        return { filePath, filename };
-    }
-
     async deletePayroll(payrollId) {
-        const payroll = await this.getPayrollById(payrollId);
-        if (!payroll) {
-            throw new Error('Payroll not found');
-        }
-
-        const formatDate = (d) => {
-            const date = new Date(d);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
-        const filename = `payslip_${payroll.employee_id}_${formatDate(payroll.date_start)}_to_${formatDate(payroll.date_end)}.pdf`;
-        const filePath = path.join('C:/Users/ADMIN/Documents/uploads/payslips', filename);
-
         await this.db.query('DELETE FROM batch_payroll_items WHERE payroll_id = $1', [payrollId]);
         await this.db.query('DELETE FROM payroll WHERE payroll_id = $1', [payrollId]);
-
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
         return { success: true };
     }
 
