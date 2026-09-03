@@ -1,7 +1,6 @@
 const pool = require('../../config/database');
 const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
+const { uploadFile, getPublicUrl } = require('../../utils/gcs');
 
 class BatchPayrollController {
     constructor(dbConnection) {
@@ -221,11 +220,6 @@ class BatchPayrollController {
         );
         const items = itemsResult.rows;
 
-        const outputDir = 'C:/Users/ADMIN/Documents/uploads/batchpayroll';
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
         const formatDate = (d) => {
             const date = new Date(d);
             const y = date.getFullYear();
@@ -233,8 +227,8 @@ class BatchPayrollController {
             const day = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
         };
-        const filename = `batchpayroll_${batch.batch_reference}_${formatDate(batch.pay_period_start)}_to_${formatDate(batch.pay_period_end)}.pdf`;
-        const filePath = path.join(outputDir, filename);
+        const filename = `${formatDate(batch.pay_period_start)} - overall summary - ${batch.batch_reference}.pdf`;
+        const gcsPath = `batch-payroll/summary/${filename}`;
 
         let previewHtml = html;
         if (!previewHtml) {
@@ -347,8 +341,7 @@ class BatchPayrollController {
         const page = await browser.newPage();
         await page.setViewport({ width: 1600, height: 900 });
         await page.setContent(previewHtml, { waitUntil: 'networkidle0' });
-        await page.pdf({
-            path: filePath,
+        const pdfBuffer = await page.pdf({
             format: 'A4',
             landscape: true,
             printBackground: true,
@@ -356,7 +349,9 @@ class BatchPayrollController {
         });
         await browser.close();
 
-        return { filePath, filename };
+        await uploadFile(pdfBuffer, gcsPath, { contentType: 'application/pdf' });
+
+        return { publicUrl: getPublicUrl(gcsPath), filename, gcsPath };
     }
 
     async generateAcknowledgementPdf(batchId) {
@@ -372,11 +367,6 @@ class BatchPayrollController {
         );
         const items = itemsResult.rows;
 
-        const outputDir = 'C:/Users/ADMIN/Documents/uploads/batchpayroll';
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
         const formatDate = (d) => {
             const date = new Date(d);
             const y = date.getFullYear();
@@ -384,8 +374,8 @@ class BatchPayrollController {
             const day = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
         };
-        const filename = `batchpayroll_acknowledgement_${batch.batch_reference}_${formatDate(batch.pay_period_start)}_to_${formatDate(batch.pay_period_end)}.pdf`;
-        const filePath = path.join(outputDir, filename);
+        const filename = `${formatDate(batch.pay_period_start)} - payslip acknowledge - ${batch.batch_reference}.pdf`;
+        const gcsPath = `batch-payroll/acknowledgement/${filename}`;
 
         const fmtNum = (val) => {
             const n = Number(val) || 0;
@@ -581,8 +571,7 @@ class BatchPayrollController {
         const page = await browser.newPage();
         await page.setViewport({ width: 794, height: 1123 });
         await page.setContent(previewHtml, { waitUntil: 'networkidle0' });
-        await page.pdf({
-            path: filePath,
+        const pdfBuffer = await page.pdf({
             format: 'A4',
             portrait: true,
             printBackground: true,
@@ -590,7 +579,9 @@ class BatchPayrollController {
         });
         await browser.close();
 
-        return { filePath, filename };
+        await uploadFile(pdfBuffer, gcsPath, { contentType: 'application/pdf' });
+
+        return { publicUrl: getPublicUrl(gcsPath), filename, gcsPath };
     }
 
     async _createCashLoanRepayments(client, employeeId, payrollId, totalDeduction) {

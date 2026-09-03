@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const BatchPayrollController = require('../../Controllers/main-human-resources-controller/batch-payroll-controller');
 const pool = require('../../config/database');
 const controller = new BatchPayrollController(pool);
@@ -67,39 +65,25 @@ router.get('/:batchId/print-data', async (req, res) => {
 router.get('/:batchId/pdf', async (req, res) => {
     try {
         const { batchId } = req.params;
-        const batch = await controller.getBatchById(batchId);
-        if (!batch) {
-            return res.status(404).json({ error: 'Batch not found' });
-        }
-
-        const formatDate = (d) => {
-            const date = new Date(d);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
-
-        const filename = `batchpayroll_${batch.batch_reference}_${formatDate(batch.pay_period_start)}_to_${formatDate(batch.pay_period_end)}.pdf`;
-        const filePath = path.join('C:/Users/ADMIN/Documents/uploads/batchpayroll', filename);
-
-        if (!fs.existsSync(filePath)) {
-            try {
-                await controller.generateBatchPdf(batchId, null);
-            } catch (genErr) {
-                console.error('Auto PDF generation failed:', genErr);
-                return res.status(500).json({ error: 'PDF not found and auto-generation failed: ' + genErr.message });
-            }
-        }
-
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'PDF file not found on server' });
-        }
-
+        const result = await controller.generateBatchPdf(batchId, null);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
+        res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
+        const https = require('https');
+        const http = require('http');
+        const url = require('url');
+        const parsed = url.parse(result.publicUrl);
+        const client = parsed.protocol === 'https:' ? https : http;
+        client.get(parsed.href, (response) => {
+            if (response.statusCode === 301 || response.statusCode === 302) {
+                client.get(response.headers.location, (finalRes) => {
+                    finalRes.pipe(res);
+                });
+            } else {
+                response.pipe(res);
+            }
+        }).on('error', () => {
+            res.redirect(result.publicUrl);
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -108,39 +92,25 @@ router.get('/:batchId/pdf', async (req, res) => {
 router.get('/:batchId/acknowledgement-pdf', async (req, res) => {
     try {
         const { batchId } = req.params;
-        const batch = await controller.getBatchById(batchId);
-        if (!batch) {
-            return res.status(404).json({ error: 'Batch not found' });
-        }
-
-        const formatDate = (d) => {
-            const date = new Date(d);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
-
-        const filename = `batchpayroll_acknowledgement_${batch.batch_reference}_${formatDate(batch.pay_period_start)}_to_${formatDate(batch.pay_period_end)}.pdf`;
-        const filePath = path.join('C:/Users/ADMIN/Documents/uploads/batchpayroll', filename);
-
-        if (!fs.existsSync(filePath)) {
-            try {
-                await controller.generateAcknowledgementPdf(batchId);
-            } catch (genErr) {
-                console.error('Auto acknowledgement PDF generation failed:', genErr);
-                return res.status(500).json({ error: 'PDF not found and auto-generation failed: ' + genErr.message });
-            }
-        }
-
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'PDF file not found on server' });
-        }
-
+        const result = await controller.generateAcknowledgementPdf(batchId);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
+        res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
+        const https = require('https');
+        const http = require('http');
+        const url = require('url');
+        const parsed = url.parse(result.publicUrl);
+        const client = parsed.protocol === 'https:' ? https : http;
+        client.get(parsed.href, (response) => {
+            if (response.statusCode === 301 || response.statusCode === 302) {
+                client.get(response.headers.location, (finalRes) => {
+                    finalRes.pipe(res);
+                });
+            } else {
+                response.pipe(res);
+            }
+        }).on('error', () => {
+            res.redirect(result.publicUrl);
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
