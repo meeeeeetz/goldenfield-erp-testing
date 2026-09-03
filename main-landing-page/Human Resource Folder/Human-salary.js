@@ -2793,7 +2793,10 @@ function initializeModule(contentArea) {
     const openBatchPrintPreviewForBatch = async (batchId, readOnly = false) => {
         try {
             const res = await fetch(`/api/batch-payroll/${encodeURIComponent(batchId)}/print-data`);
-            if (!res.ok) throw new Error('Failed to load batch print data');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${res.status}: Failed to load batch print data`);
+            }
             const { summaryData, tableData } = await res.json();
 
             batchPrintSummaryData = summaryData;
