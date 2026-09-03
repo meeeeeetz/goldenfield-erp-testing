@@ -337,7 +337,7 @@ class BatchPayrollController {
                 <meta charset="utf-8">
                 <style>
                     body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #000; }
-                    .acknowledgement-page { border: 1px solid #000; padding: 10mm; margin-bottom: 5mm; }
+                    .acknowledgement-page { display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm; }
                     .acknowledgement-header { text-align: center; margin-bottom: 8px; }
                     .acknowledgement-header h2 { margin: 0; font-size: 14px; font-weight: bold; }
                     .acknowledgement-header .subtitle { font-size: 10px; color: #333; }
@@ -348,8 +348,6 @@ class BatchPayrollController {
                     .acknowledgement-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; }
                     .acknowledgement-table th, .acknowledgement-table td { border: 1px solid #000; padding: 2px 4px; font-size: 9px; }
                     .acknowledgement-table th { background: #f0f0f0; font-weight: bold; }
-                    .acknowledgement-signature { display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px; }
-                    .acknowledgement-signature .sign-line { border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px; }
                 </style>
             </head>
             <body>
@@ -416,46 +414,85 @@ class BatchPayrollController {
                         </tr>` : '';
 
                         return `
-                            <div class="acknowledgement-page">
-                                <div class="acknowledgement-header">
-                                    <h2>GOLDEN FIELD</h2>
-                                    <div class="subtitle">ACKNOWLEDGEMENT RECEIPT</div>
+                            <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
+                                <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
+                                    <div class="acknowledgement-header">
+                                        <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
+                                        <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
+                                    </div>
+                                    <div class="acknowledgement-grid">
+                                        <div class="field"><span class="field-label">Name:</span> <span class="field-value">${item.last_name || ''}, ${item.first_name || ''}</span></div>
+                                        <div class="field"><span class="field-label">Code:</span> <span class="field-value">${item.employee_id || ''}</span></div>
+                                        <div class="field"><span class="field-label">From:</span> <span class="field-value">${formatDateShort(item.date_start)}</span></div>
+                                        <div class="field"><span class="field-label">To:</span> <span class="field-value">${formatDateShort(item.date_end)}</span></div>
+                                    </div>
+                                    <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; flex: 1;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 70%;">EARNINGS</th>
+                                                <th style="width: 30%; text-align: right;">AMOUNT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${earningsRows.join('')}
+                                        </tbody>
+                                    </table>
+                                    <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; flex: 1;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 70%;">DEDUCTIONS</th>
+                                                <th style="width: 30%; text-align: right;">AMOUNT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${deductionRows}
+                                            ${noDeductionsRow}
+                                        </tbody>
+                                    </table>
+                                    <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
+                                        <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
+                                            <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                            <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                            <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                        </div>
+                                    </div>
+                                    <div style="height: 10px;"></div>
+                                    <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 9px; padding-top: 8px; border-top: 1px solid #000;">
+                                        <div>
+                                            <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px;">Authorized Signature</div>
+                                        </div>
+                                        <div>
+                                            <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px;">Date</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="acknowledgement-grid">
-                                    <div class="field"><span class="field-label">Name:</span> <span class="field-value">${item.last_name || ''}, ${item.first_name || ''}</span></div>
-                                    <div class="field"><span class="field-label">Code:</span> <span class="field-value">${item.employee_id || ''}</span></div>
-                                    <div class="field"><span class="field-label">From:</span> <span class="field-value">${formatDateShort(item.date_start)}</span></div>
-                                    <div class="field"><span class="field-label">To:</span> <span class="field-value">${formatDateShort(item.date_end)}</span></div>
-                                </div>
-                                <table class="acknowledgement-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 35%;">EARNINGS</th>
-                                            <th style="width: 20%; text-align: right;">AMOUNT</th>
-                                            <th style="width: 25%;">DEDUCTIONS</th>
-                                            <th style="width: 20%; text-align: right;">AMOUNT</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${earningsRows.join('')}
-                                        ${deductionRows}
-                                        ${noDeductionsRow}
-                                    </tbody>
-                                </table>
-                                <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
-                                    <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
-                                        <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                <div style="flex: 0 0 40%; padding: 10mm; display: flex; flex-direction: column; background: #fff;">
+                                    <div style="font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 6px; border-bottom: 1px solid #000; padding-bottom: 4px;">TEAR-OUT SECTION</div>
+                                    <div style="font-size: 9px; margin-bottom: 6px;">
+                                        <div><strong>Employee:</strong> ${item.last_name || ''}, ${item.first_name || ''}</div>
+                                        <div><strong>Code:</strong> ${item.employee_id || ''}</div>
+                                        <div><strong>Period:</strong> ${formatDateShort(item.date_start)} - ${formatDateShort(item.date_end)}</div>
+                                    </div>
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
+                                        <tbody>
+                                            <tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">Basic</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(basicAmount)}</td></tr>
+                                            ${(Number(item.total_allowance) || 0) > 0 ? `<tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">Allowance</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(item.total_allowance || 0)}</td></tr>` : ''}
+                                            <tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">OT</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(item.total_overtime_hours || 0)}</td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div style="font-size: 9px; margin-bottom: 6px;">
                                         <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
-                                        <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                        ${deductions.map(d => `<div style="padding-left: 8px;">• ${d.label}: ${fmtNum(d.amount)}</div>`).join('')}
                                     </div>
-                                </div>
-                                <div style="height: 20px;"></div>
-                                <div class="acknowledgement-signature">
-                                    <div>
-                                        <div class="sign-line">Authorized Signature</div>
+                                    <div style="font-size: 9px; margin-bottom: 6px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px;">
+                                        <div>Net Pay: ${fmtNum(netPay)}</div>
                                     </div>
-                                    <div>
-                                        <div class="sign-line">Date</div>
+                                    <div style="font-size: 9px; margin-top: auto; border-top: 1px solid #000; padding-top: 4px;">
+                                        <div>Start Cash: ${fmtNum(Number(item.starting_cash_loan) || 0)}</div>
+                                        <div>End Cash: ${fmtNum(Number(item.ending_cash_loan) || 0)}</div>
+                                    </div>
+                                    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #000;">
+                                        <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px; font-size: 9px;">Employee Signature</div>
                                     </div>
                                 </div>
                             </div>

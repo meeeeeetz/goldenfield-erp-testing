@@ -1198,32 +1198,24 @@ ModuleComponents['hr-salary'] = (container) => {
                 earningsRows.push(`<tr>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Basic</td>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(basicAmount)}</td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                 </tr>`);
 
                 if ((row.totalAllowance || 0) > 0) {
                     earningsRows.push(`<tr>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Allowance</td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalAllowance)}</td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                     </tr>`);
                 }
 
                 earningsRows.push(`<tr>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">OT</td>
                     <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                 </tr>`);
 
                 if ((row.totalOthers || 0) > 0) {
                     earningsRows.push(`<tr>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">Others</td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(row.totalOthers)}</td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                     </tr>`);
                 }
 
@@ -1236,60 +1228,95 @@ ModuleComponents['hr-salary'] = (container) => {
 
                 const deductionRows = deductions.map(d => `
                     <tr>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;"></td>
-                        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">${d.label}</td>
                         <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;">${fmtNum(d.amount)}</td>
                     </tr>
                 `).join('');
 
                 const noDeductionsRow = deductions.length === 0 ? `<tr>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="2"></td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;">No deductions</td>
-                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right;"></td>
+                    <td style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left;" colspan="2">No deductions</td>
                 </tr>` : '';
 
                 return `
-                    <div class="acknowledgement-page" style="border: 1px solid #000; padding: 10mm; margin-bottom: 5mm;">
-                        <div class="acknowledgement-header">
-                            <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
-                            <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
+                    <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
+                        <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 10mm; display: flex; flex-direction: column;">
+                            <div class="acknowledgement-header">
+                                <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">GOLDEN FIELD</h2>
+                                <div class="subtitle" style="font-size: 10px; color: #333; text-align: center;">ACKNOWLEDGEMENT RECEIPT</div>
+                            </div>
+                            <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">From:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodFrom)}</span></div>
+                                <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">To:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodTo)}</span></div>
+                            </div>
+                            <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; flex: 1;">
+                                <thead>
+                                    <tr>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 70%;">EARNINGS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 30%;">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${earningsRows.join('')}
+                                </tbody>
+                            </table>
+                            <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px; flex: 1;">
+                                <thead>
+                                    <tr>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 70%;">DEDUCTIONS</th>
+                                        <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 30%;">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${deductionRows}
+                                    ${noDeductionsRow}
+                                </tbody>
+                            </table>
+                            <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
+                                <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
+                                    <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                                    <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
+                                    <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                </div>
+                            </div>
+                            <div style="height: 10px;"></div>
+                            <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 9px; padding-top: 8px; border-top: 1px solid #000;">
+                                <div>
+                                    <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px;">Authorized Signature</div>
+                                </div>
+                                <div>
+                                    <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px;">Date</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
-                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
-                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Code:</span> <span class="field-value">${row.employeeId || ''}</span></div>
-                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">From:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodFrom)}</span></div>
-                            <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">To:</span> <span class="field-value">${formatDateShort(summaryData.payPeriodTo)}</span></div>
-                        </div>
-                        <table class="acknowledgement-table" style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
-                            <thead>
-                                <tr>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 35%;">EARNINGS</th>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: left; width: 25%;">DEDUCTIONS</th>
-                                    <th style="border: 1px solid #000; padding: 2px 4px; font-size: 9px; text-align: right; width: 20%;">AMOUNT</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${earningsRows.join('')}
-                                ${deductionRows}
-                                ${noDeductionsRow}
-                            </tbody>
-                        </table>
-                        <div style="display: flex; justify-content: flex-end; font-size: 9px; margin-bottom: 6px; padding-right: 4px;">
-                            <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end;">
-                                <div><strong>Gross Pay:</strong> ${fmtNum(grossPay)}</div>
+                        <div style="flex: 0 0 40%; padding: 10mm; display: flex; flex-direction: column; background: #fff;">
+                            <div style="font-weight: bold; font-size: 10px; text-align: center; margin-bottom: 6px; border-bottom: 1px solid #000; padding-bottom: 4px;">TEAR-OUT SECTION</div>
+                            <div style="font-size: 9px; margin-bottom: 6px;">
+                                <div><strong>Employee:</strong> ${row.lastName || ''}, ${row.firstName || ''}</div>
+                                <div><strong>Code:</strong> ${row.employeeId || ''}</div>
+                                <div><strong>Period:</strong> ${formatDateShort(summaryData.payPeriodFrom)} - ${formatDateShort(summaryData.payPeriodTo)}</div>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 6px;">
+                                <tbody>
+                                    <tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">Basic</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(basicAmount)}</td></tr>
+                                    ${(row.totalAllowance || 0) > 0 ? `<tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">Allowance</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(row.totalAllowance)}</td></tr>` : ''}
+                                    <tr><td style="border-bottom: 1px solid #ccc; padding: 2px 0;">OT</td><td style="border-bottom: 1px solid #ccc; padding: 2px 0; text-align: right;">${fmtNum(row.totalOvertime || 0)}</td></tr>
+                                </tbody>
+                            </table>
+                            <div style="font-size: 9px; margin-bottom: 6px;">
                                 <div><strong>Deductions:</strong> ${fmtNum(grossDeduction)}</div>
-                                <div><strong>Net Pay:</strong> ${fmtNum(netPay)}</div>
+                                ${deductions.map(d => `<div style="padding-left: 8px;">• ${d.label}: ${fmtNum(d.amount)}</div>`).join('')}
                             </div>
-                        </div>
-                        <div style="height: 20px;"></div>
-                        <div class="acknowledgement-signature" style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 8px;">
-                            <div>
-                                <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Authorized Signature</div>
+                            <div style="font-size: 9px; margin-bottom: 6px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px;">
+                                <div>Net Pay: ${fmtNum(netPay)}</div>
                             </div>
-                            <div>
-                                <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 2px;">Date</div>
+                            <div style="font-size: 9px; margin-top: auto; border-top: 1px solid #000; padding-top: 4px;">
+                                <div>Start Cash: ${fmtNum(Number(row.startingCashLoan) || 0)}</div>
+                                <div>End Cash: ${fmtNum(Number(row.endingCashLoan) || 0)}</div>
+                            </div>
+                            <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #000;">
+                                <div style="border-top: 1px solid #000; width: 100px; text-align: center; padding-top: 2px; font-size: 9px;">Employee Signature</div>
                             </div>
                         </div>
                     </div>
