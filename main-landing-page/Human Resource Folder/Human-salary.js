@@ -1414,6 +1414,31 @@ ModuleComponents['hr-salary'] = (container) => {
         });
     }
 
+    window.__hrSalaryBatchPrint = {
+        get batchPrintActiveTab() { return batchPrintActiveTab; },
+        set batchPrintActiveTab(v) { batchPrintActiveTab = v; },
+        get currentBatchIdForPrint() { return currentBatchIdForPrint; },
+        set currentBatchIdForPrint(v) { currentBatchIdForPrint = v; },
+        get batchPrintSummaryData() { return batchPrintSummaryData; },
+        set batchPrintSummaryData(v) { batchPrintSummaryData = v; },
+        get batchPrintTableData() { return batchPrintTableData; },
+        set batchPrintTableData(v) { batchPrintTableData = v; },
+        get batchPrintSummaryPrinted() { return batchPrintSummaryPrinted; },
+        set batchPrintSummaryPrinted(v) { batchPrintSummaryPrinted = v; },
+        get batchPrintAcknowledgementPrinted() { return batchPrintAcknowledgementPrinted; },
+        set batchPrintAcknowledgementPrinted(v) { batchPrintAcknowledgementPrinted = v; },
+        gatherBatchPrintData,
+        setBatchPrintTab,
+        updateBatchFinalConfirmState,
+        renderBatchPrintPreview,
+        renderAcknowledgementContent,
+        get batchTabSummaryBtn() { return batchTabSummaryBtn; },
+        get batchTabAcknowledgementBtn() { return batchTabAcknowledgementBtn; },
+        get batchPrintBtn() { return batchPrintBtn; },
+        get batchPrintPreviewContent() { return batchPrintPreviewContent; },
+        get batchFinalConfirmBtn() { return batchFinalConfirmBtn; },
+        get batchPrintStatusLabel() { return batchPrintStatusLabel; }
+    };
 }
 function initializeModule(contentArea) {
     const currentTab = window.__currentTabId || 'human-resources';
@@ -2432,8 +2457,9 @@ function initializeModule(contentArea) {
 
     let pendingBatchConfirmData = null;
 
+    const batchPrint = window.__hrSalaryBatchPrint;
     const confirmBatchPayrollBtn = document.getElementById('confirm-batch-payroll-btn');
-    if (confirmBatchPayrollBtn) {
+    if (confirmBatchPayrollBtn && batchPrint) {
         confirmBatchPayrollBtn.addEventListener('click', async () => {
             const tbody = document.getElementById('salary-overview-tbody');
             if (!tbody) return;
@@ -2467,7 +2493,7 @@ function initializeModule(contentArea) {
             const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
             const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
 
-            batchPrintSummaryData = {
+            batchPrint.batchPrintSummaryData = {
                 payPeriod: startingPayPeriodEl?.value && endingPayPeriodEl?.value ? `${startingPayPeriodEl.value} - ${endingPayPeriodEl.value}` : '-',
                 payPeriodFrom: startingPayPeriodEl?.value || '',
                 payPeriodTo: endingPayPeriodEl?.value || '',
@@ -2483,7 +2509,7 @@ function initializeModule(contentArea) {
                 payPeriodEnd: endingPayPeriodEl?.value || ''
             };
 
-            batchPrintTableData = rows.map(row => {
+            batchPrint.batchPrintTableData = rows.map(row => {
                 const cells = row.querySelectorAll('td');
                 return {
                     employeeId: cells[1]?.textContent.trim() || '',
@@ -2513,7 +2539,7 @@ function initializeModule(contentArea) {
                 };
             });
 
-            const negativeNetPayRow = batchPrintTableData.find(row => row.netPay < 0);
+            const negativeNetPayRow = batchPrint.batchPrintTableData.find(row => row.netPay < 0);
             if (negativeNetPayRow) {
                 alert(`Cannot confirm batch payroll: Employee ${negativeNetPayRow.employeeId || ''} has negative Net Pay (${negativeNetPayRow.netPay.toFixed(2)}).`);
                 return;
@@ -2527,24 +2553,24 @@ function initializeModule(contentArea) {
 
             try {
                 try {
-                    const gathered = await gatherBatchPrintData();
+                    const gathered = await batchPrint.gatherBatchPrintData();
                     if (gathered) {
-                        batchPrintSummaryData = gathered.summaryData;
-                        batchPrintTableData = gathered.tableData;
+                        batchPrint.batchPrintSummaryData = gathered.summaryData;
+                        batchPrint.batchPrintTableData = gathered.tableData;
                     }
                 } catch (e) {
                     console.error('Failed to gather batch print data:', e);
                 }
 
-                currentBatchIdForPrint = null;
-                batchPrintSummaryPrinted = false;
-                batchPrintAcknowledgementPrinted = false;
-                updateBatchFinalConfirmState();
+                batchPrint.currentBatchIdForPrint = null;
+                batchPrint.batchPrintSummaryPrinted = false;
+                batchPrint.batchPrintAcknowledgementPrinted = false;
+                batchPrint.updateBatchFinalConfirmState();
 
                 batchPrintPreviewModal.style.display = 'flex';
-                setBatchPrintTab('summary');
+                batchPrint.setBatchPrintTab('summary');
 
-                renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
+                batchPrint.renderBatchPrintPreview(batchPrint.batchPrintSummaryData, batchPrint.batchPrintTableData, 'summary');
             } catch (err) {
                 console.error('Open batch print preview error:', err);
                 alert(err.message || 'Failed to open batch payroll preview');
@@ -2554,20 +2580,20 @@ function initializeModule(contentArea) {
         });
     }
 
-    if (batchFinalConfirmBtn) {
-        batchFinalConfirmBtn.addEventListener('click', async () => {
-            if (batchFinalConfirmBtn.disabled) return;
+    if (batchPrint && batchPrint.batchFinalConfirmBtn) {
+        batchPrint.batchFinalConfirmBtn.addEventListener('click', async () => {
+            if (batchPrint.batchFinalConfirmBtn.disabled) return;
             if (!pendingBatchConfirmData) {
                 alert('No batch payroll data available to confirm.');
                 return;
             }
 
             const batchPrintPreviewModal = document.getElementById('batch-print-preview-modal');
-            const previousLabel = batchFinalConfirmBtn.textContent;
-            batchFinalConfirmBtn.disabled = true;
-            batchFinalConfirmBtn.textContent = 'Confirming...';
-            batchFinalConfirmBtn.style.cursor = 'not-allowed';
-            batchFinalConfirmBtn.style.opacity = '0.6';
+            const previousLabel = batchPrint.batchFinalConfirmBtn.textContent;
+            batchPrint.batchFinalConfirmBtn.disabled = true;
+            batchPrint.batchFinalConfirmBtn.textContent = 'Confirming...';
+            batchPrint.batchFinalConfirmBtn.style.cursor = 'not-allowed';
+            batchPrint.batchFinalConfirmBtn.style.opacity = '0.6';
 
             try {
                 const res = await fetch('/api/batch-payroll/confirm', {
@@ -2588,7 +2614,7 @@ function initializeModule(contentArea) {
                 const result = await res.json();
 
                 if (result.batch && result.batch.batch_payroll_id) {
-                    currentBatchIdForPrint = result.batch.batch_payroll_id;
+                    batchPrint.currentBatchIdForPrint = result.batch.batch_payroll_id;
                 }
 
                 await loadPendingPayrolls();
@@ -2596,9 +2622,9 @@ function initializeModule(contentArea) {
                 await loadSalaryHistory();
                 await loadMonthlySalaryComparison();
                 pendingBatchConfirmData = null;
-                batchPrintSummaryPrinted = false;
-                batchPrintAcknowledgementPrinted = false;
-                updateBatchFinalConfirmState();
+                batchPrint.batchPrintSummaryPrinted = false;
+                batchPrint.batchPrintAcknowledgementPrinted = false;
+                batchPrint.updateBatchFinalConfirmState();
 
                 if (batchPrintPreviewModal) batchPrintPreviewModal.style.display = 'none';
 
@@ -2612,8 +2638,8 @@ function initializeModule(contentArea) {
                 console.error('Final confirm batch payroll error:', err);
                 alert(err.message || 'Failed to confirm batch payroll');
             } finally {
-                batchFinalConfirmBtn.textContent = previousLabel;
-                updateBatchFinalConfirmState();
+                batchPrint.batchFinalConfirmBtn.textContent = previousLabel;
+                batchPrint.updateBatchFinalConfirmState();
             }
         });
     }
