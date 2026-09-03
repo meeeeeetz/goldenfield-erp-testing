@@ -16,6 +16,10 @@ ModuleComponents['hr-employees'] = (container) => {
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 <span class="btn-label">Organizational Roles</span>
             </button>
+            <button id="compensation-upload-btn" class="btn-icon-circle" type="button" style="background: #16a34a; border-color: #16a34a;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span class="btn-label">Employee Compensation Upload (Admin)</span>
+            </button>
         </div>
         <div class="tracking-cards-row">
             <div class="card tracking-card">
@@ -463,6 +467,23 @@ ModuleComponents['hr-employees'] = (container) => {
             </div>
         </div>
 
+        <div id="compensation-upload-modal" class="modal" style="display:none; align-items: flex-start; padding-top: 20px; overflow-y: auto;">
+            <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto;">
+                <div class="modal-header-row">
+                    <h3>Employee Compensation Upload (Admin)</h3>
+                    <button class="modal-close-btn" id="close-compensation-upload-modal">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button id="download-compensation-template-btn" class="btn-primary" type="button">Download Template</button>
+                        <input type="file" id="compensation-upload-file-input" accept=".csv" style="padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;">
+                        <button id="upload-compensation-btn" class="btn-primary" type="button">Upload</button>
+                    </div>
+                    <div id="compensation-upload-message" style="font-size: 13px;"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="image-preview-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center;">
             <div style="max-width:90%; max-height:90%; background:#fff; border-radius:8px; padding:20px; position:relative;">
                 <button id="close-image-preview" style="position:absolute; top:10px; right:10px; background:#333; color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer;">&times;</button>
@@ -743,6 +764,72 @@ function initializeModule(contentArea) {
     if (closeEmployeeProfileModal && employeeProfileModal) {
         closeEmployeeProfileModal.addEventListener('click', () => {
             employeeProfileModal.style.display = 'none';
+        });
+    }
+
+    const compensationUploadModal = document.getElementById('compensation-upload-modal');
+    const closeCompensationUploadModal = document.getElementById('close-compensation-upload-modal');
+    const compensationUploadBtn = document.getElementById('compensation-upload-btn');
+    const downloadCompensationTemplateBtn = document.getElementById('download-compensation-template-btn');
+    const uploadCompensationBtn = document.getElementById('upload-compensation-btn');
+    const compensationUploadFileInput = document.getElementById('compensation-upload-file-input');
+    const compensationUploadMessage = document.getElementById('compensation-upload-message');
+
+    if (compensationUploadBtn && compensationUploadModal) {
+        compensationUploadBtn.addEventListener('click', () => {
+            compensationUploadModal.style.display = 'flex';
+            if (compensationUploadMessage) compensationUploadMessage.textContent = '';
+            if (compensationUploadFileInput) compensationUploadFileInput.value = '';
+        });
+    }
+
+    if (closeCompensationUploadModal && compensationUploadModal) {
+        closeCompensationUploadModal.addEventListener('click', () => {
+            compensationUploadModal.style.display = 'none';
+        });
+    }
+
+    if (compensationUploadModal) {
+        compensationUploadModal.addEventListener('click', (e) => {
+            if (e.target === compensationUploadModal) compensationUploadModal.style.display = 'none';
+        });
+    }
+
+    if (downloadCompensationTemplateBtn) {
+        downloadCompensationTemplateBtn.addEventListener('click', () => {
+            window.open('/api/employee-compensation/template', '_blank');
+        });
+    }
+
+    if (uploadCompensationBtn && compensationUploadFileInput) {
+        uploadCompensationBtn.addEventListener('click', async () => {
+            const file = compensationUploadFileInput.files[0];
+            if (!file) {
+                if (compensationUploadMessage) compensationUploadMessage.textContent = 'Please select a CSV file to upload.';
+                if (compensationUploadMessage) compensationUploadMessage.style.color = '#dc3545';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                if (compensationUploadMessage) compensationUploadMessage.textContent = 'Uploading...';
+                if (compensationUploadMessage) compensationUploadMessage.style.color = '#2563eb';
+                const res = await fetch('/api/employee-compensation/bulk-upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                if (!res.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+                if (compensationUploadMessage) compensationUploadMessage.textContent = `Upload successful. ${result.inserted} record(s) inserted.`;
+                if (compensationUploadMessage) compensationUploadMessage.style.color = '#16a34a';
+                if (compensationUploadFileInput) compensationUploadFileInput.value = '';
+            } catch (err) {
+                console.error('Upload error:', err);
+                if (compensationUploadMessage) compensationUploadMessage.textContent = err.message || 'Upload failed';
+                if (compensationUploadMessage) compensationUploadMessage.style.color = '#dc3545';
+            }
         });
     }
 

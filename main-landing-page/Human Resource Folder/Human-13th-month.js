@@ -40,7 +40,7 @@ ModuleComponents['hr-13th-month'] = (container) => {
         </div>
         <div class="card graph-placeholder month13-employee-search-card">
             <div class="card-header-row">
-                <h3>Employee Search</h3>
+                <h3>Employee 13th month Computation</h3>
                 <div style="display: flex; gap: 8px; align-items: center; position: relative;">
                     <input type="number" id="month13-year-picker" placeholder="Year" style="padding: 8px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 100px;">
                     <input type="text" id="month13-employee-search" class="employee-search-input" placeholder="Search employee..." style="width: 220px; position: relative;">
