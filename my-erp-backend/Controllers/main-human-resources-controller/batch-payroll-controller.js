@@ -40,6 +40,80 @@ class BatchPayrollController {
         return result.rows;
     }
 
+    async getBatchPrintData(batchId) {
+        const batchResult = await this.db.query('SELECT * FROM batch_payroll WHERE batch_payroll_id = $1', [batchId]);
+        const batch = batchResult.rows[0];
+        if (!batch) {
+            throw new Error('Batch not found');
+        }
+
+        const itemsResult = await this.db.query(
+            `SELECT bi.*, p.employee_id, ep.last_name, ep.first_name, p.date_start, p.date_end, p.total_days_worked, p.total_overtime_hours, p.total_allowance, p.total_leaves_usage, p.regular_holiday, p.special_holiday, p.total_income_tax, p.total_sss_payment, p.total_sss_loan_payment, p.total_philhealth_payment, p.total_pagibig_payment, p.total_pagibig_loan_payment, p.total_cash_loan_deductions, p.total_losses_damages, p.gross_deduction, p.starting_cash_loan, p.ending_cash_loan, p.starting_losses_damages, p.ending_losses_damages, p.net_pay FROM batch_payroll_items bi JOIN payroll p ON bi.payroll_id = p.payroll_id LEFT JOIN employee_profile ep ON p.employee_id = ep.employee_id WHERE bi.batch_payroll_id = $1 ORDER BY p.employee_id ASC`,
+            [batchId]
+        );
+
+        const formatDate = (d) => {
+            const date = new Date(d);
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+
+        const formatPayPeriod = (date) => {
+            if (!date || isNaN(new Date(date).getTime())) return '';
+            return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+
+        const payPeriodFrom = batch.pay_period_start ? formatPayPeriod(batch.pay_period_start) : '';
+        const payPeriodTo = batch.pay_period_end ? formatPayPeriod(batch.pay_period_end) : '';
+
+        const summaryData = {
+            payPeriod: payPeriodFrom && payPeriodTo ? `${payPeriodFrom} - ${payPeriodTo}` : '-',
+            payPeriodFrom,
+            payPeriodTo,
+            employeeCount: batch.payroll_count || itemsResult.rows.length,
+            grossPay: Number(batch.total_gross_pay).toFixed(2),
+            grossDeduction: Number(batch.total_gross_deduction).toFixed(2),
+            netPay: Number(batch.total_net_pay).toFixed(2)
+        };
+
+        const tableData = itemsResult.rows.map(item => {
+            const grossPay = (Number(item.total_days_worked) || 0) + (Number(item.total_overtime_hours) || 0) + (Number(item.total_allowance) || 0) + (Number(item.total_leaves_usage) || 0) + (Number(item.regular_holiday) || 0) + (Number(item.special_holiday) || 0);
+            return {
+                payrollId: item.payroll_id || '',
+                employeeId: item.employee_id || '',
+                lastName: item.last_name || '',
+                firstName: item.first_name || '',
+                totalDays: Number(item.total_days_worked) || 0,
+                totalOvertime: Number(item.total_overtime_hours) || 0,
+                totalAllowance: Number(item.total_allowance) || 0,
+                totalLeaves: Number(item.total_leaves_usage) || 0,
+                regularHoliday: Number(item.regular_holiday) || 0,
+                specialHoliday: Number(item.special_holiday) || 0,
+                grossPay,
+                totalTax: Number(item.total_income_tax) || 0,
+                totalSss: Number(item.total_sss_payment) || 0,
+                totalSssLoan: Number(item.total_sss_loan_payment) || 0,
+                totalPhilhealth: Number(item.total_philhealth_payment) || 0,
+                totalPagibig: Number(item.total_pagibig_payment) || 0,
+                totalPagibigLoan: Number(item.total_pagibig_loan_payment) || 0,
+                totalCashLoanDeductions: Number(item.total_cash_loan_deductions) || 0,
+                totalLossesDeductions: Number(item.total_losses_damages) || 0,
+                grossDeduction: Number(item.gross_deduction) || 0,
+                netPay: Number(item.net_pay) || 0,
+                startingCashLoan: Number(item.starting_cash_loan) || 0,
+                endingCashLoan: Number(item.ending_cash_loan) || 0,
+                startingLosses: Number(item.starting_losses_damages) || 0,
+                endingLosses: Number(item.ending_losses_damages) || 0,
+                date_start: item.date_start || '',
+                date_end: item.date_end || ''
+            };
+        });
+
+        return { summaryData, tableData };
+    }
+
     async confirmBatchPayroll(payrollIds, payPeriodStart, payPeriodEnd) {
         if (!payrollIds || payrollIds.length === 0) {
             throw new Error('No payroll IDs provided');

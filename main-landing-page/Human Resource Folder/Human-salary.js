@@ -2647,6 +2647,9 @@ function initializeModule(contentArea) {
                 batchPrint.batchPrintAcknowledgementPrinted = false;
                 batchPrint.updateBatchFinalConfirmState();
 
+                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = '';
+                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = '';
+
                 batchPrintPreviewModal.style.display = 'flex';
                 batchPrint.setBatchPrintTab('summary');
 
@@ -2781,9 +2784,45 @@ function initializeModule(contentArea) {
             if (!printBtn) return;
             const batchId = printBtn.dataset.batchId;
             if (!batchId) return;
-            window.open(`/api/batch-payroll/${batchId}/pdf`, '_blank');
+            if (typeof openBatchPrintPreviewForBatch === 'function') {
+                openBatchPrintPreviewForBatch(batchId, true);
+            }
         });
     }
+
+    const openBatchPrintPreviewForBatch = async (batchId, readOnly = false) => {
+        try {
+            const res = await fetch(`/api/batch-payroll/${encodeURIComponent(batchId)}/print-data`);
+            if (!res.ok) throw new Error('Failed to load batch print data');
+            const { summaryData, tableData } = await res.json();
+
+            batchPrintSummaryData = summaryData;
+            batchPrintTableData = tableData;
+            currentBatchIdForPrint = batchId;
+
+            batchPrintSummaryPrinted = false;
+            batchPrintAcknowledgementPrinted = false;
+            updateBatchFinalConfirmState();
+
+            if (readOnly) {
+                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = 'none';
+                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = 'none';
+            } else {
+                if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = '';
+                if (batchFinalConfirmBtn) batchFinalConfirmBtn.style.display = '';
+            }
+
+            setBatchPrintTab('summary');
+            renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
+
+            if (batchPrintPreviewModal) {
+                batchPrintPreviewModal.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('Failed to open batch print preview:', err);
+            alert(err.message || 'Failed to open batch payroll preview');
+        }
+    };
 
     const batchSalaryModal = document.getElementById('batch-salary-modal');
     const openBatchSalaryModalBtn = document.getElementById('batch-salary-computation-subtab-btn');

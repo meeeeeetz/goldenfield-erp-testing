@@ -54,6 +54,16 @@ router.get('/:batch_reference/items', async (req, res) => {
     }
 });
 
+router.get('/:batchId/print-data', async (req, res) => {
+    try {
+        const { batchId } = req.params;
+        const result = await controller.getBatchPrintData(batchId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:batchId/pdf', async (req, res) => {
     try {
         const { batchId } = req.params;
