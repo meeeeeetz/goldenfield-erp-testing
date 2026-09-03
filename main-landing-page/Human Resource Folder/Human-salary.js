@@ -2805,7 +2805,7 @@ function initializeModule(contentArea) {
 
             batchPrintSummaryPrinted = false;
             batchPrintAcknowledgementPrinted = false;
-            updateBatchFinalConfirmState();
+            batchPrint.updateBatchFinalConfirmState();
 
             if (readOnly) {
                 if (batchPrintStatusLabel) batchPrintStatusLabel.style.display = 'none';
