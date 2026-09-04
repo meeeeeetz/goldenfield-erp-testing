@@ -394,15 +394,15 @@ class ReceiptIssueController {
             return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         };
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const doc = new PDFDocument({ size: 'A4', margin: 0 });
         const chunks = [];
         doc.on('data', chunk => chunks.push(chunk));
 
-        let y = 50;
+        let y = 40;
 
         doc.fontSize(14).font('Helvetica-Bold').text('Official Receipt', { align: 'center' });
         y += 16;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 14;
 
         doc.fontSize(10).font('Helvetica-Bold');
@@ -411,17 +411,17 @@ class ReceiptIssueController {
         doc.text(`Date: ${formatDate(summary.date)}`, 430, y, { align: 'right', width: 115 });
         y += 18;
 
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 8;
 
-        const colX = [50, 150, 380, 470, 545];
+        const colX = [40, 140, 370, 460, 555];
         const headers = ['Qty', 'Products', 'Price', 'Amount'];
         doc.font('Helvetica-Bold');
         headers.forEach((h, i) => {
             doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10, align: 'center' });
         });
         y += 10;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 6;
 
         doc.font('Helvetica');
@@ -434,12 +434,12 @@ class ReceiptIssueController {
         });
 
         y += 6;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 10;
-        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(summary.grand_total)}`, 470, y, { align: 'right', width: 75 });
+        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(summary.grand_total)}`, 460, y, { align: 'right', width: 95 });
         y += 20;
 
-        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 495 });
+        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 515 });
 
         doc.end();
 
@@ -471,15 +471,15 @@ class ReceiptIssueController {
 
         const grandTotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const doc = new PDFDocument({ size: 'A4', margin: 0 });
         const chunks = [];
         doc.on('data', chunk => chunks.push(chunk));
 
-        let y = 50;
+        let y = 40;
 
         doc.fontSize(14).font('Helvetica-Bold').text('Official Receipt', { align: 'center' });
         y += 16;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 14;
 
         doc.fontSize(10).font('Helvetica-Bold');
@@ -488,17 +488,17 @@ class ReceiptIssueController {
         doc.text(`Date: ${formatDate(date)}`, 430, y, { align: 'right', width: 115 });
         y += 18;
 
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 8;
 
-        const colX = [50, 150, 380, 470, 545];
+        const colX = [40, 140, 370, 460, 555];
         const headers = ['Qty', 'Products', 'Price', 'Amount'];
         doc.font('Helvetica-Bold');
         headers.forEach((h, i) => {
             doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10, align: 'center' });
         });
         y += 10;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 6;
 
         doc.font('Helvetica');
@@ -511,12 +511,12 @@ class ReceiptIssueController {
         });
 
         y += 6;
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(40, y).lineTo(555, y).stroke();
         y += 10;
-        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(grandTotal)}`, 470, y, { align: 'right', width: 75 });
+        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(grandTotal)}`, 460, y, { align: 'right', width: 95 });
         y += 20;
 
-        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 495 });
+        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 515 });
 
         doc.end();
 

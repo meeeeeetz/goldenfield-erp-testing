@@ -8,6 +8,107 @@ var receiptSortColumn = 'si_number';
 var receiptSortDirection = 'asc';
 var receiptSearchQuery = '';
 
+function buildReceiptHtml(receipt, items) {
+    const fmt = (val) => 'P ' + parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const itemsHtml = (items && Array.isArray(items)) ? items.map(item => `
+        <tr>
+            <td style="padding: 6px 0; text-align: center;">${item.qty || 0}</td>
+            <td style="padding: 6px 0; text-align: center;">${item.product || ''}</td>
+            <td style="padding: 6px 0; text-align: center;">${fmt(item.total / (item.qty || 1))}</td>
+            <td style="padding: 6px 0; text-align: center;">${fmt(item.total)}</td>
+        </tr>
+    `).join('') : '';
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt ${receipt.si_number}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .receipt-paper {
+            background: white;
+            width: 100%;
+            max-width: 650px;
+            padding: 40px 0 0 0;
+        }
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .receipt-header h1 {
+            font-size: 18px;
+            margin: 0 0 8px;
+        }
+        .receipt-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        .receipt-table th {
+            text-align: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #000;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .receipt-table td {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+        .receipt-total-section {
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-paper">
+        <div class="receipt-header">
+            <h1>Official Receipt</h1>
+        </div>
+        <div class="receipt-meta">
+            <span>SI# ${receipt.si_number}</span>
+            <span>Customer: ${receipt.customer}</span>
+            <span>Date: ${(receipt.date || '').split('T')[0]}</span>
+        </div>
+        <table class="receipt-table">
+            <thead>
+                <tr>
+                    <th style="text-align: center;">Qty</th>
+                    <th style="text-align: center;">Products</th>
+                    <th style="text-align: center;">Price</th>
+                    <th style="text-align: center;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${itemsHtml}
+            </tbody>
+        </table>
+        <div class="receipt-total-section">
+            Grand Total: ${fmt(receipt.grand_total || 0)}
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
 ModuleComponents['sales-receipt-issuance'] = (container) => {
         container.innerHTML = `
             <div class="header-actions">
@@ -183,14 +284,17 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                 </div>
             </div>
 
-            <div id="receipt-preview-modal" class="modal" style="display:none;">
-                <div class="modal-content" style="max-width: 900px; height: 90vh;">
-                    <div class="modal-header-row">
-                        <h3>Receipt Preview</h3>
+            <div id="receipt-preview-modal" class="modal" style="display:none; background: rgba(0, 0, 0, 0.85);">
+                <div style="background: white; border-radius: 8px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 0;">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 id="receipt-preview-title" style="margin: 0; font-size: 16px; font-weight: 600;">Receipt</h3>
                         <button class="modal-close-btn" id="close-preview-modal">&times;</button>
                     </div>
-                    <div style="flex: 1; overflow: hidden; background: #f5f5f5;">
-                        <iframe id="receipt-preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+                    <div id="receipt-preview-content" style="padding: 24px;">
+                    </div>
+                    <div style="padding: 12px 20px; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn-secondary" id="print-receipt-btn">Print</button>
+                        <button class="btn-danger" id="close-preview-modal-bottom">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -594,23 +698,23 @@ function initializeReceiptModal() {
 
         tempReceiptData = { si_number: siNumber, date, customer: customerName, receipts: items };
 
-        try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/preview-pdf`, {
-                method: 'POST',
-                headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify(tempReceiptData)
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || `Server error: ${res.status}`);
-            }
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        } catch (err) {
-            console.error('Failed to generate receipt preview', err);
-            alert('Error generating receipt preview: ' + err.message);
+        const receipt = {
+            si_number: siNumber,
+            date: date,
+            customer: customerName,
+            grand_total: items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0)
+        };
+
+        const html = buildReceiptHtml(receipt, items);
+        const previewWindow = window.open('', '_blank');
+        if (!previewWindow) {
+            alert('Popup blocked. Please allow popups for this site.');
+            return;
         }
+        previewWindow.document.write(html);
+        previewWindow.document.close();
+        previewWindow.focus();
+        previewWindow.print();
     });
 
     document.getElementById('final-save-receipt-btn').addEventListener('click', async () => {
@@ -1012,12 +1116,29 @@ function initializeReceiptModal() {
         if (closePreviewBtn) {
             closePreviewBtn.addEventListener('click', () => {
                 const previewModal = document.getElementById('receipt-preview-modal');
-                const previewFrame = document.getElementById('receipt-preview-frame');
                 if (previewModal) {
                     previewModal.style.display = 'none';
                 }
-                if (previewFrame) {
-                    previewFrame.src = '';
+            });
+        }
+
+        const closePreviewBottomBtn = document.getElementById('close-preview-modal-bottom');
+        if (closePreviewBottomBtn) {
+            closePreviewBottomBtn.addEventListener('click', () => {
+                const previewModal = document.getElementById('receipt-preview-modal');
+                if (previewModal) {
+                    previewModal.style.display = 'none';
+                }
+            });
+        }
+
+        const printReceiptBtn = document.getElementById('print-receipt-btn');
+        if (printReceiptBtn) {
+            printReceiptBtn.addEventListener('click', () => {
+                const title = document.getElementById('receipt-preview-title');
+                const siNumber = title ? title.textContent.replace('Receipt - ', '') : null;
+                if (siNumber) {
+                    printReceipt(siNumber);
                 }
             });
         }
@@ -1128,7 +1249,7 @@ function initializeReceiptModal() {
                 <td>${parseFloat(row.grand_total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${row.status}</td>
                 <td>${row.created_by_name || '-'}</td>
-                <td><button class="btn-pdf" onclick="previewReceiptPdf('${row.si_number}')" title="View Receipt" style="background: none; border: none; cursor: pointer; padding: 4px;">
+                <td><button class="btn-pdf" onclick="openReceiptPreviewModal('${row.si_number}')" title="View Receipt" style="background: none; border: none; cursor: pointer; padding: 4px;">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 </button></td>
                 <td>${isCrossed ? '' : '<button class="btn-danger btn-void" onclick="voidReceipt(\'' + row.si_number + '\')">Void</button>'}</td>
@@ -1240,27 +1361,73 @@ function initializeReceiptModal() {
         }
     }
 
-    async function previewReceiptPdf(siNumber) {
-        try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/pdf`, { headers: getReceiptAuthHeaders() });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || `Server error: ${res.status}`);
-            }
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const previewFrame = document.getElementById('receipt-preview-frame');
-            if (previewFrame) {
-                previewFrame.src = url;
-            }
-            const previewModal = document.getElementById('receipt-preview-modal');
-            if (previewModal) {
-                previewModal.style.display = 'block';
-            }
-        } catch (err) {
-            console.error('Failed to preview receipt PDF', err);
-            alert('Error previewing receipt: ' + err.message);
+    function openReceiptPreviewModal(siNumber) {
+        const receipt = receiptTransactionsData.find(r => r.si_number === siNumber);
+        if (!receipt) {
+            alert('Receipt not found');
+            return;
         }
+
+        const title = document.getElementById('receipt-preview-title');
+        const content = document.getElementById('receipt-preview-content');
+        if (title) {
+            title.textContent = `Receipt - ${receipt.si_number}`;
+        }
+        if (content) {
+            content.innerHTML = '<div style="padding: 24px; text-align: center; color: #999;">Loading...</div>';
+        }
+
+        const previewModal = document.getElementById('receipt-preview-modal');
+        if (previewModal) {
+            previewModal.style.display = 'block';
+        }
+
+        fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}`, { headers: getReceiptAuthHeaders() })
+            .then(res => res.json())
+            .then(items => {
+                if (!Array.isArray(items)) items = [];
+                const html = buildReceiptHtml(receipt, items);
+                if (content) {
+                    content.innerHTML = `<iframe src="data:text/html;charset=utf-8,${encodeURIComponent(html)}" style="width: 100%; height: 70vh; border: none;"></iframe>`;
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load receipt items', err);
+                if (content) {
+                    content.innerHTML = '<div style="padding: 24px; text-align: center; color: #999;">Failed to load receipt</div>';
+                }
+            });
+    }
+
+    async function printReceipt(siNumber) {
+        const receipt = receiptTransactionsData.find(r => r.si_number === siNumber);
+        if (!receipt) {
+            alert('Receipt not found');
+            return;
+        }
+
+        let items = [];
+        try {
+            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}`, { headers: getReceiptAuthHeaders() });
+            if (!res.ok) throw new Error('Failed to load receipt items');
+            items = await res.json();
+        } catch (err) {
+            console.error('Failed to load receipt items for print', err);
+            alert('Error loading receipt items for print');
+            return;
+        }
+
+        const html = buildReceiptHtml(receipt, items);
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Popup blocked. Please allow popups for this site.');
+            return;
+        }
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
     }
 
     async function loadCustomerReceivables() {
