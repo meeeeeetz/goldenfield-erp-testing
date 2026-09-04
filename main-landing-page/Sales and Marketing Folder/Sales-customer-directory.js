@@ -1,5 +1,10 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 ModuleComponents['sales-customer-directory'] = (container) => {
     container.innerHTML = `
         <div class="header-actions">
@@ -124,7 +129,7 @@ var API_BASE_CUSTOMERS = '/api/customers';
 
 async function loadCustomersForEdit() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}`, { headers: getAuthHeaders() });
         const customers = await res.json();
         const customerSelect = document.getElementById('edit-customer-name');
         customerSelect.innerHTML = '<option value="">Select customer...</option>';
@@ -141,7 +146,7 @@ async function loadCustomersForEdit() {
 
 async function getNextCustomerId() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}/next-id`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}/next-id`, { headers: getAuthHeaders() });
         const data = await res.json();
         return data.customer_id;
     } catch (err) {
@@ -246,7 +251,7 @@ function initializeCustomerModal() {
         const cid = this.value;
         if (!cid) return;
         try {
-            const res = await fetch(`${API_BASE_CUSTOMERS}/${cid}`);
+            const res = await fetch(`${API_BASE_CUSTOMERS}/${cid}`, { headers: getAuthHeaders() });
             const data = await res.json();
             document.getElementById('edit-customer-id').value = data.customer_id;
             document.getElementById('edit-customer-company').value = data.company || data.customer_name || '';
@@ -290,7 +295,7 @@ function initializeCustomerModal() {
         try {
             const res = await fetch(`${API_BASE_CUSTOMERS}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer_id: customerId, company, address, tin_no: tin, contact_name: contactName, contact_number: contactNumber, status })
             });
             if (!res.ok) {
@@ -321,7 +326,7 @@ function initializeCustomerModal() {
         try {
             const res = await fetch(`${API_BASE_CUSTOMERS}/${customerId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ company, address, tin_no: tin, contact_name: contactName, contact_number: contactNumber, status })
             });
             if (!res.ok) {
@@ -345,7 +350,7 @@ function initializeCustomerModal() {
         if (!customerId) return alert('Please select a customer');
         if (confirm('Delete ' + company + '?')) {
             try {
-                const res = await fetch(`${API_BASE_CUSTOMERS}/${customerId}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE_CUSTOMERS}/${customerId}`, { method: 'DELETE', headers: getAuthHeaders() });
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || `Server error: ${res.status}`);
@@ -373,7 +378,7 @@ async function loadCustomersTable() {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading customers...</td></tr>';
     
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}`, { headers: getAuthHeaders() });
         if (!res.ok) {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
@@ -441,7 +446,7 @@ async function loadTopCustomersByReceipts() {
     if (!tbody) return;
     
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}/top-by-receipts`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}/top-by-receipts`, { headers: getAuthHeaders() });
         if (!res.ok) {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }

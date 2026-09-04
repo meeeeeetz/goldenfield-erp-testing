@@ -334,9 +334,14 @@ var API_BASE = '/api/products';
 var API_BASE_CUSTOMERS = '/api/customers';
 var API_BASE_PRICE_CHANGES = '/api/price-changes';
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 async function loadProductsForEdit() {
     try {
-        const res = await fetch(`${API_BASE}`);
+        const res = await fetch(`${API_BASE}`, { headers: getAuthHeaders() });
         const products = await res.json();
         const productSelect = document.getElementById('edit-product-name');
         if (!productSelect) return;
@@ -354,7 +359,7 @@ async function loadProductsForEdit() {
 
 async function getNextProductId() {
     try {
-        const res = await fetch(`${API_BASE}/next-id`);
+        const res = await fetch(`${API_BASE}/next-id`, { headers: getAuthHeaders() });
         const data = await res.json();
         return data.product_id;
     } catch (err) {
@@ -372,7 +377,7 @@ async function loadProductsTable(page = 1) {
     const paginationContainer = document.querySelector('.products-box .pagination');
     if (!tbody || !paginationContainer) return;
     try {
-        const res = await fetch(`${API_BASE}`);
+        const res = await fetch(`${API_BASE}`, { headers: getAuthHeaders() });
         const products = await res.json();
         const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE) || 1;
         const start = (page - 1) * PRODUCTS_PER_PAGE;
@@ -457,7 +462,7 @@ function initializeProductModal() {
         const pid = this.value;
         if (!pid) return;
         try {
-            const res = await fetch(`${API_BASE}/${pid}`);
+            const res = await fetch(`${API_BASE}/${pid}`, { headers: getAuthHeaders() });
             const data = await res.json();
             document.getElementById('edit-product-id').value = data.product_id;
             document.getElementById('edit-product-remarks').value = data.remarks;
@@ -482,7 +487,7 @@ function initializeProductModal() {
         try {
             const res = await fetch(`${API_BASE}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product_id: productId, product, remarks, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
             });
             if (!res.ok) {
@@ -513,7 +518,7 @@ function initializeProductModal() {
         try {
             const res = await fetch(`${API_BASE}/${productId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product, remarks, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
             });
             if (!res.ok) {
@@ -537,7 +542,7 @@ function initializeProductModal() {
         if (!product) return alert('Please select a product');
         if (confirm('Delete ' + product + '?')) {
             try {
-                await fetch(`${API_BASE}/${productId}`, { method: 'DELETE' });
+                await fetch(`${API_BASE}/${productId}`, { method: 'DELETE', headers: getAuthHeaders() });
                 alert('Product deleted');
                 modal.style.display = 'none';
                 loadProductsForEdit();
@@ -552,7 +557,7 @@ function initializeProductModal() {
 
 async function loadActiveCustomers() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}/active`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}/active`, { headers: getAuthHeaders() });
         const customers = await res.json();
         const select = document.getElementById('change-price-customer');
         if (!select) return;
@@ -570,7 +575,7 @@ async function loadActiveCustomers() {
 
 async function getNextPriceChangeId() {
     try {
-        const res = await fetch(`${API_BASE_PRICE_CHANGES}/next-id`);
+        const res = await fetch(`${API_BASE_PRICE_CHANGES}/next-id`, { headers: getAuthHeaders() });
         const data = await res.json();
         return data.transaction_id;
     } catch (err) {
@@ -581,7 +586,7 @@ async function getNextPriceChangeId() {
 
 async function loadActiveProducts() {
     try {
-        const res = await fetch(`${API_BASE}`);
+        const res = await fetch(`${API_BASE}`, { headers: getAuthHeaders() });
         const products = await res.json();
         const selects = document.querySelectorAll('.change-price-product');
         selects.forEach(select => {
@@ -616,7 +621,7 @@ async function loadLastPriceChange(row) {
         const selectedOption = document.getElementById('change-price-customer').selectedOptions[0];
         const customerName = selectedOption ? selectedOption.textContent.trim() : customerId;
         
-        const res = await fetch(`${API_BASE_PRICE_CHANGES}/last?customer=${encodeURIComponent(customerName)}&product=${encodeURIComponent(product)}`);
+        const res = await fetch(`${API_BASE_PRICE_CHANGES}/last?customer=${encodeURIComponent(customerName)}&product=${encodeURIComponent(product)}`, { headers: getAuthHeaders() });
         const data = await res.json();
         
         if (data.old_price !== undefined) {
@@ -641,7 +646,7 @@ async function loadLastPriceChange(row) {
 
 async function insertCaseProducts() {
     try {
-        const res = await fetch(`${API_BASE}`);
+        const res = await fetch(`${API_BASE}`, { headers: getAuthHeaders() });
         const products = await res.json();
         const caseProducts = products.filter(p => p.status === 'Active' && p.product.toLowerCase().includes('case'));
         
@@ -667,7 +672,7 @@ async function insertCaseProducts() {
             const customerName = selectedOption ? selectedOption.textContent.trim() : '';
             
             if (customerName) {
-                fetch(`${API_BASE_PRICE_CHANGES}/last?customer=${encodeURIComponent(customerName)}&product=${encodeURIComponent(product.product)}`)
+                fetch(`${API_BASE_PRICE_CHANGES}/last?customer=${encodeURIComponent(customerName)}&product=${encodeURIComponent(product.product)}`, { headers: getAuthHeaders() })
                     .then(res => res.json())
                     .then(data => {
                         if (data.old_price !== undefined) {
@@ -736,7 +741,7 @@ var chartColors = {
 
 async function loadChartCustomers() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}/active`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}/active`, { headers: getAuthHeaders() });
         const customers = await res.json();
         const select = document.getElementById('chart-customer');
         if (!select) return;
@@ -776,7 +781,7 @@ function loadChartProductCheckboxes() {
         if (container) container.innerHTML = '';
     });
 
-    fetch(`${API_BASE}`)
+    fetch(`${API_BASE}`, { headers: getAuthHeaders() })
         .then(res => res.json())
         .then(products => {
             products.filter(p => p.status === 'Active').forEach(product => {
@@ -855,7 +860,7 @@ async function updateChart() {
     const customerName = selectedOption ? selectedOption.textContent.trim() : customerId;
     
     try {
-        const res = await fetch(`${API_BASE_PRICE_CHANGES}/history?customer=${encodeURIComponent(customerName)}&products=${selectedChartProducts.map(encodeURIComponent).join(',')}&dateFrom=${dateFrom}&dateTo=${dateTo}`);
+        const res = await fetch(`${API_BASE_PRICE_CHANGES}/history?customer=${encodeURIComponent(customerName)}&products=${selectedChartProducts.map(encodeURIComponent).join(',')}&dateFrom=${dateFrom}&dateTo=${dateTo}`, { headers: getAuthHeaders() });
         const history = await res.json();
         
         const xLabels = getChartXLabels(dateFrom, dateTo);
@@ -1046,7 +1051,7 @@ function initializeChangePriceModal() {
                 
                 await fetch(`${API_BASE_PRICE_CHANGES}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         transaction_id: nextId,
                         date: date || today,
@@ -1089,7 +1094,7 @@ async function loadPriceChangesTable(page = 1) {
     const paginationContainer = document.querySelector('.egg-price-changes-box .pagination');
     if (!tbody || !paginationContainer) return;
     try {
-        const res = await fetch(`${API_BASE_PRICE_CHANGES}`);
+        const res = await fetch(`${API_BASE_PRICE_CHANGES}`, { headers: getAuthHeaders() });
         const priceChanges = await res.json();
         const totalPages = Math.ceil(priceChanges.length / PRICE_CHANGES_PER_PAGE) || 1;
         const start = (page - 1) * PRICE_CHANGES_PER_PAGE;
@@ -1233,7 +1238,7 @@ async function loadChartPreferences() {
 
 async function loadPriceListCustomers() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}/active`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}/active`, { headers: getAuthHeaders() });
         const customers = await res.json();
         const container = document.getElementById('price-list-customers-list');
         if (!container) return;
@@ -1303,7 +1308,7 @@ async function loadPriceListProducts() {
     if (!container) return;
     container.innerHTML = '';
     try {
-        const res = await fetch(`${API_BASE}`);
+        const res = await fetch(`${API_BASE}`, { headers: getAuthHeaders() });
         const products = await res.json();
         products.filter(p => p.status === 'Active').forEach(product => {
             const item = document.createElement('div');
@@ -1351,7 +1356,7 @@ async function loadPriceListTable() {
     try {
         tbody.innerHTML = '';
         for (const customerKey of selectedPriceListCustomers) {
-            const res = await fetch(`${API_BASE_PRICE_CHANGES}/today?customer=${encodeURIComponent(customerKey)}&products=${selectedPriceListProducts.map(encodeURIComponent).join(',')}`);
+            const res = await fetch(`${API_BASE_PRICE_CHANGES}/today?customer=${encodeURIComponent(customerKey)}&products=${selectedPriceListProducts.map(encodeURIComponent).join(',')}`, { headers: getAuthHeaders() });
             const data = await res.json();
 
             if (!Array.isArray(data)) {

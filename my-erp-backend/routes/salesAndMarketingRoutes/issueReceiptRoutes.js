@@ -8,6 +8,17 @@ const { authenticateToken, requireModulePermission } = require('../../middleware
 
 const controller = new ReceiptIssueController(pool);
 
+router.get('/template', async (req, res) => {
+  try {
+    const csv = controller.getTemplate();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=receipt_issues_template.csv');
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.use(authenticateToken);
 router.use(requireModulePermission('sales-receipt-issuance'));
 
@@ -112,23 +123,30 @@ router.post('/weekly-schedule', async (req, res) => {
   }
 });
 
-router.get('/template', async (req, res) => {
-  try {
-    const csv = controller.getTemplate();
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=receipt_issues_template.csv');
-    res.send(csv);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 router.post('/bulk-upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    const csvText = req.file.buffer.toString('utf-8');
+    
+    let csvText = req.file.buffer.toString('utf-8');
+    
+    if (csvText.charCodeAt(0) === 0xFEFF) {
+      csvText = csvText.slice(1);
+    }
+    
+    const firstLine = csvText.split('\n')[0];
+    if (firstLine && !firstLine.toLowerCase().includes('si_number')) {
+      try {
+        csvText = req.file.buffer.toString('utf-16le');
+        if (csvText.charCodeAt(0) === 0xFEFF) {
+          csvText = csvText.slice(1);
+        }
+      } catch (e) {
+        csvText = req.file.buffer.toString('utf-8');
+      }
+    }
+    
     const result = await controller.bulkUploadReceipts(csvText, req.user?.id || null);
     res.status(201).json(result);
   } catch (error) {

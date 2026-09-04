@@ -3414,7 +3414,9 @@ ModuleComponents['purchasing-feeds'] = (container) => {
         const tbody = document.getElementById('feeds-use-tbody');
         if (!tbody) return;
         try {
-            const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active');
+            const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            });
             const buildings = buildingsRes.ok ? await buildingsRes.json() : [];
             
             tbody.innerHTML = '';

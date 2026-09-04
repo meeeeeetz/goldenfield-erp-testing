@@ -236,7 +236,13 @@ class ReceiptIssueController {
     }
 
     async bulkUploadReceipts(csvText, created_by = null) {
-        const lines = csvText.trim().split('\n');
+        let text = csvText;
+        
+        if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.slice(1);
+        }
+        
+        const lines = text.trim().split('\n');
         if (lines.length < 2) {
             throw new Error('CSV file is empty or has no data rows');
         }
@@ -252,7 +258,11 @@ class ReceiptIssueController {
         });
 
         if (headerErrors.length > 0) {
-            throw new Error('Invalid CSV headers: ' + headerErrors.join('; '));
+            const errorMsg = 'Invalid CSV headers: ' + headerErrors.join('; ');
+            if (actualHeaders[0] && actualHeaders[0].includes('pk')) {
+                throw new Error('Invalid file format. Please export as UTF-8 CSV from Excel, not as Excel workbook (.xlsx).');
+            }
+            throw new Error(errorMsg);
         }
 
         const values = [];

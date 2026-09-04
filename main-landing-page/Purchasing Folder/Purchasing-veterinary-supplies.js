@@ -4057,7 +4057,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const tbody = document.getElementById('vet-use-tbody');
             if (!tbody) return;
             try {
-                const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active');
+                const buildingsRes = await fetch('/api/layer-buildings-reports/buildings/active', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
                 const buildings = buildingsRes.ok ? await buildingsRes.json() : [];
 
                 const inventoryRes = await fetch(API_BASE_VET_INVENTORY, {

@@ -1,5 +1,10 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 ModuleComponents['operations-layer-buildings'] = (container) => {
         container.innerHTML = `
             <div class="buildings-layout">
@@ -448,7 +453,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
         const closeAddRemoveModal = () => addRemoveModal.classList.add('hidden');
         const getNextBuildingId = async () => {
             try {
-                const res = await fetch('/api/layer-buildings-reports/buildings/next-id');
+                const res = await fetch('/api/layer-buildings-reports/buildings/next-id', { headers: getAuthHeaders() });
                 if (res.ok) {
                     const data = await res.json();
                     return data.building_id || 'BldgID-001';
@@ -478,7 +483,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 if (tab.dataset.tab === 'remove') {
                     const select = document.getElementById('remove-building-select');
                     try {
-                        const res = await fetch('/api/layer-buildings-reports/buildings/active');
+                        const res = await fetch('/api/layer-buildings-reports/buildings/active', { headers: getAuthHeaders() });
                         if (res.ok) {
                             const buildings = await res.json();
                             select.innerHTML = '<option value="">Select Building</option>';
@@ -503,7 +508,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             try {
                 const res = await fetch('/api/layer-buildings-reports/buildings', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({ building_id: buildingId, building_name: buildingName, status })
                 });
                 if (!res.ok) {
@@ -525,7 +530,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             try {
                 const res = await fetch(`/api/layer-buildings-reports/buildings/${encodeURIComponent(buildingId)}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
                 });
                 if (!res.ok) {
@@ -674,7 +679,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             try {
                 const res = await fetch('/api/layer-buildings-reports', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
@@ -786,7 +791,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const container = document.getElementById('building-view-tabs');
             if (!container) return;
             try {
-                const res = await fetch('/api/layer-buildings-reports/buildings/active');
+                const res = await fetch('/api/layer-buildings-reports/buildings/active', { headers: getAuthHeaders() });
                 if (!res.ok) throw new Error('Failed to fetch buildings');
                 const buildings = await res.json();
                 if (!buildings.length) {
@@ -812,7 +817,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const tbody = document.getElementById('buildings-table-body');
             if (!tbody) return;
             try {
-                const res = await fetch('/api/layer-buildings-reports/buildings');
+                const res = await fetch('/api/layer-buildings-reports/buildings', { headers: getAuthHeaders() });
                 if (!res.ok) throw new Error('Failed to fetch buildings');
                 const buildings = await res.json();
                 tbody.innerHTML = buildings.map(b => `
