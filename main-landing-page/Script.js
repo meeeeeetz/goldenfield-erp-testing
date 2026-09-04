@@ -142,6 +142,109 @@ const subParentMap = {
     'hr-salary-overtime': 'hr-salary'
 };
 
+const rolePermissions = {
+    'SUPER_ADMIN': null,
+    'ADMIN': null,
+    'USER': new Set([
+        'operations-egg-inventory',
+        'operations-layer-buildings',
+        'operations-shipping-permit',
+        'sales-receipt-issuance',
+        'sales-product-pricing'
+    ])
+};
+
+function getUserRole() {
+    try {
+        const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+        return user.role || 'USER';
+    } catch (e) {
+        return 'USER';
+    }
+}
+
+function isTabAllowed(tabId) {
+    const role = getUserRole();
+    const allowed = rolePermissions[role];
+    if (allowed === null) return true;
+    if (tabId === 'dashboard' || tabId === 'logout') return true;
+    if (allowed.has(tabId)) return true;
+    
+    const prefixMap = {
+        'operations': 'operations-',
+        'sales-marketing': 'sales-',
+        'human-resources': 'hr-',
+        'finance': 'finance-',
+        'metzeler': 'metz-',
+        'systems': 'systems-',
+        'purchasing': 'purchasing-'
+    };
+    
+    const prefix = prefixMap[tabId];
+    if (prefix) {
+        for (const module of allowed) {
+            if (module.startsWith(prefix)) return true;
+        }
+    }
+    
+    return false;
+}
+
+function getMainTabAllowedSubmodules(mainTab) {
+    const role = getUserRole();
+    const allowed = rolePermissions[role];
+    if (allowed === null) return null;
+
+    const prefixMap = {
+        'operations': 'operations-',
+        'sales-marketing': 'sales-',
+        'human-resources': 'hr-',
+        'finance': 'finance-',
+        'metzeler': 'metz-',
+        'systems': 'systems-',
+        'purchasing': 'purchasing-'
+    };
+
+    const prefix = prefixMap[mainTab];
+    if (!prefix) return null;
+
+    const allowedSubs = [];
+    for (const tabId of allowed) {
+        if (tabId.startsWith(prefix)) {
+            allowedSubs.push(tabId);
+        }
+    }
+    return allowedSubs.length > 0 ? allowedSubs : null;
+}
+
+function applyRoleBasedVisibility() {
+    const role = getUserRole();
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN') return;
+
+    const allowed = rolePermissions[role] || new Set();
+    
+    // Hide unauthorized sub-tabs
+    document.querySelectorAll('.subnav-item').forEach(item => {
+        const tabId = item.getAttribute('data-tab');
+        if (!tabId || !allowed.has(tabId)) {
+            item.style.display = 'none';
+        }
+    });
+
+    // Hide parent tabs that have no visible sub-tabs
+    document.querySelectorAll('.nav-group').forEach(group => {
+        const parent = group.querySelector('.nav-parent, .nav-item');
+        const subnav = group.querySelector('.subnav');
+        if (!subnav) return;
+
+        const visibleSubItems = subnav.querySelectorAll('.subnav-item:not([style*="display: none"])');
+        if (visibleSubItems.length === 0) {
+            if (parent) parent.style.display = 'none';
+            subnav.style.display = 'none';
+        }
+    });
+}
+
 function getMainTab(tabId) {
     if (mainTabs.includes(tabId)) return tabId;
     for (const [prefix, main] of Object.entries(subToMainMap)) {
@@ -151,6 +254,11 @@ function getMainTab(tabId) {
 }
 
 function switchTab(tabId) {
+    if (!isTabAllowed(tabId)) {
+        alert('Access denied. You do not have permission to view this module.');
+        return;
+    }
+    
     if (currentTab === tabId) {
         const existingModule = document.querySelector('#content-area .module-dashboard, #content-area .card, #content-area .data-table, #content-area .tracking-cards-row, #content-area .receivables-schedule-row, #content-area .transactions-row');
         const activeNav = document.querySelector('[data-tab="' + tabId + '"].nav-item.active, [data-tab="' + tabId + '"].subnav-item.active');
@@ -329,5 +437,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    applyRoleBasedVisibility();
     renderDashboard();
 });

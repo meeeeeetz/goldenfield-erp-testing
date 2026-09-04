@@ -2,8 +2,12 @@ const express = require('express');
 const router = express.Router();
 const LayerBuildingsController = require('../../Controllers/main-operations-controller/layer-buildings-controller');
 const pool = require('../../config/database');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
 const controller = new LayerBuildingsController(pool);
+
+router.use(authenticateToken);
+router.use(requireModulePermission('operations-layer-buildings'));
 
 router.get('/buildings', async (req, res) => {
     try {

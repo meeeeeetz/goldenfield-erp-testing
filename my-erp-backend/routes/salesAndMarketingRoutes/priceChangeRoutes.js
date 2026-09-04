@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const ProductListController = require('../../Controllers/main-sales-and-marketing-controller/product-and-pricing-controller');
 const pool = require('../../config/database');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 const controller = new ProductListController(pool);
+
+router.use(authenticateToken);
+router.use(requireModulePermission('sales-product-pricing'));
 
 router.get('/', async (req, res) => {
   try {
