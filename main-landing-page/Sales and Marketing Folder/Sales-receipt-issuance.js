@@ -208,6 +208,11 @@ var API_BASE_CUSTOMERS = '/api/customers';
 var API_BASE_PRICE_CHANGES = "/api/price-changes";
 var API_BASE_PRODUCTS = '/api/products';
 
+function getReceiptAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 function generateReceiptItems() {
     const tbody = document.getElementById('receipt-items-body');
     if (!tbody) return;
@@ -438,7 +443,7 @@ async function generateNextSINumber() {
     const siInput = document.getElementById('receipt-si-number');
     if (!siInput) return;
     try {
-        const res = await fetch(`${API_BASE_RECEIPTS}/next-si`);
+        const res = await fetch(`${API_BASE_RECEIPTS}/next-si`, { headers: getReceiptAuthHeaders() });
         const data = await res.json();
         siInput.value = data.si_number || 'SI# 000001';
     } catch (err) {
@@ -570,7 +575,7 @@ function initializeReceiptModal() {
         try {
             const res = await fetch(`${API_BASE_RECEIPTS}/batch`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ receipts: items })
             });
             if (!res.ok) {
@@ -596,8 +601,12 @@ function initializeReceiptModal() {
         const cells = document.querySelectorAll('.schedule-cell');
         if (!cells.length) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
+            if (!Array.isArray(data)) {
+                console.error('Weekly schedule data is not an array', data);
+                return;
+            }
             cells.forEach(cell => {
                 const day = parseInt(cell.dataset.day);
                 const row = data.find(r => r.day_of_week === day);
@@ -614,7 +623,7 @@ function initializeReceiptModal() {
         try {
             await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ schedule: [{ day_of_week: dayOfWeek, content }] })
             });
         } catch (err) {
@@ -873,6 +882,7 @@ function initializeReceiptModal() {
 
                     const res = await fetch(`${API_BASE_RECEIPTS}/bulk-upload`, {
                         method: 'POST',
+                        headers: getReceiptAuthHeaders(),
                         body: formData
                     });
 
@@ -935,15 +945,22 @@ function initializeReceiptModal() {
         const tbody = document.getElementById('receipt-transactions-body');
         if (!tbody) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/aggregated`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/aggregated`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
-            receiptTransactionsData = data;
+            if (!Array.isArray(data)) {
+                console.error('Receipt transactions data is not an array', data);
+                receiptTransactionsData = [];
+            } else {
+                receiptTransactionsData = data;
+            }
             receiptCurrentPage = 1;
             renderReceiptPage();
             renderReceiptPagination();
         } catch (err) {
             console.error('Failed to load receipt transactions', err);
-            tbody.innerHTML = '<tr><td colspan="6">Failed to load data</td></tr>';
+            receiptTransactionsData = [];
+            renderReceiptPage();
+            renderReceiptPagination();
         }
     }
     
@@ -1042,7 +1059,8 @@ function initializeReceiptModal() {
         if (!confirm('Are you sure you want to void receipt ' + siNumber + '?')) return;
         try {
             const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/void`, {
-                method: 'PATCH'
+                method: 'PATCH',
+                headers: getReceiptAuthHeaders()
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
@@ -1062,9 +1080,7 @@ function initializeReceiptModal() {
 
     async function downloadReceiptPdf(siNumber) {
         try {
-            const token = localStorage.getItem('goldenfield_auth_token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/pdf`, { headers });
+            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/pdf`, { headers: getReceiptAuthHeaders() });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
                 throw new Error(errData.error || `Server error: ${res.status}`);
@@ -1088,8 +1104,13 @@ function initializeReceiptModal() {
         const tbody = document.getElementById('customer-receivables-body');
         if (!tbody) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/pending-receivables`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/pending-receivables`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
+            if (!Array.isArray(data)) {
+                console.error('Customer receivables data is not an array', data);
+                tbody.innerHTML = '<tr><td colspan="2">Failed to load data</td></tr>';
+                return;
+            }
             tbody.innerHTML = data.map(row => `
                 <tr>
                     <td>${row.customer}</td>
@@ -1106,8 +1127,13 @@ function initializeReceiptModal() {
         const totalEl = document.getElementById('total-receivables-value');
         if (!totalEl) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/pending-receivables`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/pending-receivables`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
+            if (!Array.isArray(data)) {
+                console.error('Total receivables data is not an array', data);
+                totalEl.textContent = 'P 0.00';
+                return;
+            }
             const total = data.reduce((sum, row) => sum + (parseFloat(row.receivables) || 0), 0);
             totalEl.textContent = 'P ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         } catch (err) {
@@ -1120,7 +1146,7 @@ function initializeReceiptModal() {
         const el = document.getElementById('monthly-sales-value');
         if (!el) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/monthly-sales?t=${Date.now()}`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/monthly-sales?t=${Date.now()}`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
             const total = parseFloat(data.total_sales) || 0;
             el.textContent = 'P ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1134,8 +1160,12 @@ function initializeReceiptModal() {
         const cells = document.querySelectorAll('.schedule-cell');
         if (!cells.length) return;
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`);
+            const res = await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`, { headers: getReceiptAuthHeaders() });
             const data = await res.json();
+            if (!Array.isArray(data)) {
+                console.error('Weekly schedule data is not an array', data);
+                return;
+            }
             cells.forEach(cell => {
                 const day = parseInt(cell.dataset.day);
                 const row = data.find(r => r.day_of_week === day);
@@ -1152,7 +1182,7 @@ function initializeReceiptModal() {
         try {
             await fetch(`${API_BASE_RECEIPTS}/weekly-schedule`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ schedule: [{ day_of_week: dayOfWeek, content }] })
             });
         } catch (err) {
