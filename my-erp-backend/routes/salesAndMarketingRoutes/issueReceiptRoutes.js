@@ -4,7 +4,7 @@ const ReceiptIssueController = require('../../Controllers/main-sales-and-marketi
 const pool = require('../../config/database');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken } = require('../../middleware/authMiddleware');
 
 const controller = new ReceiptIssueController(pool);
 
