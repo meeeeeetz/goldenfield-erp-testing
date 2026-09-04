@@ -52,6 +52,18 @@ const tabModules = {
     'systems-maintenance': 'Systems Folder/Systems-maintenance.js',
 };
 
+function getLoggedInUserName() {
+    try {
+        const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+        if (user && user.first_name) {
+            return user.first_name;
+        }
+    } catch (e) {
+        console.error('Failed to parse goldenfield_user', e);
+    }
+    return 'Username';
+}
+
 const tabTitles = {
     'human-resources': 'Human Resources',
     'systems': 'Systems',
@@ -158,14 +170,14 @@ function switchTab(tabId) {
     if (tabId === 'logout') {
         const logoutNav = document.querySelector('[data-tab="logout"]');
         if (logoutNav) logoutNav.classList.add('active');
-        document.getElementById('page-title').textContent = 'Welcome back Username!';
+        document.getElementById('page-title').textContent = 'Welcome back ' + getLoggedInUserName() + '!';
         document.getElementById('breadcrumb').textContent = '';
         return;
     }
     
     if (tabId === 'dashboard') {
         currentMainTab = null;
-        document.getElementById('page-title').textContent = 'Welcome back Username!';
+        document.getElementById('page-title').textContent = 'Welcome back ' + getLoggedInUserName() + '!';
         document.getElementById('breadcrumb').textContent = 'Dashboard';
         renderDashboard();
         return;
@@ -198,7 +210,7 @@ function switchTab(tabId) {
         activeNav.classList.add('active');
     }
     
-    document.getElementById('page-title').textContent = 'Welcome back Username!';
+    document.getElementById('page-title').textContent = 'Welcome back ' + getLoggedInUserName() + '!';
     updateBreadcrumb(tabId);
     
     loadModule(tabId);
@@ -236,7 +248,7 @@ function updateBreadcrumb(tabId) {
 
 function renderDashboard() {
     const contentArea = document.getElementById('content-area');
-    document.getElementById('page-title').textContent = 'Welcome back Username!';
+    document.getElementById('page-title').textContent = 'Welcome back ' + getLoggedInUserName() + '!';
     document.getElementById('breadcrumb').textContent = 'Dashboard';
     
     contentArea.innerHTML = '<div class="dashboard-welcome"><div class="dashboard-card"><h2>Welcome to Goldenfield ERP</h2><p>Select a module from the sidebar to get started.</p></div></div>';
