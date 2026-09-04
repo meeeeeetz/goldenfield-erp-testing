@@ -155,4 +155,15 @@ router.get('/:siNumber', async (req, res) => {
   }
 });
 
+router.post('/preview-pdf', async (req, res) => {
+  try {
+    const result = await controller.generateReceiptPreviewPdf(req.body);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

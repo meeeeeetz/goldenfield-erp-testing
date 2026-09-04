@@ -3,6 +3,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 var receiptTransactionsData = [];
 var receiptCurrentPage = 1;
 var receiptRowsPerPage = 12;
+var tempReceiptData = null;
 
 ModuleComponents['sales-receipt-issuance'] = (container) => {
         container.innerHTML = `
@@ -162,7 +163,7 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                             <input type="text" id="receipt-grand-total" readonly>
                         </div>
                         <div class="modal-tab-actions">
-                            <button class="btn-primary" id="save-receipt">Save</button>
+                            <button class="btn-primary" id="generate-receipt-btn">Generate Receipt</button>
                         </div>
                     </div>
                 </div>
@@ -197,6 +198,22 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                             <button class="btn-secondary" id="download-template-btn">Download Template</button>
                             <button class="btn-secondary" id="save-to-db-btn">Save to Database</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receipt-preview-modal" class="modal" style="display:none;">
+                <div class="modal-content" style="max-width: 900px; height: 90vh;">
+                    <div class="modal-header-row">
+                        <h3>Receipt Preview</h3>
+                        <button class="modal-close-btn" id="close-preview-modal">&times;</button>
+                    </div>
+                    <div style="flex: 1; overflow: hidden; background: #f5f5f5;">
+                        <iframe id="receipt-preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <div class="modal-tab-actions">
+                        <button class="btn-secondary" id="print-receipt-btn">Print</button>
+                        <button class="btn-primary" id="final-save-receipt-btn">Final Save</button>
                     </div>
                 </div>
             </div>
@@ -543,7 +560,7 @@ function initializeReceiptModal() {
         }
     });
 
-    document.getElementById('save-receipt').addEventListener('click', async () => {
+    document.getElementById('generate-receipt-btn').addEventListener('click', async () => {
         const siNumber = document.getElementById('receipt-si-number').value;
         const date = document.getElementById('receipt-date').value;
         const customerId = document.getElementById('receipt-customer').value;
@@ -572,18 +589,51 @@ function initializeReceiptModal() {
         if (!customerId) return alert('Please select a customer');
         if (items.length === 0) return alert('Please add at least one item');
 
+        tempReceiptData = { si_number: siNumber, date, customer: customerName, receipts: items };
+
         try {
-            const res = await fetch(`${API_BASE_RECEIPTS}/batch`, {
+            const res = await fetch(`${API_BASE_RECEIPTS}/preview-pdf`, {
                 method: 'POST',
                 headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ receipts: items })
+                body: JSON.stringify(tempReceiptData)
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
                 throw new Error(errData.error || `Server error: ${res.status}`);
             }
-            alert('Receipt issued successfully: ' + siNumber);
-            modal.style.display = 'none';
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const previewFrame = document.getElementById('receipt-preview-frame');
+            if (previewFrame) {
+                previewFrame.src = url;
+            }
+            const previewModal = document.getElementById('receipt-preview-modal');
+            if (previewModal) {
+                previewModal.style.display = 'block';
+            }
+        } catch (err) {
+            console.error('Failed to generate receipt preview', err);
+            alert('Error generating receipt preview: ' + err.message);
+        }
+    });
+
+    document.getElementById('final-save-receipt-btn').addEventListener('click', async () => {
+        if (!tempReceiptData) return;
+        const { si_number, receipts } = tempReceiptData;
+        try {
+            const res = await fetch(`${API_BASE_RECEIPTS}/batch`, {
+                method: 'POST',
+                headers: { ...getReceiptAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receipts })
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server error: ${res.status}`);
+            }
+            alert('Receipt issued successfully: ' + si_number);
+            document.getElementById('receipt-modal').style.display = 'none';
+            document.getElementById('receipt-preview-modal').style.display = 'none';
+            tempReceiptData = null;
             loadReceiptTransactions();
             loadCustomerReceivables();
             loadTotalReceivables();
@@ -592,6 +642,20 @@ function initializeReceiptModal() {
         } catch (err) {
             console.error('Failed to save receipt', err);
             alert('Error saving receipt: ' + err.message);
+        }
+    });
+
+    document.getElementById('print-receipt-btn').addEventListener('click', () => {
+        const previewFrame = document.getElementById('receipt-preview-frame');
+        if (previewFrame && previewFrame.contentWindow) {
+            previewFrame.contentWindow.print();
+        }
+    });
+
+    document.getElementById('close-preview-modal').addEventListener('click', () => {
+        const previewModal = document.getElementById('receipt-preview-modal');
+        if (previewModal) {
+            previewModal.style.display = 'none';
         }
     });
 
