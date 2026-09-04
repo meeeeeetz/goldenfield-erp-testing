@@ -9,7 +9,7 @@ const controller = new ReceiptIssueController(pool);
 
 router.post('/', async (req, res) => {
   try {
-    const result = await controller.createReceiptIssue(req.body);
+    const result = await controller.createReceiptIssue({ ...req.body, created_by: req.user?.id || null });
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -22,7 +22,7 @@ router.post('/batch', async (req, res) => {
     if (!Array.isArray(receipts)) {
       return res.status(400).json({ error: 'Receipts must be an array' });
     }
-    const result = await controller.createReceiptIssuesBatch(receipts);
+    const result = await controller.createReceiptIssuesBatch(receipts, req.user?.id || null);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -125,7 +125,7 @@ router.post('/bulk-upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     const csvText = req.file.buffer.toString('utf-8');
-    const result = await controller.bulkUploadReceipts(csvText);
+    const result = await controller.bulkUploadReceipts(csvText, req.user?.id || null);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });

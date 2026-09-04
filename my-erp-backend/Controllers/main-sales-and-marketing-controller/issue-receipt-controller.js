@@ -4,7 +4,7 @@ class ReceiptIssueController {
     }
 
     async createReceiptIssue(receiptData) {
-        const { si_number, date, customer, qty, product, total } = receiptData;
+        const { si_number, date, customer, qty, product, total, created_by } = receiptData;
         const query = `
             INSERT INTO receipt_issues 
             (si_number, date, customer, qty, product, total) 
@@ -20,12 +20,12 @@ class ReceiptIssueController {
             total
         ]);
         
-        await this.upsertSummary(si_number, date, customer, total);
+        await this.upsertSummary(si_number, date, customer, total, 'Pending', true, created_by);
         
         return result.rows[0];
     }
 
-    async createReceiptIssuesBatch(receipts) {
+    async createReceiptIssuesBatch(receipts, created_by) {
         if (!receipts || receipts.length === 0) return [];
         const values = [];
         const params = [];
@@ -61,14 +61,16 @@ class ReceiptIssueController {
                 summaryUpdates.set(receipt.si_number, {
                     date: receipt.date,
                     customer: receipt.customer,
-                    total: 0
+                    total: 0,
+                    status: 'Pending',
+                    posted: true
                 });
             }
             summaryUpdates.get(receipt.si_number).total += parseFloat(receipt.total);
         });
         
         for (const [si_number, data] of summaryUpdates) {
-            await this.upsertSummary(si_number, data.date, data.customer, data.total);
+            await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted, created_by);
         }
         
         return result.rows;
@@ -95,7 +97,8 @@ class ReceiptIssueController {
                 COALESCE(SUM(ri.total), 0) as grand_total,
                 COALESCE(MAX(ris.status), 'Pending') as status,
                 COALESCE(BOOL_OR(ris.posted), true) as posted,
-                MIN(ri.created_at) as created_at
+                MIN(ri.created_at) as created_at,
+                MAX(ris.created_by) as created_by
             FROM receipt_issues ri
             LEFT JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
             GROUP BY ri.si_number, ri.date, ri.customer
@@ -228,7 +231,7 @@ class ReceiptIssueController {
         return result;
     }
 
-    async bulkUploadReceipts(csvText) {
+    async bulkUploadReceipts(csvText, created_by = null) {
         const lines = csvText.trim().split('\n');
         if (lines.length < 2) {
             throw new Error('CSV file is empty or has no data rows');
@@ -342,26 +345,27 @@ class ReceiptIssueController {
         }
         
         for (const [si_number, data] of summaryUpdates) {
-            await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted);
+            await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted, created_by);
         }
         
         return { inserted: result.rows.length, rows: result.rows };
     }
 
-    async upsertSummary(siNumber, date, customer, totalDelta, status = 'Pending', posted = true) {
+    async upsertSummary(siNumber, date, customer, totalDelta, status = 'Pending', posted = true, created_by = null) {
         const query = `
-            INSERT INTO receipt_issue_summaries (si_number, date, customer, grand_total, status, posted)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO receipt_issue_summaries (si_number, date, customer, grand_total, status, posted, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (si_number)
             DO UPDATE SET 
                 grand_total = receipt_issue_summaries.grand_total + $4,
                 date = EXCLUDED.date,
                 customer = EXCLUDED.customer,
                 status = EXCLUDED.status,
-                posted = EXCLUDED.posted
+                posted = EXCLUDED.posted,
+                created_by = COALESCE(EXCLUDED.created_by, receipt_issue_summaries.created_by)
             RETURNING *
         `;
-        await this.db.query(query, [siNumber, date, customer, parseFloat(totalDelta), status, posted]);
+        await this.db.query(query, [siNumber, date, customer, parseFloat(totalDelta), status, posted, created_by]);
     }
 }
 

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS receipt_issue_summaries (
     grand_total DECIMAL(10,2) DEFAULT 0,
     status VARCHAR(50) DEFAULT 'Pending',
     posted BOOLEAN DEFAULT TRUE,
+    created_by INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
