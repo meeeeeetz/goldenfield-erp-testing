@@ -4,8 +4,11 @@ const ReceiptIssueController = require('../../Controllers/main-sales-and-marketi
 const pool = require('../../config/database');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 const controller = new ReceiptIssueController(pool);
+
+router.use(authenticateToken);
 
 router.post('/', async (req, res) => {
   try {
@@ -129,6 +132,17 @@ router.post('/bulk-upload', upload.single('file'), async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/:siNumber/pdf', async (req, res) => {
+  try {
+    const result = await controller.generateReceiptPdf(req.params.siNumber);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

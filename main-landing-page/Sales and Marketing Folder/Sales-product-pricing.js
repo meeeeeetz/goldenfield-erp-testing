@@ -339,6 +339,7 @@ async function loadProductsForEdit() {
         const res = await fetch(`${API_BASE}`);
         const products = await res.json();
         const productSelect = document.getElementById('edit-product-name');
+        if (!productSelect) return;
         productSelect.innerHTML = '<option value="">Select product...</option>';
         products.forEach(p => {
             const option = document.createElement('option');

@@ -1,3 +1,5 @@
+const PDFDocument = require('pdfkit');
+
 class ReceiptIssueController {
     constructor(dbConnection) {
         this.db = dbConnection;
@@ -98,9 +100,11 @@ class ReceiptIssueController {
                 COALESCE(MAX(ris.status), 'Pending') as status,
                 COALESCE(BOOL_OR(ris.posted), true) as posted,
                 MIN(ri.created_at) as created_at,
-                MAX(ris.created_by) as created_by
+                MAX(ris.created_by) as created_by,
+                MAX(u.first_name || ' ' || u.last_name) as created_by_name
             FROM receipt_issues ri
             LEFT JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
+            LEFT JOIN users u ON ris.created_by = u.id
             GROUP BY ri.si_number, ri.date, ri.customer
             ORDER BY ri.si_number
         `;
@@ -366,6 +370,95 @@ class ReceiptIssueController {
             RETURNING *
         `;
         await this.db.query(query, [siNumber, date, customer, parseFloat(totalDelta), status, posted, created_by]);
+    }
+
+    async generateReceiptPdf(siNumber) {
+        const summaryResult = await this.db.query('SELECT * FROM receipt_issue_summaries WHERE si_number = $1', [siNumber]);
+        const summary = summaryResult.rows[0];
+        if (!summary) {
+            throw new Error('Receipt not found');
+        }
+
+        const itemsResult = await this.db.query('SELECT * FROM receipt_issues WHERE si_number = $1 ORDER BY id ASC', [siNumber]);
+        const items = itemsResult.rows;
+
+        const fmt = (val) => {
+            const n = Number(val) || 0;
+            return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const formatDate = (d) => {
+            if (!d) return '-';
+            const date = new Date(d);
+            if (isNaN(date.getTime())) return '-';
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        };
+
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const chunks = [];
+        doc.on('data', chunk => chunks.push(chunk));
+
+        let y = 50;
+
+        doc.fontSize(20).font('Helvetica-Bold').text('GOLDEN FIELD', { align: 'center' });
+        y += 25;
+        doc.fontSize(11).font('Helvetica').fillColor('#555').text('Official Receipt', { align: 'center' });
+        y += 15;
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 20;
+
+        doc.fontSize(10).font('Helvetica-Bold').text('Receipt Details', 50, y);
+        y += 18;
+        doc.font('Helvetica').text(`SI Number: ${summary.si_number}`, 50, y);
+        y += 16;
+        doc.text(`Date: ${formatDate(summary.date)}`, 50, y);
+        y += 16;
+        doc.text(`Customer: ${summary.customer}`, 50, y);
+        y += 16;
+        doc.text(`Status: ${summary.status}`, 50, y);
+        y += 20;
+
+        doc.font('Helvetica-Bold').text('Items', 50, y);
+        y += 16;
+
+        const tableTop = y;
+        const colX = [50, 280, 380, 470, 545];
+        const headers = ['Product', 'Qty', 'Price', 'Total'];
+        doc.font('Helvetica-Bold');
+        headers.forEach((h, i) => {
+            doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10 });
+        });
+        y += 14;
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 6;
+
+        doc.font('Helvetica');
+        items.forEach(item => {
+            doc.text(item.product || '', colX[0], y, { width: colX[1] - colX[0] - 10 });
+            doc.text(String(item.qty || 0), colX[1], y, { width: colX[2] - colX[1] - 10, align: 'center' });
+            doc.text(fmt(item.total / (item.qty || 1)), colX[2], y, { width: colX[3] - colX[2] - 10, align: 'right' });
+            doc.text(fmt(item.total), colX[3], y, { width: colX[4] - colX[3] - 10, align: 'right' });
+            y += 14;
+        });
+
+        y += 6;
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 10;
+        doc.font('Helvetica-Bold').text(`Grand Total: ${fmt(summary.grand_total)}`, 470, y, { align: 'right', width: 75 });
+        y += 30;
+
+        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', 50, y, { align: 'center', width: 495 });
+
+        doc.end();
+
+        return new Promise((resolve, reject) => {
+            doc.on('end', () => {
+                const buffer = Buffer.concat(chunks);
+                const filename = `receipt_${siNumber}.pdf`;
+                resolve({ buffer, filename });
+            });
+            doc.on('error', reject);
+        });
     }
 }
 

@@ -100,11 +100,13 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                                     <th>Customer</th>
                                     <th>Amount</th>
                                     <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>PDF</th>
                                     <th>Void</th>
                                 </tr>
                             </thead>
                             <tbody id="receipt-transactions-body">
-                                <tr><td colspan="6">Loading...</td></tr>
+                                <tr><td colspan="8">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -954,7 +956,7 @@ function initializeReceiptModal() {
         const pageData = receiptTransactionsData.slice(start, end);
         
         if (pageData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">No data available</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">No data available</td></tr>';
             return;
         }
         
@@ -969,6 +971,10 @@ function initializeReceiptModal() {
                 <td>${row.customer}</td>
                 <td>${parseFloat(row.grand_total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${row.status}</td>
+                <td>${row.created_by_name || '-'}</td>
+                <td><button class="btn-primary btn-pdf" onclick="downloadReceiptPdf('${row.si_number}')" title="Download PDF">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </button></td>
                 <td>${isCrossed ? '' : '<button class="btn-danger btn-void" onclick="voidReceipt(\'' + row.si_number + '\')">Void</button>'}</td>
             </tr>
             `;
@@ -1051,6 +1057,30 @@ function initializeReceiptModal() {
         } catch (err) {
             console.error('Failed to void receipt', err);
             alert('Error voiding receipt: ' + err.message);
+        }
+    }
+
+    async function downloadReceiptPdf(siNumber) {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/pdf`, { headers });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server error: ${res.status}`);
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `receipt_${siNumber}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to download receipt PDF', err);
+            alert('Error downloading receipt: ' + err.message);
         }
     }
 
