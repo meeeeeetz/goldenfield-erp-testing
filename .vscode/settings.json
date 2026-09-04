@@ -4,5 +4,8 @@
     "**/*.code-search",
     "**/node_modules/**",
     "**/my-erp-backend/uploads/**"
-  ]
+  ],
+  "liveServer.settings.proxy": {
+    "/api": "http://localhost:5000"
+  }
 }
