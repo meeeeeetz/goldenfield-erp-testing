@@ -400,54 +400,46 @@ class ReceiptIssueController {
 
         let y = 50;
 
-        doc.fontSize(20).font('Helvetica-Bold').text('GOLDEN FIELD', { align: 'center' });
-        y += 25;
-        doc.fontSize(11).font('Helvetica').fillColor('#555').text('Official Receipt', { align: 'center' });
-        y += 15;
+        doc.fontSize(14).font('Helvetica-Bold').text('Official Receipt', { align: 'center' });
+        y += 16;
         doc.moveTo(50, y).lineTo(545, y).stroke();
-        y += 20;
+        y += 14;
 
-        doc.fontSize(10).font('Helvetica-Bold').text('Receipt Details', 50, y);
+        doc.fontSize(10).font('Helvetica-Bold');
+        doc.text(`${summary.si_number}`, 50, y, { width: 170 });
+        doc.text(`Customer: ${summary.customer}`, 220, y, { width: 200 });
+        doc.text(`Date: ${formatDate(summary.date)}`, 430, y, { align: 'right', width: 115 });
         y += 18;
-        doc.font('Helvetica').text(`SI Number: ${summary.si_number}`, 50, y);
-        y += 16;
-        doc.text(`Date: ${formatDate(summary.date)}`, 50, y);
-        y += 16;
-        doc.text(`Customer: ${summary.customer}`, 50, y);
-        y += 16;
-        doc.text(`Status: ${summary.status}`, 50, y);
-        y += 20;
 
-        doc.font('Helvetica-Bold').text('Items', 50, y);
-        y += 16;
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 8;
 
-        const tableTop = y;
-        const colX = [50, 280, 380, 470, 545];
-        const headers = ['Product', 'Qty', 'Price', 'Total'];
+        const colX = [50, 150, 380, 470, 545];
+        const headers = ['Qty', 'Products', 'Price', 'Amount'];
         doc.font('Helvetica-Bold');
         headers.forEach((h, i) => {
-            doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10 });
+            doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10, align: 'center' });
         });
-        y += 14;
+        y += 10;
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 6;
 
         doc.font('Helvetica');
         items.forEach(item => {
-            doc.text(item.product || '', colX[0], y, { width: colX[1] - colX[0] - 10 });
-            doc.text(String(item.qty || 0), colX[1], y, { width: colX[2] - colX[1] - 10, align: 'center' });
-            doc.text(fmt(item.total / (item.qty || 1)), colX[2], y, { width: colX[3] - colX[2] - 10, align: 'right' });
-            doc.text(fmt(item.total), colX[3], y, { width: colX[4] - colX[3] - 10, align: 'right' });
-            y += 14;
+            doc.text(String(item.qty || 0), colX[0], y, { width: colX[1] - colX[0] - 10, align: 'center' });
+            doc.text(item.product || '', colX[1], y, { width: colX[2] - colX[1] - 10, align: 'center' });
+            doc.text(fmt(item.total / (item.qty || 1)), colX[2], y, { width: colX[3] - colX[2] - 10, align: 'center' });
+            doc.text(fmt(item.total), colX[3], y, { width: colX[4] - colX[3] - 10, align: 'center' });
+            y += 11;
         });
 
         y += 6;
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 10;
-        doc.font('Helvetica-Bold').text(`Grand Total: ${fmt(summary.grand_total)}`, 470, y, { align: 'right', width: 75 });
-        y += 30;
+        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(summary.grand_total)}`, 470, y, { align: 'right', width: 75 });
+        y += 20;
 
-        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', 50, y, { align: 'center', width: 495 });
+        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 495 });
 
         doc.end();
 
@@ -485,54 +477,46 @@ class ReceiptIssueController {
 
         let y = 50;
 
-        doc.fontSize(20).font('Helvetica-Bold').text('GOLDEN FIELD', { align: 'center' });
-        y += 25;
-        doc.fontSize(11).font('Helvetica').fillColor('#555').text('Official Receipt', { align: 'center' });
-        y += 15;
+        doc.fontSize(14).font('Helvetica-Bold').text('Official Receipt', { align: 'center' });
+        y += 16;
         doc.moveTo(50, y).lineTo(545, y).stroke();
-        y += 20;
+        y += 14;
 
-        doc.fontSize(10).font('Helvetica-Bold').text('Receipt Details', 50, y);
+        doc.fontSize(10).font('Helvetica-Bold');
+        doc.text(`${si_number || ''}`, 50, y, { width: 170 });
+        doc.text(`Customer: ${customer || ''}`, 220, y, { width: 200 });
+        doc.text(`Date: ${formatDate(date)}`, 430, y, { align: 'right', width: 115 });
         y += 18;
-        doc.font('Helvetica').text(`SI Number: ${si_number || ''}`, 50, y);
-        y += 16;
-        doc.text(`Date: ${formatDate(date)}`, 50, y);
-        y += 16;
-        doc.text(`Customer: ${customer || ''}`, 50, y);
-        y += 16;
-        doc.text(`Status: Pending`, 50, y);
-        y += 20;
 
-        doc.font('Helvetica-Bold').text('Items', 50, y);
-        y += 16;
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 8;
 
-        const tableTop = y;
-        const colX = [50, 280, 380, 470, 545];
-        const headers = ['Product', 'Qty', 'Price', 'Total'];
+        const colX = [50, 150, 380, 470, 545];
+        const headers = ['Qty', 'Products', 'Price', 'Amount'];
         doc.font('Helvetica-Bold');
         headers.forEach((h, i) => {
-            doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10 });
+            doc.text(h, colX[i], y, { width: colX[i + 1] - colX[i] - 10, align: 'center' });
         });
-        y += 14;
+        y += 10;
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 6;
 
         doc.font('Helvetica');
         items.forEach(item => {
-            doc.text(item.product || '', colX[0], y, { width: colX[1] - colX[0] - 10 });
-            doc.text(String(item.qty || 0), colX[1], y, { width: colX[2] - colX[1] - 10, align: 'center' });
-            doc.text(fmt(item.total / (item.qty || 1)), colX[2], y, { width: colX[3] - colX[2] - 10, align: 'right' });
-            doc.text(fmt(item.total), colX[3], y, { width: colX[4] - colX[3] - 10, align: 'right' });
-            y += 14;
+            doc.text(String(item.qty || 0), colX[0], y, { width: colX[1] - colX[0] - 10, align: 'center' });
+            doc.text(item.product || '', colX[1], y, { width: colX[2] - colX[1] - 10, align: 'center' });
+            doc.text(fmt(item.total / (item.qty || 1)), colX[2], y, { width: colX[3] - colX[2] - 10, align: 'center' });
+            doc.text(fmt(item.total), colX[3], y, { width: colX[4] - colX[3] - 10, align: 'center' });
+            y += 11;
         });
 
         y += 6;
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 10;
-        doc.font('Helvetica-Bold').text(`Grand Total: ${fmt(grandTotal)}`, 470, y, { align: 'right', width: 75 });
-        y += 30;
+        doc.fontSize(12).font('Helvetica-Bold').text(`Grand Total: ${fmt(grandTotal)}`, 470, y, { align: 'right', width: 75 });
+        y += 20;
 
-        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt preview.', 50, y, { align: 'center', width: 495 });
+        doc.fontSize(9).font('Helvetica').fillColor('#777').text('This is a system-generated receipt.', { align: 'center', width: 495 });
 
         doc.end();
 

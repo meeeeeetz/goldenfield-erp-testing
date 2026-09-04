@@ -4,6 +4,9 @@ var receiptTransactionsData = [];
 var receiptCurrentPage = 1;
 var receiptRowsPerPage = 12;
 var tempReceiptData = null;
+var receiptSortColumn = 'si_number';
+var receiptSortDirection = 'asc';
+var receiptSearchQuery = '';
 
 ModuleComponents['sales-receipt-issuance'] = (container) => {
         container.innerHTML = `
@@ -91,15 +94,18 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
             <!-- ROW 2: Receipt Transaction Box Only -->
             <div class="transactions-row">
                 <div class="card shipping-box receipt-transaction-box">
-                    <h3>Receipt Transaction</h3>
+                    <div class="box-header-row">
+                        <h3>Receipt Transaction</h3>
+                        <input type="text" id="receipt-search-input" placeholder="Search receipts..." style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 220px;">
+                    </div>
                     <div class="table-wrap">
                         <table class="data-table product-table">
                             <thead>
                                 <tr>
-                                    <th>Invoice No.</th>
-                                    <th>Date</th>
+                                    <th class="sortable" data-sort="si_number">Invoice No.<span class="sort-arrow">&#8645;</span></th>
+                                    <th class="sortable" data-sort="date">Date<span class="sort-arrow">&#8645;</span></th>
                                     <th>Customer</th>
-                                    <th>Amount</th>
+                                    <th class="sortable" data-sort="grand_total">Amount<span class="sort-arrow">&#8645;</span></th>
                                     <th>Status</th>
                                     <th>Created By</th>
                                     <th>PDF</th>
@@ -163,7 +169,8 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                             <input type="text" id="receipt-grand-total" readonly>
                         </div>
                         <div class="modal-tab-actions">
-                            <button class="btn-primary" id="generate-receipt-btn">Generate Receipt</button>
+                            <button class="btn-secondary" id="preview-receipt-btn">Preview Receipt</button>
+                            <button class="btn-primary" id="final-save-receipt-btn">Final Save</button>
                         </div>
                     </div>
                 </div>
@@ -172,6 +179,18 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                     <div class="computation-item">
                         <span>Egg Tray Used:</span>
                         <span id="computation-tray-total">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receipt-preview-modal" class="modal" style="display:none;">
+                <div class="modal-content" style="max-width: 900px; height: 90vh;">
+                    <div class="modal-header-row">
+                        <h3>Receipt Preview</h3>
+                        <button class="modal-close-btn" id="close-preview-modal">&times;</button>
+                    </div>
+                    <div style="flex: 1; overflow: hidden; background: #f5f5f5;">
+                        <iframe id="receipt-preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
                     </div>
                 </div>
             </div>
@@ -198,22 +217,6 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                             <button class="btn-secondary" id="download-template-btn">Download Template</button>
                             <button class="btn-secondary" id="save-to-db-btn">Save to Database</button>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="receipt-preview-modal" class="modal" style="display:none;">
-                <div class="modal-content" style="max-width: 900px; height: 90vh;">
-                    <div class="modal-header-row">
-                        <h3>Receipt Preview</h3>
-                        <button class="modal-close-btn" id="close-preview-modal">&times;</button>
-                    </div>
-                    <div style="flex: 1; overflow: hidden; background: #f5f5f5;">
-                        <iframe id="receipt-preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
-                    </div>
-                    <div class="modal-tab-actions">
-                        <button class="btn-secondary" id="print-receipt-btn">Print</button>
-                        <button class="btn-primary" id="final-save-receipt-btn">Final Save</button>
                     </div>
                 </div>
             </div>
@@ -560,7 +563,7 @@ function initializeReceiptModal() {
         }
     });
 
-    document.getElementById('generate-receipt-btn').addEventListener('click', async () => {
+    document.getElementById('preview-receipt-btn').addEventListener('click', async () => {
         const siNumber = document.getElementById('receipt-si-number').value;
         const date = document.getElementById('receipt-date').value;
         const customerId = document.getElementById('receipt-customer').value;
@@ -603,14 +606,7 @@ function initializeReceiptModal() {
             }
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
-            const previewFrame = document.getElementById('receipt-preview-frame');
-            if (previewFrame) {
-                previewFrame.src = url;
-            }
-            const previewModal = document.getElementById('receipt-preview-modal');
-            if (previewModal) {
-                previewModal.style.display = 'block';
-            }
+            window.open(url, '_blank');
         } catch (err) {
             console.error('Failed to generate receipt preview', err);
             alert('Error generating receipt preview: ' + err.message);
@@ -632,7 +628,6 @@ function initializeReceiptModal() {
             }
             alert('Receipt issued successfully: ' + si_number);
             document.getElementById('receipt-modal').style.display = 'none';
-            document.getElementById('receipt-preview-modal').style.display = 'none';
             tempReceiptData = null;
             loadReceiptTransactions();
             loadCustomerReceivables();
@@ -642,20 +637,6 @@ function initializeReceiptModal() {
         } catch (err) {
             console.error('Failed to save receipt', err);
             alert('Error saving receipt: ' + err.message);
-        }
-    });
-
-    document.getElementById('print-receipt-btn').addEventListener('click', () => {
-        const previewFrame = document.getElementById('receipt-preview-frame');
-        if (previewFrame && previewFrame.contentWindow) {
-            previewFrame.contentWindow.print();
-        }
-    });
-
-    document.getElementById('close-preview-modal').addEventListener('click', () => {
-        const previewModal = document.getElementById('receipt-preview-modal');
-        if (previewModal) {
-            previewModal.style.display = 'none';
         }
     });
 
@@ -1003,6 +984,43 @@ function initializeReceiptModal() {
         loadMonthlySales();
         loadWeeklySchedule();
         initializeScheduleCells();
+
+        const receiptSearchInput = document.getElementById('receipt-search-input');
+        if (receiptSearchInput) {
+            receiptSearchInput.addEventListener('input', (e) => {
+                receiptSearchQuery = e.target.value.trim();
+                receiptCurrentPage = 1;
+                applyReceiptSortingAndSearch();
+            });
+        }
+
+        document.querySelectorAll('.receipt-transaction-box .sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.sort;
+                if (!column) return;
+                if (receiptSortColumn === column) {
+                    receiptSortDirection = receiptSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    receiptSortColumn = column;
+                    receiptSortDirection = 'asc';
+                }
+                applyReceiptSortingAndSearch();
+            });
+        });
+
+        const closePreviewBtn = document.getElementById('close-preview-modal');
+        if (closePreviewBtn) {
+            closePreviewBtn.addEventListener('click', () => {
+                const previewModal = document.getElementById('receipt-preview-modal');
+                const previewFrame = document.getElementById('receipt-preview-frame');
+                if (previewModal) {
+                    previewModal.style.display = 'none';
+                }
+                if (previewFrame) {
+                    previewFrame.src = '';
+                }
+            });
+        }
     }
 
     async function loadReceiptTransactions() {
@@ -1018,8 +1036,7 @@ function initializeReceiptModal() {
                 receiptTransactionsData = data;
             }
             receiptCurrentPage = 1;
-            renderReceiptPage();
-            renderReceiptPagination();
+            applyReceiptSortingAndSearch();
         } catch (err) {
             console.error('Failed to load receipt transactions', err);
             receiptTransactionsData = [];
@@ -1027,14 +1044,72 @@ function initializeReceiptModal() {
             renderReceiptPagination();
         }
     }
+
+    function getFilteredAndSortedReceipts() {
+        let data = [...receiptTransactionsData];
+        
+        if (receiptSearchQuery) {
+            const query = receiptSearchQuery.toLowerCase();
+            data = data.filter(row => 
+                (row.si_number || '').toLowerCase().includes(query) ||
+                (row.customer || '').toLowerCase().includes(query) ||
+                (row.status || '').toLowerCase().includes(query) ||
+                (row.created_by_name || '').toLowerCase().includes(query)
+            );
+        }
+        
+        const col = receiptSortColumn;
+        const dir = receiptSortDirection === 'asc' ? 1 : -1;
+        
+        data.sort((a, b) => {
+            let valA = a[col];
+            let valB = b[col];
+            
+            if (col === 'grand_total') {
+                valA = parseFloat(valA) || 0;
+                valB = parseFloat(valB) || 0;
+            } else if (col === 'date') {
+                valA = new Date(valA).getTime() || 0;
+                valB = new Date(valB).getTime() || 0;
+            } else {
+                valA = String(valA || '').toLowerCase();
+                valB = String(valB || '').toLowerCase();
+            }
+            
+            if (valA < valB) return -1 * dir;
+            if (valA > valB) return 1 * dir;
+            return 0;
+        });
+        
+        return data;
+    }
+
+    function applyReceiptSortingAndSearch() {
+        renderReceiptPage();
+        renderReceiptPagination();
+        updateSortIndicators();
+    }
+
+    function updateSortIndicators() {
+        document.querySelectorAll('.receipt-transaction-box .sortable').forEach(th => {
+            const icon = th.querySelector('.sort-arrow');
+            if (!icon) return;
+            if (th.dataset.sort === receiptSortColumn) {
+                icon.textContent = receiptSortDirection === 'asc' ? '▲' : '▼';
+            } else {
+                icon.textContent = '⇕';
+            }
+        });
+    }
     
     function renderReceiptPage() {
         const tbody = document.getElementById('receipt-transactions-body');
         if (!tbody) return;
         
+        const filteredData = getFilteredAndSortedReceipts();
         const start = (receiptCurrentPage - 1) * receiptRowsPerPage;
         const end = start + receiptRowsPerPage;
-        const pageData = receiptTransactionsData.slice(start, end);
+        const pageData = filteredData.slice(start, end);
         
         if (pageData.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8">No data available</td></tr>';
@@ -1053,8 +1128,8 @@ function initializeReceiptModal() {
                 <td>${parseFloat(row.grand_total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${row.status}</td>
                 <td>${row.created_by_name || '-'}</td>
-                <td><button class="btn-primary btn-pdf" onclick="downloadReceiptPdf('${row.si_number}')" title="Download PDF">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <td><button class="btn-pdf" onclick="previewReceiptPdf('${row.si_number}')" title="View Receipt" style="background: none; border: none; cursor: pointer; padding: 4px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 </button></td>
                 <td>${isCrossed ? '' : '<button class="btn-danger btn-void" onclick="voidReceipt(\'' + row.si_number + '\')">Void</button>'}</td>
             </tr>
@@ -1063,7 +1138,8 @@ function initializeReceiptModal() {
     }
     
     function renderReceiptPagination() {
-        const totalPages = Math.max(1, Math.ceil(receiptTransactionsData.length / receiptRowsPerPage));
+        const filteredData = getFilteredAndSortedReceipts();
+        const totalPages = Math.max(1, Math.ceil(filteredData.length / receiptRowsPerPage));
         if (receiptCurrentPage > totalPages) receiptCurrentPage = totalPages;
         
         const pagination = document.getElementById('receipt-pagination');
@@ -1161,6 +1237,29 @@ function initializeReceiptModal() {
         } catch (err) {
             console.error('Failed to download receipt PDF', err);
             alert('Error downloading receipt: ' + err.message);
+        }
+    }
+
+    async function previewReceiptPdf(siNumber) {
+        try {
+            const res = await fetch(`${API_BASE_RECEIPTS}/${encodeURIComponent(siNumber)}/pdf`, { headers: getReceiptAuthHeaders() });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server error: ${res.status}`);
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const previewFrame = document.getElementById('receipt-preview-frame');
+            if (previewFrame) {
+                previewFrame.src = url;
+            }
+            const previewModal = document.getElementById('receipt-preview-modal');
+            if (previewModal) {
+                previewModal.style.display = 'block';
+            }
+        } catch (err) {
+            console.error('Failed to preview receipt PDF', err);
+            alert('Error previewing receipt: ' + err.message);
         }
     }
 

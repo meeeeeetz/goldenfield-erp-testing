@@ -3035,6 +3035,33 @@ body {
     margin-top: 16px;
 }
 
+.receipt-transaction-box .box-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.receipt-transaction-box .box-header-row h3 {
+    margin: 0;
+}
+
+.receipt-transaction-box .sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.receipt-transaction-box .sortable:hover {
+    background-color: #f5f5f5;
+}
+
+.receipt-transaction-box .sort-arrow {
+    font-size: 13px;
+    margin-left: 4px;
+    color: #a88805;
+    font-weight: 700;
+}
+
 .sales-cards-row {
     grid-template-columns: repeat(2, 1fr);
     margin-top: 16px;

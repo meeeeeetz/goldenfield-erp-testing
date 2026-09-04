@@ -5,7 +5,11 @@
     "**/node_modules/**",
     "**/my-erp-backend/uploads/**"
   ],
-  "liveServer.settings.proxy": {
-    "/api": "http://localhost:5000"
-  }
+  "liveServer.settings.proxy": [
+    {
+      "context": "/api",
+      "target": "http://localhost:5000",
+      "changeOrigin": true
+    }
+  ]
 }
