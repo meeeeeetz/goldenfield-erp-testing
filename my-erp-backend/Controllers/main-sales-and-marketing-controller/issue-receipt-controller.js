@@ -104,7 +104,7 @@ class ReceiptIssueController {
                 MAX(u.first_name || ' ' || u.last_name) as created_by_name
             FROM receipt_issues ri
             LEFT JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
-            LEFT JOIN users u ON ris.created_by::integer = u.id
+            LEFT JOIN users u ON ris.created_by::text = u.id::text
             GROUP BY ri.si_number, ri.date, ri.customer
             ORDER BY ri.si_number
         `;
