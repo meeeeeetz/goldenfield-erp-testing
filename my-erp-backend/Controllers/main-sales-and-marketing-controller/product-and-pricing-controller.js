@@ -115,7 +115,7 @@ class ProductListController {
 
     async getLastPriceChange(customer, product) {
         const query = `
-            SELECT new_price AS old_price, created_at AS date 
+            SELECT new_price AS old_price, date 
             FROM price_changes 
             WHERE customer = $1 AND product = $2 
             ORDER BY id DESC 
