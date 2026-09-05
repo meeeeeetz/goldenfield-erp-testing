@@ -1056,7 +1056,7 @@ function initializeChangePriceModal() {
                 
                 if (!product || !newPrice) continue;
                 
-                await fetch(`${API_BASE_PRICE_CHANGES}`, {
+                const res = await fetch(`${API_BASE_PRICE_CHANGES}`, {
                     method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1068,6 +1068,11 @@ function initializeChangePriceModal() {
                         new_price: newPrice
                     })
                 });
+                
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error: ${res.status}`);
+                }
                 
                 nextId = await getNextPriceChangeId();
             }

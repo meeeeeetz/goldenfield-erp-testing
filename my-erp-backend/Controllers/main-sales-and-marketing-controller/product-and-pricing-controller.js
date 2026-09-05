@@ -78,9 +78,17 @@ class ProductListController {
     }
 
     async getNextPriceChangeId() {
-        const query = "SELECT get_next_price_change_transaction_id() AS transaction_id";
+        const query = 'SELECT transaction_id FROM price_changes ORDER BY created_at DESC LIMIT 1';
         const result = await this.db.query(query);
-        return result.rows[0].transaction_id;
+        let nextNum = 1;
+        if (result.rows.length > 0) {
+            const lastId = result.rows[0].transaction_id || '';
+            const match = lastId.match(/(\d+)$/);
+            if (match) {
+                nextNum = parseInt(match[1], 10) + 1;
+            }
+        }
+        return 'EP-' + String(nextNum).padStart(3, '0');
     }
 
     async savePriceChange(priceData) {
@@ -90,8 +98,13 @@ class ProductListController {
             (transaction_id, date, customer, product, old_price, new_price) 
             VALUES ($1, $2, $3, $4, $5, $6)
         `;
-        const result = await this.db.query(query, [transaction_id, date, customer, product, old_price, new_price]);
-        return result;
+        try {
+            const result = await this.db.query(query, [transaction_id, date, customer, product, old_price, new_price]);
+            return result;
+        } catch (error) {
+            console.error('Failed to save price change:', { transaction_id, date, customer, product, old_price, new_price, error: error.message });
+            throw error;
+        }
     }
 
     async getAllPriceChanges() {
