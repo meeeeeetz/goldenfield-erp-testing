@@ -518,7 +518,7 @@ async function addCaseProducts() {
         trayInput.dataset.originalTray = newCaseProducts[i].tray;
         
         try {
-            const res = await fetch(API_BASE_PRICE_CHANGES + '/today?customer=' + encodeURIComponent(customerName) + '&products=' + encodeURIComponent(newCaseProducts[i].text));
+            const res = await fetch(API_BASE_PRICE_CHANGES + '/today?customer=' + encodeURIComponent(customerName) + '&products=' + encodeURIComponent(newCaseProducts[i].text), { headers: getReceiptAuthHeaders() });
             const data = await res.json();
             
             if (data.length > 0 && data[0].price) {
@@ -674,7 +674,7 @@ function initializeReceiptModal() {
             const customerName = customerSelect.options[customerSelect.selectedIndex].textContent.trim();
             
             try {
-                const res = await fetch(API_BASE_PRICE_CHANGES + '/today?customer=' + encodeURIComponent(customerName) + '&products=' + encodeURIComponent(productName));
+                const res = await fetch(API_BASE_PRICE_CHANGES + '/today?customer=' + encodeURIComponent(customerName) + '&products=' + encodeURIComponent(productName), { headers: getReceiptAuthHeaders() });
                 const data = await res.json();
                 
                 if (data.length > 0 && data[0].price) {

@@ -151,13 +151,16 @@ ModuleComponents['sales-product-pricing'] = (container) => {
                 </div>
             </div>
             <div class="card shipping-box egg-price-changes-box">
-                <h3>Egg Price changes Transaction</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0;">Egg Price changes Transaction</h3>
+                    <input type="text" id="price-change-search" placeholder="Search customer..." style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 220px;">
+                </div>
                 <div class="table-wrap">
                     <table class="data-table product-table">
                         <thead>
                             <tr>
-                                <th>Transaction ID</th>
-                                <th>Date</th>
+                                <th class="sortable" data-sort="transaction_id">Transaction ID<span class="sort-arrow">⇕</span></th>
+                                <th class="sortable" data-sort="date">Date<span class="sort-arrow">⇕</span></th>
                                 <th>Customer</th>
                                 <th>Old Price</th>
                                 <th>New Price</th>
@@ -333,6 +336,10 @@ ModuleComponents['sales-product-pricing'] = (container) => {
 var API_BASE = '/api/products';
 var API_BASE_CUSTOMERS = '/api/customers';
 var API_BASE_PRICE_CHANGES = '/api/price-changes';
+
+var priceChangeSortColumn = 'transaction_id';
+var priceChangeSortDirection = 'asc';
+var priceChangeSearchQuery = '';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('goldenfield_auth_token');
@@ -1096,10 +1103,34 @@ async function loadPriceChangesTable(page = 1) {
     try {
         const res = await fetch(`${API_BASE_PRICE_CHANGES}`, { headers: getAuthHeaders() });
         const priceChanges = await res.json();
-        const totalPages = Math.ceil(priceChanges.length / PRICE_CHANGES_PER_PAGE) || 1;
+        
+        let filtered = priceChanges || [];
+        if (priceChangeSearchQuery) {
+            const q = priceChangeSearchQuery.toLowerCase();
+            filtered = filtered.filter(pc => (pc.customer || '').toLowerCase().includes(q));
+        }
+        
+        const col = priceChangeSortColumn;
+        const dir = priceChangeSortDirection === 'asc' ? 1 : -1;
+        filtered.sort((a, b) => {
+            let valA = a[col];
+            let valB = b[col];
+            if (col === 'date') {
+                valA = new Date(valA).getTime() || 0;
+                valB = new Date(valB).getTime() || 0;
+            } else {
+                valA = String(valA || '').toLowerCase();
+                valB = String(valB || '').toLowerCase();
+            }
+            if (valA < valB) return -1 * dir;
+            if (valA > valB) return 1 * dir;
+            return 0;
+        });
+        
+        const totalPages = Math.ceil(filtered.length / PRICE_CHANGES_PER_PAGE) || 1;
         const start = (page - 1) * PRICE_CHANGES_PER_PAGE;
         const end = start + PRICE_CHANGES_PER_PAGE;
-        const pageItems = priceChanges.slice(start, end);
+        const pageItems = filtered.slice(start, end);
         
         tbody.innerHTML = pageItems.map(pc => `
             <tr>
@@ -1126,10 +1157,23 @@ async function loadPriceChangesTable(page = 1) {
         paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${page + 1})">Next &raquo;</button>`;
         
         paginationContainer.innerHTML = paginationHTML;
+        updatePriceChangeSortIndicators();
     } catch (err) {
         console.error('Failed to load price changes table', err);
         tbody.innerHTML = '<tr><td colspan="5">No price changes found</td></tr>';
     }
+}
+
+function updatePriceChangeSortIndicators() {
+    document.querySelectorAll('.egg-price-changes-box .sortable').forEach(th => {
+        const icon = th.querySelector('.sort-arrow');
+        if (!icon) return;
+        if (th.dataset.sort === priceChangeSortColumn) {
+            icon.textContent = priceChangeSortDirection === 'asc' ? '▲' : '▼';
+        } else {
+            icon.textContent = '⇕';
+        }
+    });
 }
 
 function initializeModule(contentArea) {
@@ -1145,6 +1189,28 @@ function initializeModule(contentArea) {
     initializePriceListListeners();
     updatePriceListHeaders();
     loadPriceListTable();
+
+    const priceChangeSearch = document.getElementById('price-change-search');
+    if (priceChangeSearch) {
+        priceChangeSearch.addEventListener('input', (e) => {
+            priceChangeSearchQuery = e.target.value.trim();
+            loadPriceChangesTable(1);
+        });
+    }
+
+    document.querySelectorAll('.egg-price-changes-box .sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const column = th.dataset.sort;
+            if (!column) return;
+            if (priceChangeSortColumn === column) {
+                priceChangeSortDirection = priceChangeSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                priceChangeSortColumn = column;
+                priceChangeSortDirection = 'asc';
+            }
+            loadPriceChangesTable(currentPriceChangePage);
+        });
+    });
 }
 
 function initializeChartListeners() {

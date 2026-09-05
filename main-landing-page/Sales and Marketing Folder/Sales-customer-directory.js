@@ -16,8 +16,7 @@ ModuleComponents['sales-customer-directory'] = (container) => {
                 <span class="btn-label">Manage Customer</span>
             </button>
         </div>
-        <div class="content-gap"></div>
-        <div class="card shipping-box customer-lifetime-value-box">
+        <div class="card shipping-box customer-lifetime-value-box" style="margin-top: 20px;">
             <h3>Customer Lifetime Value</h3>
             <p class="section-description">Top 10 active customers by gross receipts</p>
             <div class="table-wrap">
