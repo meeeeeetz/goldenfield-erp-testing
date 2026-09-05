@@ -265,6 +265,105 @@ class EmployeeProfileController {
         };
     }
 
+    async getBatch13thMonthData(employeeIds, year) {
+        const yearInt = parseInt(year, 10);
+        if (!yearInt || yearInt < 2000 || yearInt > 2100) {
+            throw new Error('Invalid year');
+        }
+
+        const startDate = `${yearInt}-01-01`;
+        const endDate = `${yearInt}-12-31`;
+
+        const attendanceQuery = `
+            SELECT 
+                employee_id,
+                EXTRACT(MONTH FROM date)::int AS month,
+                COALESCE(SUM(actual_payable_hours), 0) / 8 AS days_worked
+            FROM attendance_log
+            WHERE employee_id = ANY($1::text[])
+                AND date >= $2
+                AND date <= $3
+                AND time_in IS NOT NULL
+                AND time_out IS NOT NULL
+                AND status NOT IN ('Rejected', 'Pending')
+            GROUP BY employee_id, EXTRACT(MONTH FROM date)
+            ORDER BY employee_id, month ASC
+        `;
+        const attendanceResult = await this.db.query(attendanceQuery, [employeeIds, startDate, endDate]);
+
+        const compensationQuery = `
+            SELECT employee_id, salary_amount, salary_pay_mode, created_at
+            FROM employee_compensation
+            WHERE employee_id = ANY($1::text[])
+            ORDER BY employee_id, created_at ASC
+        `;
+        const compensationResult = await this.db.query(compensationQuery, [employeeIds]);
+
+        const attendanceByEmployee = new Map();
+        attendanceResult.rows.forEach(row => {
+            if (!attendanceByEmployee.has(row.employee_id)) {
+                attendanceByEmployee.set(row.employee_id, []);
+            }
+            attendanceByEmployee.get(row.employee_id).push({
+                month: row.month,
+                daysWorked: Number(row.days_worked) || 0
+            });
+        });
+
+        const compensationByEmployee = new Map();
+        compensationResult.rows.forEach(row => {
+            if (!compensationByEmployee.has(row.employee_id)) {
+                compensationByEmployee.set(row.employee_id, []);
+            }
+            compensationByEmployee.get(row.employee_id).push(row);
+        });
+
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        const result = {};
+        for (const empId of employeeIds) {
+            const attendanceRows = attendanceByEmployee.get(empId) || [];
+            const attendanceByMonth = new Map();
+            attendanceRows.forEach(row => {
+                attendanceByMonth.set(row.month, row.daysWorked);
+            });
+
+            const compensations = compensationByEmployee.get(empId) || [];
+            const monthlyData = months.map((name, index) => {
+                const monthNum = index + 1;
+                const lastDayOfMonth = new Date(yearInt, monthNum, 0);
+
+                let activeComp = null;
+                for (const comp of compensations) {
+                    const compDate = new Date(comp.created_at);
+                    if (compDate <= lastDayOfMonth) {
+                        activeComp = comp;
+                    }
+                }
+
+                const daysWorked = parseFloat((attendanceByMonth.get(monthNum) || 0).toFixed(2));
+                const salaryAmount = activeComp ? Number(activeComp.salary_amount) || 0 : 0;
+                const salaryPayMode = activeComp ? (activeComp.salary_pay_mode || 'Monthly') : 'Monthly';
+                const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
+                const thirteenthMonth = daysWorked * dailyRate / 12;
+                return {
+                    month: name,
+                    daysWorked,
+                    salary: salaryAmount,
+                    thirteenthMonth: parseFloat(thirteenthMonth.toFixed(2))
+                };
+            });
+
+            const totalThirteenthMonth = monthlyData.reduce((sum, row) => sum + row.thirteenthMonth, 0);
+            result[empId] = parseFloat(totalThirteenthMonth.toFixed(2));
+        }
+
+        return result;
+    }
+
     async addProfile(profileData) {
         const {
             employee_id,
@@ -563,15 +662,7 @@ class EmployeeProfileController {
             ORDER BY ep.created_at DESC
         `;
         const result = await this.db.query(query);
-        const summaries = result.rows;
-
-        for (const summary of summaries) {
-            const photo = await this.findEmployeePhoto(summary.employee_id);
-            summary.photo_file_name = photo.photo_file_name;
-            summary.photo_url = photo.photo_url;
-            summary.folder_name = photo.folder_name;
-        }
-        return summaries;
+        return result.rows;
     }
 }
 

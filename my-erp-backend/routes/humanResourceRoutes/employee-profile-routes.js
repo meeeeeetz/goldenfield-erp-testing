@@ -179,6 +179,23 @@ router.get('/:id/13th-month', async (req, res) => {
     }
 });
 
+router.get('/13th-month-batch', async (req, res) => {
+    try {
+        const { employee_ids, year } = req.query;
+        if (!employee_ids || !year) {
+            return res.status(400).json({ error: 'employee_ids and year query parameters are required' });
+        }
+        const ids = String(employee_ids).split(',').map(id => id.trim()).filter(Boolean);
+        if (ids.length === 0) {
+            return res.json({});
+        }
+        const result = await controller.getBatch13thMonthData(ids, parseInt(year, 10));
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const profile = await controller.getProfileById(req.params.id);

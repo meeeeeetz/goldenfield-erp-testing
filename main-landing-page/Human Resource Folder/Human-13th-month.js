@@ -1,5 +1,9 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
+const style = document.createElement('style');
+style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+document.head.appendChild(style);
+
 ModuleComponents['hr-13th-month'] = (container) => {
     container.innerHTML = `
         <div class="header-actions">
@@ -111,25 +115,34 @@ ModuleComponents['hr-13th-month'] = (container) => {
     generate13thModal.innerHTML = `
         <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto;">
             <div class="modal-header-row">
-                <h3>Generate 13th month</h3>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #1a1f2e;">Generate 13th month</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 13px; font-weight: 600; color: #334155;">Grand Total:</label>
+                    <input type="text" id="generate-13th-grand-total" value="0.00" readonly style="width: 140px; padding: 6px 10px; border: 1px solid #D6D6D6; border-radius: 6px; background: #f8fafc; color: #1a1f2e; font-weight: 600; text-align: right;">
+                </div>
                 <button class="modal-close-btn" id="close-generate-13th-modal">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 16px;">
+            <div class="modal-body" style="padding: 16px; position: relative;">
+                <div id="generate-13th-loading" style="display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.85); z-index: 10; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <div style="font-size: 13px; color: #334155; font-weight: 600;">Loading employees...</div>
+                </div>
                 <div style="overflow-x: auto;">
                     <table class="data-table product-table">
                         <thead>
                             <tr>
                                 <th style="text-align: center !important; width: 60px;">Delete</th>
                                 <th style="text-align: center !important;">Employee</th>
-                                <th style="text-align: center !important;">Total No. of Days Worked</th>
-                                <th style="text-align: center !important;">Rate</th>
-                                <th style="text-align: center !important;">Amount</th>
-                                <th style="text-align: center !important;">Bonus</th>
-                                <th style="text-align: center !important;">Total Amount</th>
+                                <th style="text-align: center !important; border-left: 2px solid #e2e8f0;">Last Year 13th Month</th>
+                                <th style="text-align: center !important;">Last year Bonus</th>
+                                <th style="text-align: center !important; border-right: 2px solid #e2e8f0;">Last year Total</th>
+                                <th style="text-align: center !important; border-left: 2px solid #e2e8f0;">This Year 13th month</th>
+                                <th style="text-align: center !important;">This Year Bonus</th>
+                                <th style="text-align: center !important; border-right: 2px solid #e2e8f0;">This Year Total</th>
                             </tr>
                         </thead>
                         <tbody id="generate-13th-table-body">
-                            <tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">Loading employees...</td></tr>
+                            <tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">Loading employees...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -143,6 +156,8 @@ ModuleComponents['hr-13th-month'] = (container) => {
 
     const closeGenerate13thModal = document.getElementById('close-generate-13th-modal');
     const generate13thTableBody = document.getElementById('generate-13th-table-body');
+    const generate13thLoading = document.getElementById('generate-13th-loading');
+    const generate13thGrandTotal = document.getElementById('generate-13th-grand-total');
     const saveGenerate13thBtn = document.getElementById('save-generate-13th-btn');
     let generate13thRows = [];
 
@@ -161,30 +176,33 @@ ModuleComponents['hr-13th-month'] = (container) => {
     const renderGenerate13thTable = () => {
         if (!generate13thTableBody) return;
         if (generate13thRows.length === 0) {
-            generate13thTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">No active employees found</td></tr>';
+            generate13thTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">No active employees found</td></tr>';
+            if (generate13thGrandTotal) generate13thGrandTotal.value = '0.00';
             return;
         }
         generate13thTableBody.innerHTML = generate13thRows.map((row, idx) => `
             <tr>
                 <td style="text-align: center !important;"><button class="delete-13th-row-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; font-size: 18px; color: #dc3545; padding: 4px;" title="Remove employee">&times;</button></td>
                 <td style="text-align: center !important;">${row.employeeName}</td>
-                <td style="text-align: center !important;">${Number(row.daysWorked).toFixed(2)}</td>
-                <td style="text-align: center !important;">${fmtMoney(row.rate)}</td>
-                <td style="text-align: center !important;">${fmtMoney(row.amount)}</td>
-                <td style="text-align: center !important;"><input type="number" class="generate-13th-bonus" data-idx="${idx}" value="${row.bonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px; text-align: center !important;"></td>
-                <td style="text-align: center !important;" class="generate-13th-total">${fmtMoney((Number(row.amount) || 0) + (Number(row.bonus) || 0))}</td>
+                <td style="text-align: center !important; border-left: 2px solid #e2e8f0;">${fmtMoney(row.lastYear || 0)}</td>
+                <td style="text-align: center !important;">${fmtMoney(row.lastYearBonus || 0)}</td>
+                <td style="text-align: center !important; border-right: 2px solid #e2e8f0;">${fmtMoney((Number(row.lastYear || 0) + Number(row.lastYearBonus || 0)))}</td>
+                <td style="text-align: center !important; border-left: 2px solid #e2e8f0;">${fmtMoney(row.amount || 0)}</td>
+                <td style="text-align: center !important;"><input type="number" class="generate-13th-this-year-bonus" data-idx="${idx}" value="${row.thisYearBonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px; text-align: center !important;"></td>
+                <td style="text-align: center !important; border-right: 2px solid #e2e8f0;" class="generate-13th-this-year-total">${fmtMoney((Number(row.amount || 0) + Number(row.thisYearBonus || 0)))}</td>
             </tr>
         `).join('');
 
-        generate13thTableBody.querySelectorAll('.generate-13th-bonus').forEach(input => {
+        generate13thTableBody.querySelectorAll('.generate-13th-this-year-bonus').forEach(input => {
             input.addEventListener('input', (e) => {
                 const idx = parseInt(e.target.getAttribute('data-idx'), 10);
                 const bonus = Number(e.target.value) || 0;
-                generate13thRows[idx].bonus = bonus;
-                const totalCell = e.target.closest('tr').querySelector('.generate-13th-total');
+                generate13thRows[idx].thisYearBonus = bonus;
+                const totalCell = e.target.closest('tr').querySelector('.generate-13th-this-year-total');
                 if (totalCell) {
                     totalCell.textContent = fmtMoney((Number(generate13thRows[idx].amount) || 0) + bonus);
                 }
+                updateGrandTotal();
             });
         });
 
@@ -194,27 +212,39 @@ ModuleComponents['hr-13th-month'] = (container) => {
                 if (!isNaN(idx) && idx >= 0 && idx < generate13thRows.length) {
                     generate13thRows.splice(idx, 1);
                     renderGenerate13thTable();
+                    updateGrandTotal();
                 }
             });
         });
+
+        updateGrandTotal();
+    };
+
+    const updateGrandTotal = () => {
+        if (!generate13thGrandTotal) return;
+        const total = generate13thRows.reduce((sum, row) => {
+            const thisYearTotal = (Number(row.amount) || 0) + (Number(row.thisYearBonus) || 0);
+            return sum + thisYearTotal;
+        }, 0);
+        generate13thGrandTotal.value = fmtMoney(total);
     };
 
     const openGenerate13thModal = async () => {
         generate13thRows = [];
         renderGenerate13thTable();
         if (generate13thModal) generate13thModal.style.display = 'flex';
+        if (generate13thLoading) generate13thLoading.style.display = 'flex';
 
         try {
-            const res = await fetch('/api/employee-profiles?status=active');
+            const res = await fetch('/api/employee-profiles/all?status=active');
             if (!res.ok) throw new Error('Failed to load active employees');
             const profiles = await res.json();
             if (!Array.isArray(profiles)) return;
 
             generate13thRows = profiles.map(profile => {
                 const empName = [profile.last_name, profile.first_name, profile.middle_name].filter(Boolean).join(', ');
-                const compensation = profile.compensation || {};
-                const salaryAmount = Number(compensation.salary_amount) || 0;
-                const salaryPayMode = compensation.salary_pay_mode || 'Monthly';
+                const salaryAmount = Number(profile.salary_amount) || 0;
+                const salaryPayMode = profile.salary_pay_mode || 'Monthly';
                 const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
                 const daysWorked = 0;
                 const amount = daysWorked * dailyRate;
@@ -224,12 +254,33 @@ ModuleComponents['hr-13th-month'] = (container) => {
                     daysWorked,
                     rate: parseFloat(dailyRate.toFixed(2)),
                     amount: parseFloat(amount.toFixed(2)),
-                    bonus: 0
+                    bonus: 0,
+                    lastYear: 0,
+                    lastYearBonus: 0,
+                    thisYearBonus: 0
                 };
             });
+
+            const currentYear = new Date().getFullYear();
+            const lastYear = currentYear - 1;
+            const employeeIds = generate13thRows.map(r => r.employeeId).filter(Boolean);
+            if (employeeIds.length > 0) {
+                const batchRes = await fetch(`/api/employee-profiles/13th-month-batch?employee_ids=${encodeURIComponent(employeeIds.join(','))}&year=${encodeURIComponent(lastYear)}`);
+                if (batchRes.ok) {
+                    const lastYearData = await batchRes.json();
+                    generate13thRows.forEach(row => {
+                        if (lastYearData[row.employeeId] !== undefined) {
+                            row.lastYear = Number(lastYearData[row.employeeId]) || 0;
+                        }
+                    });
+                }
+            }
+
             renderGenerate13thTable();
         } catch (err) {
             console.error('Failed to load active employees:', err);
+        } finally {
+            if (generate13thLoading) generate13thLoading.style.display = 'none';
         }
     };
 
