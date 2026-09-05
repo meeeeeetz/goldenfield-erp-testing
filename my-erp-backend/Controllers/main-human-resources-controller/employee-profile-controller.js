@@ -382,20 +382,14 @@ class EmployeeProfileController {
                 `employee-photos/${employee_id}/`
             ];
 
-            console.log(`[findEmployeePhoto] employee_id=${employee_id}, folderName=${folderName}`);
-
             for (const prefix of prefixes) {
-                console.log(`[findEmployeePhoto] Searching prefix: ${prefix}`);
                 const [files] = await bucket.getFiles({ prefix });
-                console.log(`[findEmployeePhoto] Found ${files.length} files`);
                 if (files.length > 0) {
-                    console.log(`[findEmployeePhoto] Files:`, files.map(f => f.name));
                     for (const f of files) {
                         const lower = f.name.toLowerCase();
                         const lowerPrefix = prefix.toLowerCase();
                         const startsWithPrefix = lower.startsWith(`${lowerPrefix}${lowerEmpId}`);
                         const includes2x2 = lower.includes('2x2');
-                        console.log(`[findEmployeePhoto] Checking ${f.name}: startsWith=${startsWithPrefix}, includes2x2=${includes2x2}`);
                     }
                     const match = files.find(f => {
                         const lower = f.name.toLowerCase();
@@ -403,7 +397,6 @@ class EmployeeProfileController {
                         return lower.startsWith(`${lowerPrefix}${lowerEmpId}`) && lower.includes('2x2');
                     });
                     if (match) {
-                        console.log(`[findEmployeePhoto] Match found:`, match.name);
                         return {
                             photo_file_name: match.name.replace(prefix, ''),
                             photo_url: getPublicUrl(match.name),
@@ -413,7 +406,6 @@ class EmployeeProfileController {
                 }
             }
 
-            console.log(`[findEmployeePhoto] No match found for ${employee_id}`);
             return { photo_file_name: null, photo_url: null, folder_name: folderName };
         } catch (e) {
             console.error(`[findEmployeePhoto] Error:`, e.message, e.stack);
@@ -457,8 +449,6 @@ class EmployeeProfileController {
                 console.error(`[getEmployeeDocuments] Error listing files with prefix ${prefix}:`, e.message);
             }
         }
-
-        console.log(`[getEmployeeDocuments] Found ${files.length} files`);
 
         const patterns = {
             '2x2-pic': ['2x2', '2x2_pic', '2x2-pic'],
@@ -511,7 +501,6 @@ class EmployeeProfileController {
                 });
             }
         }
-        console.log(`[getEmployeeDocuments] Result:`, result);
         return result;
     }
 

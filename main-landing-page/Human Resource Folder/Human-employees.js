@@ -2,6 +2,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
 ModuleComponents['hr-employees'] = (container) => {
     let originalDepartment = '';
+    let originalFormData = {};
 
     container.innerHTML = `
         <div class="header-actions">
@@ -770,6 +771,21 @@ function initializeModule(contentArea) {
             document.getElementById('employee-profile-emp-id').value = '';
             document.getElementById('employee-search-results').style.display = 'none';
             clearEmployeeForm();
+            originalDepartment = '';
+            updateDeactivateButtonState();
+            document.querySelectorAll('#employee-profile-modal .tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.borderBottom = '2px solid transparent';
+            });
+            const firstTab = document.querySelector('#employee-profile-modal .tab-btn[data-tab="emp-profile"]');
+            if (firstTab) {
+                firstTab.classList.add('active');
+                firstTab.style.borderBottom = '2px solid #2563eb';
+            }
+            document.querySelectorAll('#employee-profile-modal .tab-content').forEach(c => c.style.display = 'none');
+            const profileTab = document.getElementById('tab-emp-profile');
+            if (profileTab) profileTab.style.display = 'flex';
+            captureOriginalFormData();
         });
     }
 
@@ -1412,6 +1428,7 @@ function initializeModule(contentArea) {
             if (profileRes.ok) {
                 const profile = await profileRes.json();
                 loadEmployeeProfile(profile);
+                updateDeactivateButtonState();
             }
             if (compRes.ok) {
                 const comp = await compRes.json();
@@ -1447,6 +1464,7 @@ function initializeModule(contentArea) {
                 const docs = await docsRes.json();
                 loadEmployeeDocuments(docs);
             }
+            captureOriginalFormData();
         } catch (err) {
             console.error('Failed to load employee:', err);
         }
@@ -1619,7 +1637,7 @@ function initializeModule(contentArea) {
     }
 
     function clearEmployeeForm() {
-        const ids = ['emp-last-name', 'emp-first-name', 'emp-middle-name', 'emp-address', 'emp-contact', 'emp-email', 'emp-birthdate', 'emp-gender', 'emp-civil-status', 'emp-emergency-contact', 'emp-emergency-number', 'emp-employment-status', 'emp-sss', 'emp-philhealth', 'emp-pagibig', 'emp-tin', 'emp-doc-2x2', 'emp-doc-resume', 'emp-doc-employment-contract', 'emp-doc-birth-certificate', 'emp-doc-gov-id', 'emp-doc-sss', 'emp-doc-philhealth', 'emp-doc-pagibig', 'emp-doc-tin', 'emp-doc-nbi', 'emp-doc-pnp', 'emp-doc-medical', 'emp-doc-barangay'];
+        const ids = ['emp-last-name', 'emp-first-name', 'emp-middle-name', 'emp-address', 'emp-contact', 'emp-email', 'emp-birthdate', 'emp-gender', 'emp-civil-status', 'emp-emergency-contact', 'emp-emergency-number', 'emp-employment-status', 'emp-sss', 'emp-philhealth', 'emp-pagibig', 'emp-tin', 'emp-department', 'emp-role', 'emp-shift-policy', 'emp-salary-paymode', 'emp-salary-amount', 'emp-allowance-paymode', 'emp-allowance-amount', 'emp-pay-frequency', 'emp-payout-method', 'emp-sss-contribution-mode', 'emp-sss-contribution-amount', 'emp-sss-loan-mode', 'emp-sss-loan-amount', 'emp-philhealth-contribution-mode', 'emp-philhealth-contribution-amount', 'emp-pagibig-contribution-mode', 'emp-pagibig-contribution-amount', 'emp-pagibig-loan-mode', 'emp-pagibig-loan-amount', 'emp-yearly-sick-leave', 'emp-yearly-vacation-leave', 'guide-emp-department', 'guide-emp-role', 'emp-doc-2x2', 'emp-doc-resume', 'emp-doc-employment-contract', 'emp-doc-birth-certificate', 'emp-doc-gov-id', 'emp-doc-sss', 'emp-doc-philhealth', 'emp-doc-pagibig', 'emp-doc-tin', 'emp-doc-nbi', 'emp-doc-pnp', 'emp-doc-medical', 'emp-doc-barangay'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -1627,6 +1645,178 @@ function initializeModule(contentArea) {
             else el.value = '';
             delete el.dataset.publicUrl;
         });
+    }
+
+    function getVal(id) {
+        const el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    function getSelectText(id) {
+        const el = document.getElementById(id);
+        if (!el || !el.selectedOptions || !el.selectedOptions[0]) return '';
+        return el.selectedOptions[0].textContent.trim();
+    }
+
+    function captureOriginalFormData() {
+        originalFormData = {
+            emp_id: getVal('employee-profile-emp-id'),
+            last_name: getVal('emp-last-name'),
+            first_name: getVal('emp-first-name'),
+            middle_name: getVal('emp-middle-name'),
+            address: getVal('emp-address'),
+            contact_details: getVal('emp-contact'),
+            email_address: getVal('emp-email'),
+            birthdate: getVal('emp-birthdate'),
+            gender: getVal('emp-gender'),
+            civil_status: getVal('emp-civil-status'),
+            emergency_contact: getVal('emp-emergency-contact'),
+            emergency_contact_number: getVal('emp-emergency-number'),
+            employment_status: getVal('emp-employment-status'),
+            sss_number: getVal('emp-sss'),
+            philhealth_number: getVal('emp-philhealth'),
+            pagibig_number: getVal('emp-pagibig'),
+            tin_number: getVal('emp-tin'),
+            department: getVal('emp-department'),
+            role: getSelectText('emp-role'),
+            shift_policy: getVal('emp-shift-policy'),
+            salary_pay_mode: getVal('emp-salary-paymode'),
+            salary_amount: getVal('emp-salary-amount'),
+            allowance_pay_mode: getVal('emp-allowance-paymode'),
+            allowance_amount: getVal('emp-allowance-amount'),
+            pay_frequency: getVal('emp-pay-frequency'),
+            payout_method: getVal('emp-payout-method'),
+            sss_contribution_mode: getVal('emp-sss-contribution-mode'),
+            sss_contribution_amount: getVal('emp-sss-contribution-amount'),
+            sss_loan_payment_mode: getVal('emp-sss-loan-mode'),
+            sss_loan_amount: getVal('emp-sss-loan-amount'),
+            philhealth_contribution_mode: getVal('emp-philhealth-contribution-mode'),
+            philhealth_contribution_amount: getVal('emp-philhealth-contribution-amount'),
+            pagibig_contribution_mode: getVal('emp-pagibig-contribution-mode'),
+            pagibig_contribution_amount: getVal('emp-pagibig-contribution-amount'),
+            pagibig_loan_payment_mode: getVal('emp-pagibig-loan-mode'),
+            pagibig_loan_amount: getVal('emp-pagibig-loan-amount'),
+            yearly_sick_leave: getVal('emp-yearly-sick-leave'),
+            yearly_vacation_leave: getVal('emp-yearly-vacation-leave'),
+        };
+    }
+
+    function getCurrentValue(key) {
+        const idMap = {
+            last_name: 'emp-last-name',
+            first_name: 'emp-first-name',
+            middle_name: 'emp-middle-name',
+            address: 'emp-address',
+            contact_details: 'emp-contact',
+            email_address: 'emp-email',
+            birthdate: 'emp-birthdate',
+            gender: 'emp-gender',
+            civil_status: 'emp-civil-status',
+            emergency_contact: 'emp-emergency-contact',
+            emergency_contact_number: 'emp-emergency-number',
+            employment_status: 'emp-employment-status',
+            sss_number: 'emp-sss',
+            philhealth_number: 'emp-philhealth',
+            pagibig_number: 'emp-pagibig',
+            tin_number: 'emp-tin',
+            department: 'emp-department',
+            role: 'emp-role',
+            shift_policy: 'emp-shift-policy',
+            salary_pay_mode: 'emp-salary-paymode',
+            salary_amount: 'emp-salary-amount',
+            allowance_pay_mode: 'emp-allowance-paymode',
+            allowance_amount: 'emp-allowance-amount',
+            pay_frequency: 'emp-pay-frequency',
+            payout_method: 'emp-payout-method',
+            sss_contribution_mode: 'emp-sss-contribution-mode',
+            sss_contribution_amount: 'emp-sss-contribution-amount',
+            sss_loan_payment_mode: 'emp-sss-loan-mode',
+            sss_loan_amount: 'emp-sss-loan-amount',
+            philhealth_contribution_mode: 'emp-philhealth-contribution-mode',
+            philhealth_contribution_amount: 'emp-philhealth-contribution-amount',
+            pagibig_contribution_mode: 'emp-pagibig-contribution-mode',
+            pagibig_contribution_amount: 'emp-pagibig-contribution-amount',
+            pagibig_loan_payment_mode: 'emp-pagibig-loan-mode',
+            pagibig_loan_amount: 'emp-pagibig-loan-amount',
+            yearly_sick_leave: 'emp-yearly-sick-leave',
+            yearly_vacation_leave: 'emp-yearly-vacation-leave',
+        };
+        const id = idMap[key];
+        if (!id) return '';
+        const el = document.getElementById(id);
+        if (!el) return '';
+        if (key === 'role') {
+            return el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].textContent.trim() : '';
+        }
+        return el.value || '';
+    }
+
+    function updateDeactivateButtonState() {
+        const status = document.getElementById('emp-employment-status')?.value || '';
+        if (status === 'Inactive') {
+            deactivateEmployeeBtn.textContent = 'Activate Employee';
+            deactivateEmployeeBtn.style.background = '#16a34a';
+            deactivateEmployeeBtn.style.borderColor = '#16a34a';
+        } else {
+            deactivateEmployeeBtn.textContent = 'Deactivate Employee';
+            deactivateEmployeeBtn.style.background = '#dc3545';
+            deactivateEmployeeBtn.style.borderColor = '#dc3545';
+        }
+    }
+
+    function buildChangesAlert() {
+        const fieldMap = [
+            ['Last Name', 'last_name'],
+            ['First Name', 'first_name'],
+            ['Middle Name', 'middle_name'],
+            ['Address', 'address'],
+            ['Contact Details', 'contact_details'],
+            ['Email Address', 'email_address'],
+            ['Birth Date', 'birthdate'],
+            ['Gender', 'gender'],
+            ['Civil Status', 'civil_status'],
+            ['Emergency Contact', 'emergency_contact'],
+            ['Emergency Contact Number', 'emergency_contact_number'],
+            ['Employment Status', 'employment_status'],
+            ['SSS Number', 'sss_number'],
+            ['PhilHealth Number', 'philhealth_number'],
+            ['Pag-IBIG Number', 'pagibig_number'],
+            ['TIN Number', 'tin_number'],
+            ['Department', 'department'],
+            ['Role', 'role'],
+            ['Shift Policy', 'shift_policy'],
+            ['Salary Paymode', 'salary_pay_mode'],
+            ['Salary Amount', 'salary_amount'],
+            ['Allowance Paymode', 'allowance_pay_mode'],
+            ['Allowance Amount', 'allowance_amount'],
+            ['Pay Frequency', 'pay_frequency'],
+            ['Payout Method', 'payout_method'],
+            ['SSS Contribution Mode', 'sss_contribution_mode'],
+            ['SSS Contribution Amount', 'sss_contribution_amount'],
+            ['SSS Loan Payment Mode', 'sss_loan_payment_mode'],
+            ['SSS Loan Amount', 'sss_loan_amount'],
+            ['PhilHealth Contribution Mode', 'philhealth_contribution_mode'],
+            ['PhilHealth Contribution Amount', 'philhealth_contribution_amount'],
+            ['Pag-IBIG Contribution Mode', 'pagibig_contribution_mode'],
+            ['Pag-IBIG Contribution Amount', 'pagibig_contribution_amount'],
+            ['Pag-IBIG Loan Payment Mode', 'pagibig_loan_payment_mode'],
+            ['Pag-IBIG Loan Amount', 'pagibig_loan_amount'],
+            ['Yearly Sick Leave', 'yearly_sick_leave'],
+            ['Yearly Vacation Leave', 'yearly_vacation_leave'],
+        ];
+
+        for (const [label, key] of fieldMap) {
+            const original = originalFormData[key] || '';
+            const current = getCurrentValue(key) || '';
+            if (original !== current) {
+                changes.push(`${label}: ${original || '(empty)'} → ${current || '(empty)'}`);
+            }
+        }
+
+        if (changes.length === 0) {
+            return 'No changes were made.';
+        }
+        return 'Changes saved:\n\n' + changes.join('\n');
     }
 
     const empDocInputIds = [
@@ -1782,9 +1972,10 @@ function initializeModule(contentArea) {
                     }
                 }
 
-                alert('Employee profile saved successfully!');
+                alert(buildChangesAlert());
+                employeeProfileModal.style.display = 'none';
                 originalDepartment = department || '';
-                 await loadEmployeeCards();
+                await loadEmployeeCards();
             } catch (err) {
                 alert('Save failed: ' + err.message);
             }
@@ -1800,35 +1991,42 @@ function initializeModule(contentArea) {
                 return;
             }
 
-            const confirmed = confirm(`Are you sure you want to deactivate employee ${empId}? This will set their status to Inactive.`);
+            const currentStatus = document.getElementById('emp-employment-status')?.value || '';
+            const isInactive = currentStatus === 'Inactive';
+            const action = isInactive ? 'activate' : 'deactivate';
+            const newStatus = isInactive ? 'Active' : 'Inactive';
+            const confirmed = confirm(`Are you sure you want to ${action} employee ${empId}? This will set their status to ${newStatus}.`);
             if (!confirmed) return;
 
             try {
                 const res = await fetch(`/api/employee-profiles/${encodeURIComponent(empId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ employment_status: 'Inactive' })
+                    body: JSON.stringify({ employment_status: newStatus })
                 });
-                if (!res.ok) throw new Error('Failed to deactivate employee');
+                if (!res.ok) throw new Error(`Failed to ${action} employee`);
 
-                const orgRes = await fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
-                if (orgRes.ok) {
-                    const nodes = await orgRes.json();
-                    await Promise.all((nodes || []).map(node =>
-                        fetch(`/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ employee_assigned: null })
-                        })
-                    ));
+                if (newStatus === 'Inactive') {
+                    const orgRes = await fetch(`/api/organizational-structure?employee_assigned=${encodeURIComponent(empId)}`);
+                    if (orgRes.ok) {
+                        const nodes = await orgRes.json();
+                        await Promise.all((nodes || []).map(node =>
+                            fetch(`/api/organizational-structure/${encodeURIComponent(node.org_unit_role_id)}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ employee_assigned: null })
+                            })
+                        ));
+                    }
                 }
 
-                alert(`Employee ${empId} has been deactivated.`);
+                alert(`Employee ${empId} has been ${newStatus.toLowerCase()}d.`);
                 const empStatus = document.getElementById('emp-employment-status');
-                if (empStatus) empStatus.value = 'Inactive';
+                if (empStatus) empStatus.value = newStatus;
+                updateDeactivateButtonState();
                 if (typeof loadEmployeeCards === 'function') loadEmployeeCards();
             } catch (err) {
-                alert('Deactivation failed: ' + err.message);
+                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} failed: ` + err.message);
             }
         });
     }
@@ -1904,8 +2102,9 @@ function initializeModule(contentArea) {
                     })
                 });
                 if (!res.ok) throw new Error('Failed to save compensation');
-                alert('Compensation saved successfully!');
-                 await loadEmployeeCards();
+                alert(buildChangesAlert());
+                employeeProfileModal.style.display = 'none';
+                await loadEmployeeCards();
             } catch (err) {
                 alert('Save failed: ' + err.message);
             }

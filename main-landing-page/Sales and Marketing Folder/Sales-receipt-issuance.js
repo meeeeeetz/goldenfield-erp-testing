@@ -344,7 +344,7 @@ function generateReceiptItems() {
     for (let i = 0; i < 10; i++) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input type="number" class="receipt-qty" value="" min="1" style="width: 60px;"></td>
+            <td><input type="number" class="receipt-qty" value="" min="0" step="0.01" style="width: 120px;"></td>
             <td>
                 <select class="receipt-product modal-select">
                     <option value="">Select product...</option>
@@ -490,7 +490,7 @@ async function addCaseProducts() {
     if (emptyRowIndex === -1) {
         for (let i = 0; i < newCaseProducts.length; i++) {
             const row = document.createElement('tr');
-            row.innerHTML = '<td><input type="number" class="receipt-qty" value="" min="1" style="width: 60px;"></td><td><select class="receipt-product modal-select"><option value="">Select product...</option></select></td><td><input type="text" class="receipt-price" value="0.00" readonly style="width: 100px;"></td><td><input type="text" class="receipt-tray" value="0" readonly style="width: 100px;"></td><td><input type="text" class="receipt-total" value="0.00" readonly style="width: 100px;"></td>';
+            row.innerHTML = '<td><input type="number" class="receipt-qty" value="" min="0" step="0.01" style="width: 120px;"></td><td><select class="receipt-product modal-select"><option value="">Select product...</option></select></td><td><input type="text" class="receipt-price" value="0.00" readonly style="width: 100px;"></td><td><input type="text" class="receipt-tray" value="0" readonly style="width: 100px;"></td><td><input type="text" class="receipt-total" value="0.00" readonly style="width: 100px;"></td>';
             tbody.appendChild(row);
             
             const newSelect = row.querySelector('.receipt-product');
@@ -1015,7 +1015,7 @@ function initializeReceiptModal() {
                             errors.push(`Row ${i + 1}: product "${product}" does not exist in the database`);
                         }
 
-                        if (isNaN(parseInt(qty.replace(/,/g, '')))) {
+                        if (isNaN(parseFloat(qty.replace(/,/g, '')))) {
                             errors.push(`Row ${i + 1}: qty must be a number`);
                         }
 
