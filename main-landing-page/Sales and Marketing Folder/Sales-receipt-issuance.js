@@ -210,7 +210,7 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                                     <th>Status</th>
                                     <th>Created By</th>
                                     <th>PDF</th>
-                                    <th>Void</th>
+                                    <th id="receipt-void-header">Void</th>
                                 </tr>
                             </thead>
                             <tbody id="receipt-transactions-body">
@@ -820,6 +820,7 @@ function initializeReceiptModal() {
         const render = ModuleComponents['sales-receipt-issuance'];
         render(contentArea);
         initializeReceiptModal();
+        applyReceiptRoleVisibility();
         
         const uploadBtn = document.getElementById('upload-db-btn');
         if (uploadBtn) {
@@ -1170,6 +1171,19 @@ function initializeReceiptModal() {
         }
     }
 
+    function applyReceiptRoleVisibility() {
+        try {
+            const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+            const role = user.role || 'USER';
+            if (role === 'SUPER_ADMIN' || role === 'ADMIN') return;
+            const header = document.getElementById('receipt-void-header');
+            if (header) header.style.display = 'none';
+            document.querySelectorAll('.receipt-void-cell').forEach(cell => cell.style.display = 'none');
+        } catch (e) {
+            console.error('Failed to apply receipt role visibility', e);
+        }
+    }
+
     async function loadReceiptTransactions() {
         const tbody = document.getElementById('receipt-transactions-body');
         if (!tbody) return;
@@ -1278,10 +1292,11 @@ function initializeReceiptModal() {
                 <td><button class="btn-pdf" onclick="openReceiptPreviewModal('${row.si_number}')" title="View Receipt" style="background: none; border: none; cursor: pointer; padding: 4px;">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 </button></td>
-                <td>${isCrossed ? '' : '<button class="btn-danger btn-void" onclick="voidReceipt(\'' + row.si_number + '\')">Void</button>'}</td>
+                <td class="receipt-void-cell">${isCrossed ? '' : '<button class="btn-danger btn-void" onclick="voidReceipt(\'' + row.si_number + '\')">Void</button>'}</td>
             </tr>
             `;
         }).join('');
+        applyReceiptRoleVisibility();
     }
     
     function renderReceiptPagination() {
