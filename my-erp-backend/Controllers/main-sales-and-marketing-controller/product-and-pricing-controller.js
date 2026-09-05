@@ -88,7 +88,7 @@ class ProductListController {
                 nextNum = parseInt(match[1], 10) + 1;
             }
         }
-        return 'EP-' + String(nextNum).padStart(3, '0');
+        return 'EPCh-' + String(nextNum).padStart(6, '0');
     }
 
     async savePriceChange(priceData) {

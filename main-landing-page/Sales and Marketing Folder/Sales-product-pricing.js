@@ -1061,7 +1061,7 @@ function initializeChangePriceModal() {
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         transaction_id: nextId,
-                        date: date || today,
+                         date: today,
                         customer: customerName,
                         product: product,
                         old_price: oldPrice || '0',
