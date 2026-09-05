@@ -172,12 +172,12 @@ ModuleComponents['hr-13th-month'] = (container) => {
         }
         generate13thTableBody.innerHTML = generate13thRows.map((row, idx) => `
             <tr>
-                <td>${row.employeeName}</td>
-                <td style="text-align: right;">${row.daysWorked}</td>
-                <td style="text-align: right;">${fmtMoney(row.rate)}</td>
-                <td style="text-align: right;">${fmtMoney(row.amount)}</td>
-                <td style="text-align: right;"><input type="number" class="generate-13th-bonus" data-idx="${idx}" value="${row.bonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px;"></td>
-                <td style="text-align: right;" class="generate-13th-total">${fmtMoney((Number(row.amount) || 0) + (Number(row.bonus) || 0))}</td>
+                <td style="text-align: center;">${row.employeeName}</td>
+                <td style="text-align: center;">${Number(row.daysWorked).toFixed(2)}</td>
+                <td style="text-align: center;">${fmtMoney(row.rate)}</td>
+                <td style="text-align: center;">${fmtMoney(row.amount)}</td>
+                <td style="text-align: center;"><input type="number" class="generate-13th-bonus" data-idx="${idx}" value="${row.bonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px; text-align: center;"></td>
+                <td style="text-align: center;" class="generate-13th-total">${fmtMoney((Number(row.amount) || 0) + (Number(row.bonus) || 0))}</td>
             </tr>
         `).join('');
 
@@ -302,10 +302,10 @@ ModuleComponents['hr-13th-month'] = (container) => {
 
         tbody.innerHTML = monthlyData.map(row => `
             <tr>
-                <td>${row.month}</td>
-                <td style="text-align: right;">${row.daysWorked}</td>
-                <td style="text-align: right;">${fmtMoney(row.salary)}</td>
-                <td style="text-align: right;">${fmtMoney(row.thirteenthMonth)}</td>
+                <td style="text-align: center;">${row.month}</td>
+                <td style="text-align: center;">${Number(row.daysWorked).toFixed(2)}</td>
+                <td style="text-align: center;">${fmtMoney(row.salary)}</td>
+                <td style="text-align: center;">${fmtMoney(row.thirteenthMonth)}</td>
             </tr>
         `).join('');
 

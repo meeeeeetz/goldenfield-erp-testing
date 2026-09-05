@@ -182,7 +182,7 @@ class EmployeeProfileController {
         const attendanceQuery = `
             SELECT 
                 EXTRACT(MONTH FROM date)::int AS month,
-                COUNT(*) AS days_worked
+                COALESCE(SUM(actual_payable_hours), 0) / 8 AS days_worked
             FROM attendance_log
             WHERE employee_id = $1
                 AND date >= $2
@@ -211,7 +211,7 @@ class EmployeeProfileController {
 
         const monthlyData = months.map((name, index) => {
             const monthNum = index + 1;
-            const daysWorked = attendanceByMonth.get(monthNum) || 0;
+            const daysWorked = parseFloat((attendanceByMonth.get(monthNum) || 0).toFixed(2));
             const salary = salaryAmount;
             const thirteenthMonth = daysWorked * dailyRate / 12;
             return {

@@ -186,6 +186,38 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 </div>
             </div>
         </div>
+        <div id="bulk-attendance-summary-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+            <div class="modal-content" style="max-width: 600px; width: 95%;">
+                <div class="modal-header-row">
+                    <h3>Bulk Upload Summary</h3>
+                    <button class="modal-close-btn" id="close-bulk-attendance-summary-modal">&times;</button>
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 16px; justify-content: space-around; text-align: center;">
+                        <div style="flex: 1; padding: 12px; border-radius: 8px; background: #d4edda;">
+                            <div style="font-size: 24px; font-weight: 700; color: #155724;" id="bulk-attendance-ok-count">0</div>
+                            <div style="font-size: 13px; color: #155724;">Rows OK</div>
+                        </div>
+                        <div style="flex: 1; padding: 12px; border-radius: 8px; background: #f8d7da;">
+                            <div style="font-size: 24px; font-weight: 700; color: #721c24;" id="bulk-attendance-missing-count">0</div>
+                            <div style="font-size: 13px; color: #721c24;">Rows Missing</div>
+                        </div>
+                    </div>
+                    <div id="bulk-attendance-missing-details" style="display: none; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                        <strong>Missing Rows (incomplete data):</strong>
+                        <div id="bulk-attendance-missing-list" style="margin-top: 8px; font-size: 13px; color: #856404;"></div>
+                    </div>
+                    <div id="bulk-attendance-error-details" style="display: none; padding: 12px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px;">
+                        <strong>Errors:</strong>
+                        <div id="bulk-attendance-error-list" style="margin-top: 8px; font-size: 13px; color: #721c24;"></div>
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button id="cancel-bulk-attendance-summary-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                        <button id="proceed-bulk-attendance-summary-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Proceed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
 
     const attendanceSubtabAddBtn = document.getElementById('attendance-subtab-add-btn');
@@ -1369,6 +1401,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
 
                 const logs = [];
                 const skippedRows = [];
+                const missingShiftPolicyRows = [];
                 const missingShiftPolicy = new Set();
 
                 rows.forEach((row, index) => {
@@ -1394,6 +1427,8 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
 
                     if (!employeeShiftMap[employee_id]) {
                         missingShiftPolicy.add(employee_id);
+                        missingShiftPolicyRows.push(index + 2);
+                        return;
                     }
 
                     const computed = computeAttendanceRow(employee_id, time_in, time_out, first_coffee_break_in, first_coffee_break_out, mid_day_break_in, mid_day_break_out, second_coffee_break_in, second_coffee_break_out);
@@ -1418,41 +1453,95 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                     });
                 });
 
-                if (logs.length === 0) {
-                    alert('No valid rows found in file');
-                    return;
+                const okCount = logs.length;
+                const missingCount = skippedRows.length;
+                const errorCount = missingShiftPolicyRows.length;
+
+                const summaryModal = document.getElementById('bulk-attendance-summary-modal');
+                const okCountEl = document.getElementById('bulk-attendance-ok-count');
+                const missingCountEl = document.getElementById('bulk-attendance-missing-count');
+                const missingDetails = document.getElementById('bulk-attendance-missing-details');
+                const missingList = document.getElementById('bulk-attendance-missing-list');
+                const errorDetails = document.getElementById('bulk-attendance-error-details');
+                const errorList = document.getElementById('bulk-attendance-error-list');
+                const proceedBtn = document.getElementById('proceed-bulk-attendance-summary-btn');
+
+                if (okCountEl) okCountEl.textContent = okCount;
+                if (missingCountEl) missingCountEl.textContent = missingCount;
+
+                if (missingDetails && missingList) {
+                    if (skippedRows.length > 0) {
+                        missingDetails.style.display = 'block';
+                        missingList.textContent = `Rows ${skippedRows.join(', ')} have incomplete data and will be skipped.`;
+                    } else {
+                        missingDetails.style.display = 'none';
+                    }
                 }
 
-                if (missingShiftPolicy.size > 0) {
-                    alert(`The following employees do not have a shift policy assigned and cannot be saved:\n${[...missingShiftPolicy].join('\n')}`);
-                    return;
+                if (errorDetails && errorList) {
+                    if (missingShiftPolicyRows.length > 0) {
+                        errorDetails.style.display = 'block';
+                        errorList.textContent = `Rows ${missingShiftPolicyRows.join(', ')} have employees without shift policy:\n${[...missingShiftPolicy].join('\n')}`;
+                    } else {
+                        errorDetails.style.display = 'none';
+                    }
                 }
 
-                if (skippedRows.length > 0) {
-                    const proceed = confirm(`Rows ${skippedRows.join(', ')} have incomplete data and will be skipped. Continue saving ${logs.length} complete row(s)?`);
-                    if (!proceed) return;
+                if (proceedBtn) {
+                    proceedBtn.disabled = errorCount > 0;
+                    proceedBtn.style.opacity = errorCount > 0 ? '0.5' : '1';
                 }
 
-                saveBatchUploadAttendanceBtn.disabled = true;
-                saveBatchUploadAttendanceBtn.innerText = 'Saving...';
+                if (summaryModal) summaryModal.style.display = 'flex';
 
-                const res = await fetch('/api/attendance-logs/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ logs })
-                });
+                const proceedSave = async () => {
+                    if (summaryModal) summaryModal.style.display = 'none';
 
-                if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Failed to save attendance logs');
+                    if (logs.length === 0) {
+                        alert('No valid rows to save');
+                        return;
+                    }
+
+                    saveBatchUploadAttendanceBtn.disabled = true;
+                    saveBatchUploadAttendanceBtn.innerText = 'Saving...';
+
+                    const res = await fetch('/api/attendance-logs/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ logs })
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({}));
+                        throw new Error(errorData.error || 'Failed to save attendance logs');
+                    }
+
+                    const result = await res.json();
+                    const savedIds = (result.data || []).map(row => row.attendance_id).filter(Boolean);
+                    alert(`Saved ${logs.length} row(s) successfully\nIDs: ${savedIds.join(', ')}`);
+                    await loadPendingAttendanceLogs();
+                    await loadAttendanceHistory();
+                    closeBatchUploadAttendanceModalFn();
+                };
+
+                const cancelSummary = () => {
+                    if (summaryModal) summaryModal.style.display = 'none';
+                };
+
+                const proceedBtnEl = document.getElementById('proceed-bulk-attendance-summary-btn');
+                const cancelBtnEl = document.getElementById('cancel-bulk-attendance-summary-btn');
+                const closeBtnEl = document.getElementById('close-bulk-attendance-summary-modal');
+
+                if (proceedBtnEl) {
+                    proceedBtnEl.onclick = proceedSave;
+                }
+                if (cancelBtnEl) {
+                    cancelBtnEl.onclick = cancelSummary;
+                }
+                if (closeBtnEl) {
+                    closeBtnEl.onclick = cancelSummary;
                 }
 
-                const result = await res.json();
-                const savedIds = (result.data || []).map(row => row.attendance_id).filter(Boolean);
-                alert(`Saved ${logs.length} row(s) successfully\nIDs: ${savedIds.join(', ')}`);
-                await loadPendingAttendanceLogs();
-                await loadAttendanceHistory();
-                closeBatchUploadAttendanceModalFn();
             } catch (err) {
                 console.error('Failed to save batch attendance:', err);
                 alert('Failed to save batch upload: ' + err.message);

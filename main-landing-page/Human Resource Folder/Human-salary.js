@@ -90,10 +90,10 @@ ModuleComponents['hr-salary'] = (container) => {
                         </tbody>
                     </table>
                 </div>
-                <div class="pagination">
-                    <button class="page-btn" disabled>&laquo; Prev</button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">Next &raquo;</button>
+                <div class="pagination" id="salary-overview-pagination">
+                    <button class="page-btn" id="salary-overview-prev-btn" disabled>&laquo; Prev</button>
+                    <button class="page-btn active" id="salary-overview-page-1">1</button>
+                    <button class="page-btn" id="salary-overview-next-btn">Next &raquo;</button>
                 </div>
             </div>
 
@@ -323,12 +323,10 @@ ModuleComponents['hr-salary'] = (container) => {
                     </tbody>
                 </table>
             </div>
-            <div class="pagination">
-                <button class="page-btn">&laquo; Prev</button>
+            <div class="pagination" id="batch-payroll-pagination">
+                <button class="page-btn" disabled>&laquo; Prev</button>
                 <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <button class="page-btn">Next &raquo;</button>
+                <button class="page-btn" disabled>Next &raquo;</button>
             </div>
         </div>
         <div class="bottom-cards-row">
@@ -366,7 +364,12 @@ ModuleComponents['hr-salary'] = (container) => {
                             <tbody id="yearly-holidays-tbody">
                                 <tr><td>Loading...</td><td></td><td></td><td></td></tr>
                             </tbody>
-                        </table>
+                    </table>
+                </div>
+                <div class="pagination" id="yearly-holidays-pagination">
+                    <button class="page-btn" disabled>&laquo; Prev</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn" disabled>Next &raquo;</button>
                 </div>
             </div>
         </div>
@@ -1539,6 +1542,186 @@ function initializeModule(contentArea) {
     }
     render(contentArea);
 
+    let overviewPayrolls = [];
+    let overviewCurrentPage = 1;
+    const overviewRowsPerPage = 10;
+
+    let historyPayrolls = [];
+    let historyCurrentPage = 1;
+    const historyRowsPerPage = 10;
+
+    function renderOverviewPagination() {
+        const totalPages = Math.max(1, Math.ceil(overviewPayrolls.length / overviewRowsPerPage));
+        if (overviewCurrentPage > totalPages) overviewCurrentPage = totalPages;
+        const start = (overviewCurrentPage - 1) * overviewRowsPerPage;
+        const pageData = overviewPayrolls.slice(start, start + overviewRowsPerPage);
+        const tbody = document.getElementById('salary-overview-tbody');
+        if (!tbody) return;
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
+        } else {
+            tbody.innerHTML = pageData.map((p) => {
+                const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
+                const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
+                const fmt = (val) => Number(val || 0).toFixed(2);
+                return `
+                    <tr>
+                        <td>${p.payroll_id || ''}</td>
+                        <td>${p.employee_id || ''}</td>
+                        <td>${p.last_name || ''}</td>
+                        <td>${p.first_name || ''}</td>
+                        <td>${fmt(p.total_days_worked)}</td>
+                        <td>${fmt(p.total_overtime_hours)}</td>
+                        <td>${fmt(p.total_allowance)}</td>
+                        <td>${fmt(p.total_leaves_usage)}</td>
+                        <td>${fmt(p.regular_holiday)}</td>
+                        <td>${fmt(p.special_holiday)}</td>
+                        <td>${fmt(grossPay)}</td>
+                        <td>${fmt(p.total_income_tax)}</td>
+                        <td>${fmt(p.total_sss_payment)}</td>
+                        <td>${fmt(p.total_sss_loan_payment)}</td>
+                        <td>${fmt(p.total_philhealth_payment)}</td>
+                        <td>${fmt(p.total_pagibig_payment)}</td>
+                        <td>${fmt(p.total_pagibig_loan_payment)}</td>
+                        <td>${fmt(p.total_cash_loan_deductions)}</td>
+                        <td>${fmt(p.total_losses_damages)}</td>
+                        <td>${fmt(grossDeduction)}</td>
+                        <td>${fmt(p.net_pay)}</td>
+                        <td>${fmt(p.starting_cash_loan)}</td>
+                        <td>${fmt(p.ending_cash_loan)}</td>
+                        <td>${fmt(p.starting_losses_damages)}</td>
+                        <td>${fmt(p.ending_losses_damages)}</td>
+                        <td style="text-align: center;"><a href="/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
+                        <td style="text-align: center;"><button class="btn-danger" data-payroll-id="${p.payroll_id}" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Delete</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        const pagination = document.getElementById('salary-overview-pagination');
+        if (!pagination) return;
+        let buttonsHtml = '';
+        if (overviewCurrentPage > 1) {
+            buttonsHtml += `<button class="page-btn" id="salary-overview-prev-btn">&laquo; Prev</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>&laquo; Prev</button>`;
+        }
+        let startPage = 1;
+        let endPage = totalPages;
+        if (totalPages > 7) {
+            startPage = Math.max(1, overviewCurrentPage - Math.floor(7 / 2));
+            endPage = Math.min(totalPages, startPage + 7 - 1);
+            if (endPage - startPage + 1 < 7) {
+                startPage = Math.max(1, endPage - 7 + 1);
+            }
+        }
+        for (let i = startPage; i <= endPage; i++) {
+            buttonsHtml += `<button class="page-btn ${i === overviewCurrentPage ? 'active' : ''}" id="salary-overview-page-${i}">${i}</button>`;
+        }
+        if (overviewCurrentPage < totalPages) {
+            buttonsHtml += `<button class="page-btn" id="salary-overview-next-btn">Next &raquo;</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>Next &raquo;</button>`;
+        }
+        pagination.innerHTML = buttonsHtml;
+        document.getElementById('salary-overview-prev-btn')?.addEventListener('click', () => {
+            if (overviewCurrentPage > 1) { overviewCurrentPage--; renderOverviewPagination(); }
+        });
+        document.getElementById('salary-overview-next-btn')?.addEventListener('click', () => {
+            if (overviewCurrentPage < totalPages) { overviewCurrentPage++; renderOverviewPagination(); }
+        });
+        for (let i = startPage; i <= endPage; i++) {
+            document.getElementById(`salary-overview-page-${i}`)?.addEventListener('click', () => {
+                overviewCurrentPage = i; renderOverviewPagination();
+            });
+        }
+    }
+
+    function renderHistoryPagination() {
+        const totalPages = Math.max(1, Math.ceil(historyPayrolls.length / historyRowsPerPage));
+        if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+        const start = (historyCurrentPage - 1) * historyRowsPerPage;
+        const pageData = historyPayrolls.slice(start, start + historyRowsPerPage);
+        const tbody = document.getElementById('salary-history-tbody');
+        if (!tbody) return;
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">No payroll history</td></tr>';
+        } else {
+            const fmt = (val) => Number(val || 0).toFixed(2);
+            tbody.innerHTML = pageData.map((p) => {
+                const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
+                const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
+                return `
+                    <tr>
+                        <td>${p.payroll_id || ''}</td>
+                        <td>${p.employee_id || ''}</td>
+                        <td>${p.last_name || ''}</td>
+                        <td>${p.first_name || ''}</td>
+                        <td style="text-align: center;"><button class="view-payslip-btn" data-payroll-id="${p.payroll_id}" data-employee-id="${p.employee_id}" data-date-start="${p.date_start || ''}" data-date-end="${p.date_end || ''}" style="background: none; border: none; cursor: pointer; padding: 4px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></button></td>
+                        <td><span style="background: ${p.status === 'Paid' ? '#d4edda' : '#fff3cd'}; color: ${p.status === 'Paid' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${p.status || 'Pending'}</span></td>
+                        <td>${fmt(p.total_days_worked)}</td>
+                        <td>${fmt(p.total_overtime_hours)}</td>
+                        <td>${fmt(p.total_allowance)}</td>
+                        <td>${fmt(p.total_leaves_usage)}</td>
+                        <td>${fmt(p.regular_holiday)}</td>
+                        <td>${fmt(p.special_holiday)}</td>
+                        <td>${fmt(grossPay)}</td>
+                        <td>${fmt(p.total_income_tax)}</td>
+                        <td>${fmt(p.total_sss_payment)}</td>
+                        <td>${fmt(p.total_sss_loan_payment)}</td>
+                        <td>${fmt(p.total_philhealth_payment)}</td>
+                        <td>${fmt(p.total_pagibig_payment)}</td>
+                        <td>${fmt(p.total_pagibig_loan_payment)}</td>
+                        <td>${fmt(p.total_cash_loan_deductions)}</td>
+                        <td>${fmt(p.total_losses_damages)}</td>
+                        <td>${fmt(grossDeduction)}</td>
+                        <td>${fmt(p.net_pay)}</td>
+                        <td>${fmt(p.starting_cash_loan)}</td>
+                        <td>${fmt(p.ending_cash_loan)}</td>
+                        <td>${fmt(p.starting_losses_damages)}</td>
+                        <td>${fmt(p.ending_losses_damages)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        const pagination = document.getElementById('salary-history-pagination');
+        if (!pagination) return;
+        let buttonsHtml = '';
+        if (historyCurrentPage > 1) {
+            buttonsHtml += `<button class="page-btn" id="salary-history-prev-btn">&laquo; Prev</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>&laquo; Prev</button>`;
+        }
+        let startPage = 1;
+        let endPage = totalPages;
+        if (totalPages > 7) {
+            startPage = Math.max(1, historyCurrentPage - Math.floor(7 / 2));
+            endPage = Math.min(totalPages, startPage + 7 - 1);
+            if (endPage - startPage + 1 < 7) {
+                startPage = Math.max(1, endPage - 7 + 1);
+            }
+        }
+        for (let i = startPage; i <= endPage; i++) {
+            buttonsHtml += `<button class="page-btn ${i === historyCurrentPage ? 'active' : ''}" id="salary-history-page-${i}">${i}</button>`;
+        }
+        if (historyCurrentPage < totalPages) {
+            buttonsHtml += `<button class="page-btn" id="salary-history-next-btn">Next &raquo;</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>Next &raquo;</button>`;
+        }
+        pagination.innerHTML = buttonsHtml;
+        document.getElementById('salary-history-prev-btn')?.addEventListener('click', () => {
+            if (historyCurrentPage > 1) { historyCurrentPage--; renderHistoryPagination(); }
+        });
+        document.getElementById('salary-history-next-btn')?.addEventListener('click', () => {
+            if (historyCurrentPage < totalPages) { historyCurrentPage++; renderHistoryPagination(); }
+        });
+        for (let i = startPage; i <= endPage; i++) {
+            document.getElementById(`salary-history-page-${i}`)?.addEventListener('click', () => {
+                historyCurrentPage = i; renderHistoryPagination();
+            });
+        }
+    }
+
     const addAttendanceLogBtn = document.getElementById('add-attendance-log-btn');
 
     if (addAttendanceLogBtn) {
@@ -2260,9 +2443,10 @@ function initializeModule(contentArea) {
             const res = await fetch('/api/payroll/status/Pending');
             if (!res.ok) throw new Error('Failed to load pending payrolls');
             const payrolls = await res.json();
+            overviewPayrolls = payrolls || [];
+            overviewCurrentPage = 1;
 
-            if (!payrolls || payrolls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">No pending payrolls</td></tr>';
+            if (!overviewPayrolls.length) {
                 const employeeCountEl = document.getElementById('salary-overview-employee-count');
                 const grossPayEl = document.getElementById('salary-overview-gross-pay');
                 const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2275,95 +2459,38 @@ function initializeModule(contentArea) {
                 if (netPayEl) netPayEl.value = '0.00';
                 if (startingPayPeriodEl) startingPayPeriodEl.value = '';
                 if (endingPayPeriodEl) endingPayPeriodEl.value = '';
-                return;
+            } else {
+                const totalGrossPay = overviewPayrolls.reduce((sum, p) => sum + ((Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0)), 0);
+                const totalGrossDeduction = overviewPayrolls.reduce((sum, p) => sum + ((Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0)), 0);
+                const totalNetPay = overviewPayrolls.reduce((sum, p) => sum + (Number(p.net_pay) || 0), 0);
+                const startDates = overviewPayrolls.map(p => p.date_start).filter(Boolean);
+                const endDates = overviewPayrolls.map(p => p.date_end).filter(Boolean);
+                const startingPayPeriod = startDates.length ? new Date(Math.min(...startDates.map(d => new Date(d).getTime()))) : null;
+                const endingPayPeriod = endDates.length ? new Date(Math.max(...endDates.map(d => new Date(d).getTime()))) : null;
+                const formatDateShort = (date) => {
+                    if (!date || isNaN(date.getTime())) return '';
+                    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                };
+                const employeeCountEl = document.getElementById('salary-overview-employee-count');
+                const grossPayEl = document.getElementById('salary-overview-gross-pay');
+                const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
+                const netPayEl = document.getElementById('salary-overview-net-pay');
+                const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
+                const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
+                if (employeeCountEl) employeeCountEl.value = overviewPayrolls.length;
+                if (grossPayEl) grossPayEl.value = totalGrossPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (grossDeductionEl) grossDeductionEl.value = totalGrossDeduction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (netPayEl) netPayEl.value = totalNetPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (startingPayPeriodEl) startingPayPeriodEl.value = formatDateShort(startingPayPeriod);
+                if (endingPayPeriodEl) endingPayPeriodEl.value = formatDateShort(endingPayPeriod);
             }
 
-            const fmt = (val) => Number(val || 0).toFixed(2);
-
-            tbody.innerHTML = payrolls.map((p) => {
-                const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
-                const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
-                const pdfFilename = `payslip_${p.employee_id}_${String(p.date_start).split('T')[0]}_to_${String(p.date_end).split('T')[0]}.pdf`;
-                return `
-                    <tr>
-                        <td>${p.payroll_id || ''}</td>
-                        <td>${p.employee_id || ''}</td>
-                        <td>${p.last_name || ''}</td>
-                        <td>${p.first_name || ''}</td>
-                        <td>${fmt(p.total_days_worked)}</td>
-                        <td>${fmt(p.total_overtime_hours)}</td>
-                        <td>${fmt(p.total_allowance)}</td>
-                        <td>${fmt(p.total_leaves_usage)}</td>
-                        <td>${fmt(p.regular_holiday)}</td>
-                        <td>${fmt(p.special_holiday)}</td>
-                        <td>${fmt(grossPay)}</td>
-                        <td>${fmt(p.total_income_tax)}</td>
-                        <td>${fmt(p.total_sss_payment)}</td>
-                        <td>${fmt(p.total_sss_loan_payment)}</td>
-                        <td>${fmt(p.total_philhealth_payment)}</td>
-                        <td>${fmt(p.total_pagibig_payment)}</td>
-                        <td>${fmt(p.total_pagibig_loan_payment)}</td>
-                        <td>${fmt(p.total_cash_loan_deductions)}</td>
-                        <td>${fmt(p.total_losses_damages)}</td>
-                        <td>${fmt(grossDeduction)}</td>
-                        <td>${fmt(p.net_pay)}</td>
-                        <td>${fmt(p.starting_cash_loan)}</td>
-                        <td>${fmt(p.ending_cash_loan)}</td>
-                        <td>${fmt(p.starting_losses_damages)}</td>
-                        <td>${fmt(p.ending_losses_damages)}</td>
-                        <td style="text-align: center;"><a href="/api/payroll/${encodeURIComponent(p.payroll_id)}/pdf-file" target="_blank" title="Open PDF" style="font-size: 20px; color: #dc3545; text-decoration: none;">📄</a></td>
-                        <td style="text-align: center;"><button class="btn-danger" data-payroll-id="${p.payroll_id}" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Delete</button></td>
-                    </tr>
-                `;
-            }).join('');
-
-            const totalGrossPay = payrolls.reduce((sum, p) => sum + ((Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0)), 0);
-            const totalGrossDeduction = payrolls.reduce((sum, p) => sum + ((Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0)), 0);
-            const totalNetPay = payrolls.reduce((sum, p) => sum + (Number(p.net_pay) || 0), 0);
-            const employeeCount = payrolls.length;
-
-            const employeeCountEl = document.getElementById('salary-overview-employee-count');
-            const grossPayEl = document.getElementById('salary-overview-gross-pay');
-            const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
-            const netPayEl = document.getElementById('salary-overview-net-pay');
-            const startingPayPeriodEl = document.getElementById('salary-overview-starting-pay-period');
-            const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
-
-            const startDates = payrolls.map(p => p.date_start).filter(Boolean);
-            const endDates = payrolls.map(p => p.date_end).filter(Boolean);
-            const startingPayPeriod = startDates.length ? new Date(Math.min(...startDates.map(d => new Date(d).getTime()))) : null;
-            const endingPayPeriod = endDates.length ? new Date(Math.max(...endDates.map(d => new Date(d).getTime()))) : null;
-
-            const formatDateShort = (date) => {
-                if (!date || isNaN(date.getTime())) return '';
-                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-            };
-
-            if (employeeCountEl) employeeCountEl.value = employeeCount;
-            if (grossPayEl) grossPayEl.value = totalGrossPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (grossDeductionEl) grossDeductionEl.value = totalGrossDeduction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (netPayEl) netPayEl.value = totalNetPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (startingPayPeriodEl) startingPayPeriodEl.value = formatDateShort(startingPayPeriod);
-            if (endingPayPeriodEl) endingPayPeriodEl.value = formatDateShort(endingPayPeriod);
-
-            tbody.querySelectorAll('.btn-danger').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const payrollId = e.target.dataset.payrollId;
-                    if (!payrollId) return;
-                    if (!confirm('Delete this payroll and its PDF?')) return;
-                    try {
-                        const res = await fetch(`/api/payroll/${encodeURIComponent(payrollId)}`, { method: 'DELETE' });
-                        if (!res.ok) throw new Error('Failed to delete payroll');
-                        const row = e.target.closest('tr');
-                        if (row) row.remove();
-                    } catch (err) {
-                        alert(err.message || 'Failed to delete payroll');
-                    }
-                });
-            });
+            renderOverviewPagination();
         } catch (err) {
             console.error('Failed to load pending payrolls:', err);
-            tbody.innerHTML = '<tr><td colspan="28" style="text-align: center; padding: 20px; color: #999;">Failed to load payrolls</td></tr>';
+            overviewPayrolls = [];
+            overviewCurrentPage = 1;
+            renderOverviewPagination();
             const employeeCountEl = document.getElementById('salary-overview-employee-count');
             const grossPayEl = document.getElementById('salary-overview-gross-pay');
             const grossDeductionEl = document.getElementById('salary-overview-gross-deduction');
@@ -2387,52 +2514,14 @@ function initializeModule(contentArea) {
             const res = await fetch('/api/payroll/all');
             if (!res.ok) throw new Error('Failed to load salary history');
             const payrolls = await res.json();
-
-            if (!payrolls || payrolls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">No payroll history</td></tr>';
-                return;
-            }
-
-            const fmt = (val) => Number(val || 0).toFixed(2);
-
-            tbody.innerHTML = payrolls.map((p) => {
-                const grossPay = (Number(p.gross_pay) && Number(p.gross_pay) !== 0) ? Number(p.gross_pay) : ((Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0));
-                const grossDeduction = (Number(p.gross_deduction) && Number(p.gross_deduction) !== 0) ? Number(p.gross_deduction) : ((Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0));
-                return `
-                    <tr>
-                        <td>${p.payroll_id || ''}</td>
-                        <td>${p.employee_id || ''}</td>
-                        <td>${p.last_name || ''}</td>
-                        <td>${p.first_name || ''}</td>
-                        <td style="text-align: center;"><button class="view-payslip-btn" data-payroll-id="${p.payroll_id}" data-employee-id="${p.employee_id}" data-date-start="${p.date_start || ''}" data-date-end="${p.date_end || ''}" style="background: none; border: none; cursor: pointer; padding: 4px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></button></td>
-                        <td><span style="background: ${p.status === 'Paid' ? '#d4edda' : '#fff3cd'}; color: ${p.status === 'Paid' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${p.status || 'Pending'}</span></td>
-                        <td>${fmt(p.total_days_worked)}</td>
-                        <td>${fmt(p.total_overtime_hours)}</td>
-                        <td>${fmt(p.total_allowance)}</td>
-                        <td>${fmt(p.total_leaves_usage)}</td>
-                        <td>${fmt(p.regular_holiday)}</td>
-                        <td>${fmt(p.special_holiday)}</td>
-                        <td>${fmt(grossPay)}</td>
-                        <td>${fmt(p.total_income_tax)}</td>
-                        <td>${fmt(p.total_sss_payment)}</td>
-                        <td>${fmt(p.total_sss_loan_payment)}</td>
-                        <td>${fmt(p.total_philhealth_payment)}</td>
-                        <td>${fmt(p.total_pagibig_payment)}</td>
-                        <td>${fmt(p.total_pagibig_loan_payment)}</td>
-                        <td>${fmt(p.total_cash_loan_deductions)}</td>
-                        <td>${fmt(p.total_losses_damages)}</td>
-                        <td>${fmt(grossDeduction)}</td>
-                        <td>${fmt(p.net_pay)}</td>
-                        <td>${fmt(p.starting_cash_loan)}</td>
-                        <td>${fmt(p.ending_cash_loan)}</td>
-                        <td>${fmt(p.starting_losses_damages)}</td>
-                        <td>${fmt(p.ending_losses_damages)}</td>
-                    </tr>
-                `;
-            }).join('');
+            historyPayrolls = payrolls || [];
+            historyCurrentPage = 1;
+            renderHistoryPagination();
         } catch (err) {
             console.error('Failed to load salary history:', err);
-            tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">Failed to load salary history</td></tr>';
+            historyPayrolls = [];
+            historyCurrentPage = 1;
+            renderHistoryPagination();
         }
     }
 
