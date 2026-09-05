@@ -64,10 +64,10 @@ ModuleComponents['hr-13th-month'] = (container) => {
                     <table class="data-table product-table">
                         <thead>
                             <tr>
-                                <th>Month</th>
-                                <th>Days Worked</th>
-                                <th>Salary</th>
-                                <th>13th Month Amount</th>
+                                <th style="text-align: center !important;">Month</th>
+                                <th style="text-align: center !important;">Days Worked</th>
+                                <th style="text-align: center !important;">Salary</th>
+                                <th style="text-align: center !important;">13th Month Amount</th>
                             </tr>
                         </thead>
                         <tbody id="month13-table-body">
@@ -85,13 +85,13 @@ ModuleComponents['hr-13th-month'] = (container) => {
                 <table class="data-table product-table">
                     <thead>
                         <tr>
-                            <th>13thmonth transaction ID</th>
-                            <th>Date</th>
-                            <th>Remarks</th>
-                            <th>Amount</th>
-                            <th>Mode of payment</th>
-                            <th>Reference</th>
-                            <th>Payment Status</th>
+                            <th style="text-align: center !important;">13thmonth transaction ID</th>
+                            <th style="text-align: center !important;">Date</th>
+                            <th style="text-align: center !important;">Remarks</th>
+                            <th style="text-align: center !important;">Amount</th>
+                            <th style="text-align: center !important;">Mode of payment</th>
+                            <th style="text-align: center !important;">Reference</th>
+                            <th style="text-align: center !important;">Payment Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -115,24 +115,21 @@ ModuleComponents['hr-13th-month'] = (container) => {
                 <button class="modal-close-btn" id="close-generate-13th-modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 16px;">
-                <div style="margin-bottom: 12px; position: relative;">
-                    <input type="text" id="generate-13th-search" placeholder="Search active employees..." style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;">
-                    <div id="generate-13th-search-results" style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
-                </div>
                 <div style="overflow-x: auto;">
                     <table class="data-table product-table">
                         <thead>
                             <tr>
-                                <th>Employee</th>
-                                <th>Total No. of Days Worked</th>
-                                <th>Rate</th>
-                                <th>Amount</th>
-                                <th>Bonus</th>
-                                <th>Total Amount</th>
+                                <th style="text-align: center !important; width: 60px;">Delete</th>
+                                <th style="text-align: center !important;">Employee</th>
+                                <th style="text-align: center !important;">Total No. of Days Worked</th>
+                                <th style="text-align: center !important;">Rate</th>
+                                <th style="text-align: center !important;">Amount</th>
+                                <th style="text-align: center !important;">Bonus</th>
+                                <th style="text-align: center !important;">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody id="generate-13th-table-body">
-                            <tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">Search and select an employee to add</td></tr>
+                            <tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">Loading employees...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -145,11 +142,8 @@ ModuleComponents['hr-13th-month'] = (container) => {
     document.body.appendChild(generate13thModal);
 
     const closeGenerate13thModal = document.getElementById('close-generate-13th-modal');
-    const generate13thSearch = document.getElementById('generate-13th-search');
-    const generate13thSearchResults = document.getElementById('generate-13th-search-results');
     const generate13thTableBody = document.getElementById('generate-13th-table-body');
     const saveGenerate13thBtn = document.getElementById('save-generate-13th-btn');
-    let generate13thDebounce = null;
     let generate13thRows = [];
 
     if (closeGenerate13thModal && generate13thModal) {
@@ -167,17 +161,18 @@ ModuleComponents['hr-13th-month'] = (container) => {
     const renderGenerate13thTable = () => {
         if (!generate13thTableBody) return;
         if (generate13thRows.length === 0) {
-            generate13thTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">Search and select an employee to add</td></tr>';
+            generate13thTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">No active employees found</td></tr>';
             return;
         }
         generate13thTableBody.innerHTML = generate13thRows.map((row, idx) => `
             <tr>
-                <td style="text-align: center;">${row.employeeName}</td>
-                <td style="text-align: center;">${Number(row.daysWorked).toFixed(2)}</td>
-                <td style="text-align: center;">${fmtMoney(row.rate)}</td>
-                <td style="text-align: center;">${fmtMoney(row.amount)}</td>
-                <td style="text-align: center;"><input type="number" class="generate-13th-bonus" data-idx="${idx}" value="${row.bonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px; text-align: center;"></td>
-                <td style="text-align: center;" class="generate-13th-total">${fmtMoney((Number(row.amount) || 0) + (Number(row.bonus) || 0))}</td>
+                <td style="text-align: center !important;"><button class="delete-13th-row-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; font-size: 18px; color: #dc3545; padding: 4px;" title="Remove employee">&times;</button></td>
+                <td style="text-align: center !important;">${row.employeeName}</td>
+                <td style="text-align: center !important;">${Number(row.daysWorked).toFixed(2)}</td>
+                <td style="text-align: center !important;">${fmtMoney(row.rate)}</td>
+                <td style="text-align: center !important;">${fmtMoney(row.amount)}</td>
+                <td style="text-align: center !important;"><input type="number" class="generate-13th-bonus" data-idx="${idx}" value="${row.bonus || 0}" style="width: 100px; padding: 4px; border: 1px solid #D6D6D6; border-radius: 4px; text-align: center !important;"></td>
+                <td style="text-align: center !important;" class="generate-13th-total">${fmtMoney((Number(row.amount) || 0) + (Number(row.bonus) || 0))}</td>
             </tr>
         `).join('');
 
@@ -192,79 +187,56 @@ ModuleComponents['hr-13th-month'] = (container) => {
                 }
             });
         });
-    };
 
-    const addGenerate13thRow = (profile) => {
-        const empName = [profile.last_name, profile.first_name, profile.middle_name].filter(Boolean).join(', ');
-        const compensation = profile.compensation || {};
-        const salaryAmount = Number(compensation.salary_amount) || 0;
-        const salaryPayMode = compensation.salary_pay_mode || 'Monthly';
-        const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
-        const daysWorked = 0;
-        const amount = daysWorked * dailyRate;
-        generate13thRows.push({
-            employeeId: profile.employee_id,
-            employeeName: empName || profile.employee_id,
-            daysWorked,
-            rate: parseFloat(dailyRate.toFixed(2)),
-            amount: parseFloat(amount.toFixed(2)),
-            bonus: 0
+        generate13thTableBody.querySelectorAll('.delete-13th-row-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                if (!isNaN(idx) && idx >= 0 && idx < generate13thRows.length) {
+                    generate13thRows.splice(idx, 1);
+                    renderGenerate13thTable();
+                }
+            });
         });
-        renderGenerate13thTable();
-        if (generate13thSearchResults) generate13thSearchResults.style.display = 'none';
-        if (generate13thSearch) generate13thSearch.value = '';
     };
 
-    const openGenerate13thModal = () => {
+    const openGenerate13thModal = async () => {
         generate13thRows = [];
         renderGenerate13thTable();
         if (generate13thModal) generate13thModal.style.display = 'flex';
+
+        try {
+            const res = await fetch('/api/employee-profiles?status=active');
+            if (!res.ok) throw new Error('Failed to load active employees');
+            const profiles = await res.json();
+            if (!Array.isArray(profiles)) return;
+
+            generate13thRows = profiles.map(profile => {
+                const empName = [profile.last_name, profile.first_name, profile.middle_name].filter(Boolean).join(', ');
+                const compensation = profile.compensation || {};
+                const salaryAmount = Number(compensation.salary_amount) || 0;
+                const salaryPayMode = compensation.salary_pay_mode || 'Monthly';
+                const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
+                const daysWorked = 0;
+                const amount = daysWorked * dailyRate;
+                return {
+                    employeeId: profile.employee_id,
+                    employeeName: empName || profile.employee_id,
+                    daysWorked,
+                    rate: parseFloat(dailyRate.toFixed(2)),
+                    amount: parseFloat(amount.toFixed(2)),
+                    bonus: 0
+                };
+            });
+            renderGenerate13thTable();
+        } catch (err) {
+            console.error('Failed to load active employees:', err);
+        }
     };
 
     const process13thBtn = document.getElementById('generate-year-end-13th-btn');
     if (process13thBtn) {
         process13thBtn.addEventListener('click', () => {
             openGenerate13thModal();
-        });
-    }
-
-    if (generate13thSearch && generate13thSearchResults) {
-        generate13thSearch.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            if (generate13thDebounce) clearTimeout(generate13thDebounce);
-            if (query.length < 2) {
-                generate13thSearchResults.style.display = 'none';
-                return;
-            }
-            generate13thDebounce = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/employee-profiles?search=${encodeURIComponent(query)}&status=active`);
-                    if (!res.ok) throw new Error('Search failed');
-                    const profiles = await res.json();
-                    if (!Array.isArray(profiles) || profiles.length === 0) {
-                        generate13thSearchResults.innerHTML = '<div style="padding: 10px; color: #64748b; font-size: 13px;">No employees found</div>';
-                        generate13thSearchResults.style.display = 'block';
-                        return;
-                    }
-                    generate13thSearchResults.innerHTML = profiles.map(p => `
-                        <div class="employee-search-result" data-employee-id="${p.employee_id}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px;">
-                            <div style="font-weight: 600; color: #1a1f2e;">${p.last_name || ''}, ${p.first_name || ''} ${p.middle_name || ''}</div>
-                            <div style="font-size: 12px; color: #64748b;">${p.employee_id || ''}</div>
-                        </div>
-                    `).join('');
-                    generate13thSearchResults.style.display = 'block';
-
-                    generate13thSearchResults.querySelectorAll('.employee-search-result').forEach(item => {
-                        item.addEventListener('click', () => {
-                            const empId = item.getAttribute('data-employee-id');
-                            const selected = profiles.find(p => p.employee_id === empId);
-                            if (selected) addGenerate13thRow(selected);
-                        });
-                    });
-                } catch (err) {
-                    console.error('Search error:', err);
-                }
-            }, 300);
         });
     }
 
@@ -302,10 +274,10 @@ ModuleComponents['hr-13th-month'] = (container) => {
 
         tbody.innerHTML = monthlyData.map(row => `
             <tr>
-                <td style="text-align: center;">${row.month}</td>
-                <td style="text-align: center;">${Number(row.daysWorked).toFixed(2)}</td>
-                <td style="text-align: center;">${fmtMoney(row.salary)}</td>
-                <td style="text-align: center;">${fmtMoney(row.thirteenthMonth)}</td>
+                <td style="text-align: center !important;">${row.month}</td>
+                <td style="text-align: center !important;">${Number(row.daysWorked).toFixed(2)}</td>
+                <td style="text-align: center !important;">${fmtMoney(row.salary)}</td>
+                <td style="text-align: center !important;">${fmtMoney(row.thirteenthMonth)}</td>
             </tr>
         `).join('');
 

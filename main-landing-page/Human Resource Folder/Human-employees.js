@@ -974,7 +974,7 @@ function initializeModule(contentArea) {
         try {
             const formData = new FormData();
             formData.append('file', compensationUploadFile);
-            const res = await fetch('/api/employee-compensation/bulk-upload', {
+            const res = await fetch('/api/employee-compensations/bulk-upload', {
                 method: 'POST',
                 body: formData
             });

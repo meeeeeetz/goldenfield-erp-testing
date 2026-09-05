@@ -199,10 +199,19 @@ class EmployeeProfileController {
             attendanceByMonth.set(row.month, Number(row.days_worked) || 0);
         });
 
-        const compensation = await this.getLatestCompensation(employeeId);
-        const salaryAmount = Number(compensation.salary_amount) || 0;
-        const salaryPayMode = compensation.salary_pay_mode || 'Monthly';
-        const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
+        const compensationQuery = `
+            SELECT salary_amount, salary_pay_mode, created_at
+            FROM employee_compensation
+            WHERE employee_id = $1
+            ORDER BY created_at ASC
+        `;
+        const compensationResult = await this.db.query(compensationQuery, [employeeId]);
+        const compensations = compensationResult.rows;
+
+        const latestCompensation = compensations.length > 0 ? compensations[compensations.length - 1] : null;
+        const currentSalaryAmount = Number(latestCompensation?.salary_amount) || 0;
+        const currentSalaryPayMode = latestCompensation?.salary_pay_mode || 'Monthly';
+        const currentDailyRate = currentSalaryPayMode === 'Daily' ? currentSalaryAmount : currentSalaryAmount / 22;
 
         const months = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -211,13 +220,25 @@ class EmployeeProfileController {
 
         const monthlyData = months.map((name, index) => {
             const monthNum = index + 1;
+            const lastDayOfMonth = new Date(yearInt, monthNum, 0);
+
+            let activeComp = null;
+            for (const comp of compensations) {
+                const compDate = new Date(comp.created_at);
+                if (compDate <= lastDayOfMonth) {
+                    activeComp = comp;
+                }
+            }
+
             const daysWorked = parseFloat((attendanceByMonth.get(monthNum) || 0).toFixed(2));
-            const salary = salaryAmount;
+            const salaryAmount = activeComp ? Number(activeComp.salary_amount) || 0 : 0;
+            const salaryPayMode = activeComp ? (activeComp.salary_pay_mode || 'Monthly') : 'Monthly';
+            const dailyRate = salaryPayMode === 'Daily' ? salaryAmount : salaryAmount / 22;
             const thirteenthMonth = daysWorked * dailyRate / 12;
             return {
                 month: name,
                 daysWorked,
-                salary,
+                salary: salaryAmount,
                 thirteenthMonth: parseFloat(thirteenthMonth.toFixed(2))
             };
         });
@@ -234,9 +255,9 @@ class EmployeeProfileController {
                 employment_status: profile.employment_status
             },
             compensation: {
-                salary_amount: salaryAmount,
-                salary_pay_mode: salaryPayMode,
-                daily_rate: parseFloat(dailyRate.toFixed(2))
+                salary_amount: currentSalaryAmount,
+                salary_pay_mode: currentSalaryPayMode,
+                daily_rate: parseFloat(currentDailyRate.toFixed(2))
             },
             photo: await this.findEmployeePhoto(employeeId),
             monthlyData,

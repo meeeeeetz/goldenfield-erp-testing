@@ -187,12 +187,12 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
             </div>
         </div>
         <div id="bulk-attendance-summary-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
-            <div class="modal-content" style="max-width: 600px; width: 95%;">
-                <div class="modal-header-row">
+            <div class="modal-content" style="max-width: 600px; width: 95%; display: flex; flex-direction: column; max-height: 80vh;">
+                <div class="modal-header-row" style="flex-shrink: 0;">
                     <h3>Bulk Upload Summary</h3>
                     <button class="modal-close-btn" id="close-bulk-attendance-summary-modal">&times;</button>
                 </div>
-                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                     <div style="display: flex; gap: 16px; justify-content: space-around; text-align: center;">
                         <div style="flex: 1; padding: 12px; border-radius: 8px; background: #d4edda;">
                             <div style="font-size: 24px; font-weight: 700; color: #155724;" id="bulk-attendance-ok-count">0</div>
@@ -211,10 +211,10 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                         <strong>Errors:</strong>
                         <div id="bulk-attendance-error-list" style="margin-top: 8px; font-size: 13px; color: #721c24;"></div>
                     </div>
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button id="cancel-bulk-attendance-summary-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
-                        <button id="proceed-bulk-attendance-summary-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Proceed</button>
-                    </div>
+                </div>
+                <div style="flex-shrink: 0; padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button id="cancel-bulk-attendance-summary-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                    <button id="proceed-bulk-attendance-summary-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Proceed</button>
                 </div>
             </div>
         </div>
@@ -507,7 +507,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                     total_early_out_minutes,
                     total_deductable_time,
                     actual_payable_hours,
-                    created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return u.id || null; } catch(e) { return null; } })()
+                    created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return `${u.first_name || ''} ${u.last_name || ''}`.trim() || null; } catch(e) { return null; } })()
                 });
             });
 
@@ -1072,6 +1072,16 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
     const openBatchUploadAttendanceModal = async () => {
         await fetchShiftData();
         if (batchUploadAttendanceModal) batchUploadAttendanceModal.style.display = 'flex';
+        const previewContainer = document.getElementById('batch-attendance-preview');
+        const previewTable = document.getElementById('batch-attendance-preview-table');
+        if (previewContainer) previewContainer.style.display = 'none';
+        if (previewTable) previewTable.innerHTML = '';
+        if (batchAttendanceFileName) batchAttendanceFileName.textContent = '';
+        if (batchAttendanceFileInput) batchAttendanceFileInput.value = '';
+        if (saveBatchUploadAttendanceBtn) {
+            saveBatchUploadAttendanceBtn.disabled = false;
+            saveBatchUploadAttendanceBtn.innerText = 'Save';
+        }
     };
 
     const closeBatchUploadAttendanceModalFn = () => {
@@ -1449,7 +1459,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                         total_early_out_minutes: computed.totalEarlyOutMinutes,
                         total_deductable_time: computed.totalDeductableTime,
                         actual_payable_hours: computed.actualPayableHours,
-                        created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return u.id || null; } catch(e) { return null; } })()
+                        created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return `${u.first_name || ''} ${u.last_name || ''}`.trim() || null; } catch(e) { return null; } })()
                     });
                 });
 
