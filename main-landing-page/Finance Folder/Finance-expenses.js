@@ -251,16 +251,30 @@ function renderExpensePagination() {
     }
     
     let buttonsHtml = '';
+    if (totalPages > 10) {
+        buttonsHtml += `<button class="page-btn" id="expense-first-btn" ${expenseCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+    }
     buttonsHtml += `<button class="page-btn" id="expense-prev-btn" ${expenseCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
-    
+
     pages.forEach(i => {
         buttonsHtml += `<button class="page-btn ${i === expenseCurrentPage ? 'active' : ''}" id="expense-page-${i}">${i}</button>`;
     });
-    
+
     buttonsHtml += `<button class="page-btn" id="expense-next-btn" ${expenseCurrentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
-    
+    if (totalPages > 10) {
+        buttonsHtml += `<button class="page-btn" id="expense-last-btn" ${expenseCurrentPage === totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+    }
+
     pagination.innerHTML = buttonsHtml;
-    
+
+    document.getElementById('expense-first-btn')?.addEventListener('click', () => {
+        if (expenseCurrentPage !== 1) {
+            expenseCurrentPage = 1;
+            renderExpensePage();
+            renderExpensePagination();
+        }
+    });
+
     document.getElementById('expense-prev-btn')?.addEventListener('click', () => {
         if (expenseCurrentPage > 1) {
             expenseCurrentPage--;
@@ -268,7 +282,7 @@ function renderExpensePagination() {
             renderExpensePagination();
         }
     });
-    
+
     document.getElementById('expense-next-btn')?.addEventListener('click', () => {
         if (expenseCurrentPage < totalPages) {
             expenseCurrentPage++;
@@ -276,7 +290,15 @@ function renderExpensePagination() {
             renderExpensePagination();
         }
     });
-    
+
+    document.getElementById('expense-last-btn')?.addEventListener('click', () => {
+        if (expenseCurrentPage !== totalPages) {
+            expenseCurrentPage = totalPages;
+            renderExpensePage();
+            renderExpensePagination();
+        }
+    });
+
     pages.forEach(i => {
         document.getElementById(`expense-page-${i}`)?.addEventListener('click', () => {
             expenseCurrentPage = i;
@@ -663,30 +685,50 @@ function renderExpenseListPagination(totalPages) {
     if (!container) return;
     
     let html = '';
+    if (totalPages > 10) {
+        html += `<button class="page-btn" id="expense-list-first-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+    }
     html += `<button class="page-btn" id="expense-list-prev-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
-    
+
     for (let i = 1; i <= totalPages; i++) {
         html += `<button class="page-btn ${i === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${i}">${i}</button>`;
     }
-    
+
     html += `<button class="page-btn" id="expense-list-next-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
-    
+    if (totalPages > 10) {
+        html += `<button class="page-btn" id="expense-list-last-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+    }
+
     container.innerHTML = html;
-    
+
+    document.getElementById('expense-list-first-btn')?.addEventListener('click', () => {
+        if (expenseListCurrentPage !== 1) {
+            expenseListCurrentPage = 1;
+            renderExpenseListPage();
+        }
+    });
+
     document.getElementById('expense-list-prev-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage > 1) {
             expenseListCurrentPage--;
             renderExpenseListPage();
         }
     });
-    
+
     document.getElementById('expense-list-next-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage < totalPages) {
             expenseListCurrentPage++;
             renderExpenseListPage();
         }
     });
-    
+
+    document.getElementById('expense-list-last-btn')?.addEventListener('click', () => {
+        if (expenseListCurrentPage < totalPages) {
+            expenseListCurrentPage = totalPages;
+            renderExpenseListPage();
+        }
+    });
+
     for (let i = 1; i <= totalPages; i++) {
         document.getElementById(`expense-list-page-${i}`)?.addEventListener('click', () => {
             expenseListCurrentPage = i;

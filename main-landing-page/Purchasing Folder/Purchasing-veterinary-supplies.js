@@ -1579,6 +1579,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(vetSuppliersPageData.length / vetSuppliersPerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-suppliers-page-first" ${currentVetSuppliersPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="vet-suppliers-page-prev" ${currentVetSuppliersPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -1586,8 +1589,19 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             }
 
             html += `<button class="page-btn" id="vet-suppliers-page-next" ${currentVetSuppliersPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-suppliers-page-last" ${currentVetSuppliersPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('vet-suppliers-page-first')?.addEventListener('click', () => {
+                if (currentVetSuppliersPageNum !== 1) {
+                    currentVetSuppliersPageNum = 1;
+                    renderVetSuppliersPageTable();
+                    renderVetSuppliersPagePagination();
+                }
+            });
 
             document.getElementById('vet-suppliers-page-prev')?.addEventListener('click', () => {
                 if (currentVetSuppliersPageNum > 1) {
@@ -1600,6 +1614,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             document.getElementById('vet-suppliers-page-next')?.addEventListener('click', () => {
                 if (currentVetSuppliersPageNum < totalPages) {
                     currentVetSuppliersPageNum++;
+                    renderVetSuppliersPageTable();
+                    renderVetSuppliersPagePagination();
+                }
+            });
+
+            document.getElementById('vet-suppliers-page-last')?.addEventListener('click', () => {
+                if (currentVetSuppliersPageNum !== totalPages) {
+                    currentVetSuppliersPageNum = totalPages;
                     renderVetSuppliersPageTable();
                     renderVetSuppliersPagePagination();
                 }
@@ -2090,6 +2112,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(vetProductsPageData.length / vetProductsPerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-products-page-first" ${currentVetProductsPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="vet-products-page-prev" ${currentVetProductsPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -2097,8 +2122,19 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             }
 
             html += `<button class="page-btn" id="vet-products-page-next" ${currentVetProductsPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-products-page-last" ${currentVetProductsPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('vet-products-page-first')?.addEventListener('click', () => {
+                if (currentVetProductsPageNum !== 1) {
+                    currentVetProductsPageNum = 1;
+                    renderVetProductsPageTable();
+                    renderVetProductsPagePagination();
+                }
+            });
 
             document.getElementById('vet-products-page-prev')?.addEventListener('click', () => {
                 if (currentVetProductsPageNum > 1) {
@@ -2111,6 +2147,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             document.getElementById('vet-products-page-next')?.addEventListener('click', () => {
                 if (currentVetProductsPageNum < totalPages) {
                     currentVetProductsPageNum++;
+                    renderVetProductsPageTable();
+                    renderVetProductsPagePagination();
+                }
+            });
+
+            document.getElementById('vet-products-page-last')?.addEventListener('click', () => {
+                if (currentVetProductsPageNum !== totalPages) {
+                    currentVetProductsPageNum = totalPages;
                     renderVetProductsPageTable();
                     renderVetProductsPagePagination();
                 }
@@ -3690,6 +3734,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(vetTransactionsPageData.length / vetTransactionsPerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-transactions-page-first" ${currentVetTransactionsPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="vet-transactions-page-prev" ${currentVetTransactionsPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -3697,8 +3744,19 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             }
 
             html += `<button class="page-btn" id="vet-transactions-page-next" ${currentVetTransactionsPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="vet-transactions-page-last" ${currentVetTransactionsPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('vet-transactions-page-first')?.addEventListener('click', () => {
+                if (currentVetTransactionsPageNum !== 1) {
+                    currentVetTransactionsPageNum = 1;
+                    renderVetTransactionsPageTable();
+                    renderVetTransactionsPagePagination();
+                }
+            });
 
             document.getElementById('vet-transactions-page-prev')?.addEventListener('click', () => {
                 if (currentVetTransactionsPageNum > 1) {
@@ -3711,6 +3769,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             document.getElementById('vet-transactions-page-next')?.addEventListener('click', () => {
                 if (currentVetTransactionsPageNum < totalPages) {
                     currentVetTransactionsPageNum++;
+                    renderVetTransactionsPageTable();
+                    renderVetTransactionsPagePagination();
+                }
+            });
+
+            document.getElementById('vet-transactions-page-last')?.addEventListener('click', () => {
+                if (currentVetTransactionsPageNum !== totalPages) {
+                    currentVetTransactionsPageNum = totalPages;
                     renderVetTransactionsPageTable();
                     renderVetTransactionsPagePagination();
                 }

@@ -178,9 +178,11 @@ ModuleComponents['hr-offenses'] = (container) => {
             </div>
             <div style="padding: 10px 15px; border-top: 1px solid #ddd; display: flex; justify-content: center;">
                 <div class="pagination" id="coc-pagination">
+                    <button class="page-btn" id="coc-first-btn" style="display:none;">&laquo; 1st</button>
                     <button class="page-btn" id="coc-prev-btn">&laquo; Prev</button>
                     <button class="page-btn active" id="coc-page-1">1</button>
                     <button class="page-btn" id="coc-next-btn">Next &raquo;</button>
+                    <button class="page-btn" id="coc-last-btn" style="display:none;">Last &raquo;</button>
                 </div>
             </div>
         </div>
@@ -875,13 +877,23 @@ ModuleComponents['hr-offenses'] = (container) => {
     const updateCocPagination = (totalPages) => {
         const prevBtn = document.getElementById('coc-prev-btn');
         const nextBtn = document.getElementById('coc-next-btn');
+        const firstBtn = document.getElementById('coc-first-btn');
+        const lastBtn = document.getElementById('coc-last-btn');
         const pagination = document.getElementById('coc-pagination');
         if (!pagination) return;
 
         pagination.innerHTML = '';
 
+        if (firstBtn) {
+            firstBtn.textContent = '« 1st';
+            firstBtn.disabled = cocCurrentPage === 1;
+        }
         prevBtn.textContent = '« Prev';
         nextBtn.textContent = 'Next »';
+        if (lastBtn) {
+            lastBtn.textContent = 'Last »';
+            lastBtn.disabled = cocCurrentPage === totalPages || totalPages === 0;
+        }
 
         prevBtn.disabled = cocCurrentPage === 1;
         nextBtn.disabled = cocCurrentPage === totalPages || totalPages === 0;
@@ -897,6 +909,8 @@ ModuleComponents['hr-offenses'] = (container) => {
             return btn;
         };
 
+        if (firstBtn && totalPages > 10) pagination.appendChild(firstBtn);
+        else if (firstBtn) firstBtn.style.display = 'none';
         pagination.appendChild(prevBtn);
         prevBtn.addEventListener('click', () => {
             if (cocCurrentPage > 1) {
@@ -904,6 +918,15 @@ ModuleComponents['hr-offenses'] = (container) => {
                 loadActiveCodeOfConduct();
             }
         });
+
+        if (firstBtn) {
+            firstBtn.addEventListener('click', () => {
+                if (cocCurrentPage !== 1) {
+                    cocCurrentPage = 1;
+                    loadActiveCodeOfConduct();
+                }
+            });
+        }
 
         const maxButtons = 5;
         let startPage = Math.max(1, cocCurrentPage - Math.floor(maxButtons / 2));
@@ -943,6 +966,18 @@ ModuleComponents['hr-offenses'] = (container) => {
                 loadActiveCodeOfConduct();
             }
         });
+
+        if (lastBtn && totalPages > 10) {
+            pagination.appendChild(lastBtn);
+            lastBtn.addEventListener('click', () => {
+                if (cocCurrentPage !== totalPages) {
+                    cocCurrentPage = totalPages;
+                    loadActiveCodeOfConduct();
+                }
+            });
+        } else if (lastBtn) {
+            lastBtn.style.display = 'none';
+        }
     };
 
     loadActiveCodeOfConduct();

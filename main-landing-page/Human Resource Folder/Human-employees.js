@@ -1106,6 +1106,9 @@ function initializeModule(contentArea) {
 
         if (pagination && totalPages > 1) {
             let buttonsHtml = '';
+            if (totalPages > 10) {
+                buttonsHtml += `<button class="page-btn" id="emp-first-btn" ${currentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             buttonsHtml += `<button class="page-btn" id="emp-prev-btn" ${currentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             const maxVisible = 7;
@@ -1120,7 +1123,17 @@ function initializeModule(contentArea) {
             }
 
             buttonsHtml += `<button class="page-btn" id="emp-next-btn" ${currentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                buttonsHtml += `<button class="page-btn" id="emp-last-btn" ${currentPage === totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
             pagination.innerHTML = buttonsHtml;
+
+            document.getElementById('emp-first-btn')?.addEventListener('click', () => {
+                if (currentEmployeePage !== 1) {
+                    currentEmployeePage = 1;
+                    renderEmployeeCards(employees, currentEmployeePage, paidTotalsCache, paidTotalsByEmployeeCache);
+                }
+            });
 
             document.getElementById('emp-prev-btn')?.addEventListener('click', () => {
                 if (currentPage > 1) {
@@ -1132,6 +1145,13 @@ function initializeModule(contentArea) {
             document.getElementById('emp-next-btn')?.addEventListener('click', () => {
                 if (currentPage < totalPages) {
                     currentEmployeePage = currentPage + 1;
+                    renderEmployeeCards(employees, currentEmployeePage, paidTotalsCache, paidTotalsByEmployeeCache);
+                }
+            });
+
+            document.getElementById('emp-last-btn')?.addEventListener('click', () => {
+                if (currentEmployeePage !== totalPages) {
+                    currentEmployeePage = totalPages;
                     renderEmployeeCards(employees, currentEmployeePage, paidTotalsCache, paidTotalsByEmployeeCache);
                 }
             });

@@ -856,16 +856,27 @@ function initializeModule(contentArea) {
             return;
         }
         let html = '';
+        if (totalPages > 10) {
+            html += `<button class="page-btn" data-page="first" ${editStructureCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+        }
         html += `<button class="page-btn" data-page="prev" ${editStructureCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
         for (let i = 1; i <= totalPages; i++) {
             html += `<button class="page-btn ${i === editStructureCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
         }
         html += `<button class="page-btn" data-page="next" ${editStructureCurrentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+        if (totalPages > 10) {
+            html += `<button class="page-btn" data-page="last" ${editStructureCurrentPage === totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+        }
         editStructurePagination.innerHTML = html;
         editStructurePagination.querySelectorAll('.page-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const page = btn.dataset.page;
-                if (page === 'prev') {
+                if (page === 'first') {
+                    if (editStructureCurrentPage !== 1) {
+                        editStructureCurrentPage = 1;
+                        renderEditStructureTablePage();
+                    }
+                } else if (page === 'prev') {
                     if (editStructureCurrentPage > 1) {
                         editStructureCurrentPage--;
                         renderEditStructureTablePage();
@@ -874,6 +885,12 @@ function initializeModule(contentArea) {
                     const totalPagesCalc = Math.max(1, Math.ceil(editStructureAllStructures.length / editStructureRowsPerPage));
                     if (editStructureCurrentPage < totalPagesCalc) {
                         editStructureCurrentPage++;
+                        renderEditStructureTablePage();
+                    }
+                } else if (page === 'last') {
+                    const totalPagesCalc = Math.max(1, Math.ceil(editStructureAllStructures.length / editStructureRowsPerPage));
+                    if (editStructureCurrentPage !== totalPagesCalc) {
+                        editStructureCurrentPage = totalPagesCalc;
                         renderEditStructureTablePage();
                     }
                 } else {

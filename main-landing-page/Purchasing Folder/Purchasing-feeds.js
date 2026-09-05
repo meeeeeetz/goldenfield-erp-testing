@@ -1903,6 +1903,9 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feeds-suppliers-first-btn" ${currentSupplierPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="feeds-suppliers-prev-btn" ${currentSupplierPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -1910,8 +1913,18 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
 
             html += `<button class="page-btn" id="feeds-suppliers-next-btn" ${currentSupplierPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feeds-suppliers-last-btn" ${currentSupplierPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('feeds-suppliers-first-btn')?.addEventListener('click', () => {
+                if (currentSupplierPage !== 1) {
+                    currentSupplierPage = 1;
+                    renderFeedsSuppliersPage();
+                }
+            });
 
             document.getElementById('feeds-suppliers-prev-btn')?.addEventListener('click', () => {
                 if (currentSupplierPage > 1) {
@@ -1923,6 +1936,13 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             document.getElementById('feeds-suppliers-next-btn')?.addEventListener('click', () => {
                 if (currentSupplierPage < totalPages) {
                     currentSupplierPage++;
+                    renderFeedsSuppliersPage();
+                }
+            });
+
+            document.getElementById('feeds-suppliers-last-btn')?.addEventListener('click', () => {
+                if (currentSupplierPage !== totalPages) {
+                    currentSupplierPage = totalPages;
                     renderFeedsSuppliersPage();
                 }
             });
@@ -2339,6 +2359,9 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feed-types-first-btn" ${currentFeedTypePage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="feed-types-prev-btn" ${currentFeedTypePage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -2346,8 +2369,18 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
 
             html += `<button class="page-btn" id="feed-types-next-btn" ${currentFeedTypePage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feed-types-last-btn" ${currentFeedTypePage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('feed-types-first-btn')?.addEventListener('click', () => {
+                if (currentFeedTypePage !== 1) {
+                    currentFeedTypePage = 1;
+                    renderFeedTypesPage();
+                }
+            });
 
             document.getElementById('feed-types-prev-btn')?.addEventListener('click', () => {
                 if (currentFeedTypePage > 1) {
@@ -2359,6 +2392,13 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             document.getElementById('feed-types-next-btn')?.addEventListener('click', () => {
                 if (currentFeedTypePage < totalPages) {
                     currentFeedTypePage++;
+                    renderFeedTypesPage();
+                }
+            });
+
+            document.getElementById('feed-types-last-btn')?.addEventListener('click', () => {
+                if (currentFeedTypePage !== totalPages) {
+                    currentFeedTypePage = totalPages;
                     renderFeedTypesPage();
                 }
             });
@@ -2831,6 +2871,9 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feeds-transaction-first-btn" ${feedsTransactionCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="feeds-transaction-prev-btn" ${feedsTransactionCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -2838,8 +2881,18 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
 
             html += `<button class="page-btn" id="feeds-transaction-next-btn" ${feedsTransactionCurrentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="feeds-transaction-last-btn" ${feedsTransactionCurrentPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('feeds-transaction-first-btn')?.addEventListener('click', () => {
+                if (feedsTransactionCurrentPage !== 1) {
+                    feedsTransactionCurrentPage = 1;
+                    renderFeedsTransactionPage();
+                }
+            });
 
             document.getElementById('feeds-transaction-prev-btn')?.addEventListener('click', () => {
                 if (feedsTransactionCurrentPage > 1) {
@@ -2851,6 +2904,13 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             document.getElementById('feeds-transaction-next-btn')?.addEventListener('click', () => {
                 if (feedsTransactionCurrentPage < totalPages) {
                     feedsTransactionCurrentPage++;
+                    renderFeedsTransactionPage();
+                }
+            });
+
+            document.getElementById('feeds-transaction-last-btn')?.addEventListener('click', () => {
+                if (feedsTransactionCurrentPage !== totalPages) {
+                    feedsTransactionCurrentPage = totalPages;
                     renderFeedsTransactionPage();
                 }
             });

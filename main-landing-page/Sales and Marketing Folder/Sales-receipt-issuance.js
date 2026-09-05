@@ -1307,16 +1307,30 @@ function initializeReceiptModal() {
         }
         
         let buttonsHtml = '';
+        if (totalPages > 10) {
+            buttonsHtml += `<button class="page-btn" id="receipt-first-btn" ${receiptCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+        }
         buttonsHtml += `<button class="page-btn" id="receipt-prev-btn" ${receiptCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
-        
+
         pages.forEach(i => {
             buttonsHtml += `<button class="page-btn ${i === receiptCurrentPage ? 'active' : ''}" id="receipt-page-${i}">${i}</button>`;
         });
-        
+
         buttonsHtml += `<button class="page-btn" id="receipt-next-btn" ${receiptCurrentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
-        
+        if (totalPages > 10) {
+            buttonsHtml += `<button class="page-btn" id="receipt-last-btn" ${receiptCurrentPage === totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+        }
+
         pagination.innerHTML = buttonsHtml;
-        
+
+        document.getElementById('receipt-first-btn')?.addEventListener('click', () => {
+            if (receiptCurrentPage !== 1) {
+                receiptCurrentPage = 1;
+                renderReceiptPage();
+                renderReceiptPagination();
+            }
+        });
+
         document.getElementById('receipt-prev-btn')?.addEventListener('click', () => {
             if (receiptCurrentPage > 1) {
                 receiptCurrentPage--;
@@ -1324,7 +1338,7 @@ function initializeReceiptModal() {
                 renderReceiptPagination();
             }
         });
-        
+
         document.getElementById('receipt-next-btn')?.addEventListener('click', () => {
             if (receiptCurrentPage < totalPages) {
                 receiptCurrentPage++;
@@ -1332,7 +1346,15 @@ function initializeReceiptModal() {
                 renderReceiptPagination();
             }
         });
-        
+
+        document.getElementById('receipt-last-btn')?.addEventListener('click', () => {
+            if (receiptCurrentPage !== totalPages) {
+                receiptCurrentPage = totalPages;
+                renderReceiptPage();
+                renderReceiptPagination();
+            }
+        });
+
         pages.forEach(i => {
             document.getElementById(`receipt-page-${i}`)?.addEventListener('click', () => {
                 receiptCurrentPage = i;

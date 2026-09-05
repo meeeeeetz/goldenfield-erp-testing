@@ -767,6 +767,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-suppliers-first-btn" ${currentEggTraySupplierPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="egg-tray-suppliers-prev-btn" ${currentEggTraySupplierPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -774,8 +777,18 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             }
 
             html += `<button class="page-btn" id="egg-tray-suppliers-next-btn" ${currentEggTraySupplierPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-suppliers-last-btn" ${currentEggTraySupplierPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('egg-tray-suppliers-first-btn')?.addEventListener('click', () => {
+                if (currentEggTraySupplierPage !== 1) {
+                    currentEggTraySupplierPage = 1;
+                    renderEggTraySuppliersPage();
+                }
+            });
 
             document.getElementById('egg-tray-suppliers-prev-btn')?.addEventListener('click', () => {
                 if (currentEggTraySupplierPage > 1) {
@@ -787,6 +800,13 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             document.getElementById('egg-tray-suppliers-next-btn')?.addEventListener('click', () => {
                 if (currentEggTraySupplierPage < totalPages) {
                     currentEggTraySupplierPage++;
+                    renderEggTraySuppliersPage();
+                }
+            });
+
+            document.getElementById('egg-tray-suppliers-last-btn')?.addEventListener('click', () => {
+                if (currentEggTraySupplierPage !== totalPages) {
+                    currentEggTraySupplierPage = totalPages;
                     renderEggTraySuppliersPage();
                 }
             });
@@ -1152,6 +1172,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(eggTraySuppliersPageData.length / eggTraySuppliersPagePerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-suppliers-page-first" ${currentEggTraySuppliersPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="egg-tray-suppliers-page-prev" ${currentEggTraySuppliersPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -1159,8 +1182,19 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             }
 
             html += `<button class="page-btn" id="egg-tray-suppliers-page-next" ${currentEggTraySuppliersPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-suppliers-page-last" ${currentEggTraySuppliersPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('egg-tray-suppliers-page-first')?.addEventListener('click', () => {
+                if (currentEggTraySuppliersPageNum !== 1) {
+                    currentEggTraySuppliersPageNum = 1;
+                    renderEggTraySuppliersPageTable();
+                    renderEggTraySuppliersPagePagination();
+                }
+            });
 
             document.getElementById('egg-tray-suppliers-page-prev')?.addEventListener('click', () => {
                 if (currentEggTraySuppliersPageNum > 1) {
@@ -1173,6 +1207,14 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             document.getElementById('egg-tray-suppliers-page-next')?.addEventListener('click', () => {
                 if (currentEggTraySuppliersPageNum < totalPages) {
                     currentEggTraySuppliersPageNum++;
+                    renderEggTraySuppliersPageTable();
+                    renderEggTraySuppliersPagePagination();
+                }
+            });
+
+            document.getElementById('egg-tray-suppliers-page-last')?.addEventListener('click', () => {
+                if (currentEggTraySuppliersPageNum !== totalPages) {
+                    currentEggTraySuppliersPageNum = totalPages;
                     renderEggTraySuppliersPageTable();
                     renderEggTraySuppliersPagePagination();
                 }
@@ -1573,6 +1615,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(eggTrayTypesPageData.length / eggTrayTypesPagePerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-types-page-first" ${currentEggTrayTypesPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="egg-tray-types-page-prev" ${currentEggTrayTypesPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -1580,8 +1625,19 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             }
 
             html += `<button class="page-btn" id="egg-tray-types-page-next" ${currentEggTrayTypesPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-types-page-last" ${currentEggTrayTypesPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('egg-tray-types-page-first')?.addEventListener('click', () => {
+                if (currentEggTrayTypesPageNum !== 1) {
+                    currentEggTrayTypesPageNum = 1;
+                    renderEggTrayTypesPageTable();
+                    renderEggTrayTypesPagePagination();
+                }
+            });
 
             document.getElementById('egg-tray-types-page-prev')?.addEventListener('click', () => {
                 if (currentEggTrayTypesPageNum > 1) {
@@ -1594,6 +1650,14 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             document.getElementById('egg-tray-types-page-next')?.addEventListener('click', () => {
                 if (currentEggTrayTypesPageNum < totalPages) {
                     currentEggTrayTypesPageNum++;
+                    renderEggTrayTypesPageTable();
+                    renderEggTrayTypesPagePagination();
+                }
+            });
+
+            document.getElementById('egg-tray-types-page-last')?.addEventListener('click', () => {
+                if (currentEggTrayTypesPageNum !== totalPages) {
+                    currentEggTrayTypesPageNum = totalPages;
                     renderEggTrayTypesPageTable();
                     renderEggTrayTypesPagePagination();
                 }
@@ -1673,6 +1737,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             const totalPages = Math.max(1, Math.ceil(eggTrayTransactionsPageData.length / eggTrayTransactionsPagePerPage));
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-transactions-page-first" ${currentEggTrayTransactionsPageNum === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="egg-tray-transactions-page-prev" ${currentEggTrayTransactionsPageNum === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -1680,8 +1747,19 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             }
 
             html += `<button class="page-btn" id="egg-tray-transactions-page-next" ${currentEggTrayTransactionsPageNum >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="egg-tray-transactions-page-last" ${currentEggTrayTransactionsPageNum >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('egg-tray-transactions-page-first')?.addEventListener('click', () => {
+                if (currentEggTrayTransactionsPageNum !== 1) {
+                    currentEggTrayTransactionsPageNum = 1;
+                    renderEggTrayTransactionsPageTable();
+                    renderEggTrayTransactionsPagePagination();
+                }
+            });
 
             document.getElementById('egg-tray-transactions-page-prev')?.addEventListener('click', () => {
                 if (currentEggTrayTransactionsPageNum > 1) {
@@ -1694,6 +1772,14 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             document.getElementById('egg-tray-transactions-page-next')?.addEventListener('click', () => {
                 if (currentEggTrayTransactionsPageNum < totalPages) {
                     currentEggTrayTransactionsPageNum++;
+                    renderEggTrayTransactionsPageTable();
+                    renderEggTrayTransactionsPagePagination();
+                }
+            });
+
+            document.getElementById('egg-tray-transactions-page-last')?.addEventListener('click', () => {
+                if (currentEggTrayTransactionsPageNum !== totalPages) {
+                    currentEggTrayTransactionsPageNum = totalPages;
                     renderEggTrayTransactionsPageTable();
                     renderEggTrayTransactionsPagePagination();
                 }

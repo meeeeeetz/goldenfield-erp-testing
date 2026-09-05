@@ -228,18 +228,31 @@ ModuleComponents['systems-user-management'] = (container) => {
         const el = document.getElementById('users-pagination');
         if (!el) return;
         const totalPages = pagination.totalPages || 1;
-        let html = `<button class="page-btn" id="users-prev-btn" ${pagination.page <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+        let html = '';
+        if (totalPages > 10) {
+            html += `<button class="page-btn" id="users-first-btn" ${pagination.page <= 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+        }
+        html += `<button class="page-btn" id="users-prev-btn" ${pagination.page <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
         for (let i = 1; i <= totalPages; i++) {
             html += `<button class="page-btn ${i === pagination.page ? 'active' : ''}" id="users-page-${i}">${i}</button>`;
         }
         html += `<button class="page-btn" id="users-next-btn" ${pagination.page >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+        if (totalPages > 10) {
+            html += `<button class="page-btn" id="users-last-btn" ${pagination.page >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+        }
         el.innerHTML = html;
 
+        document.getElementById('users-first-btn')?.addEventListener('click', () => {
+            if (usersCurrentPage !== 1) { usersCurrentPage = 1; loadUsers(); }
+        });
         document.getElementById('users-prev-btn')?.addEventListener('click', () => {
             if (usersCurrentPage > 1) { usersCurrentPage--; loadUsers(); }
         });
         document.getElementById('users-next-btn')?.addEventListener('click', () => {
             usersCurrentPage++; loadUsers();
+        });
+        document.getElementById('users-last-btn')?.addEventListener('click', () => {
+            usersCurrentPage = totalPages; loadUsers();
         });
         for (let i = 1; i <= totalPages; i++) {
             document.getElementById(`users-page-${i}`)?.addEventListener('click', () => {

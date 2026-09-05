@@ -756,14 +756,20 @@ function renderElectricBillsPagination(totalPages) {
     }
     
     let html = '';
+    if (totalPages > 10) {
+        html += `<button class="page-btn" ${electricBillsCurrentPage === 1 ? 'disabled' : ''} onclick="electricBillsCurrentPage=1; renderElectricBillsTable();">&laquo; 1st</button>`;
+    }
     html += `<button class="page-btn" ${electricBillsCurrentPage === 1 ? 'disabled' : ''} onclick="electricBillsCurrentPage--; renderElectricBillsTable();">&lt;</button>`;
-    
+
     for (let i = 1; i <= totalPages; i++) {
         html += `<button class="page-btn ${i === electricBillsCurrentPage ? 'active' : ''}" onclick="electricBillsCurrentPage=${i}; renderElectricBillsTable();">${i}</button>`;
     }
-    
+
     html += `<button class="page-btn" ${electricBillsCurrentPage >= totalPages ? 'disabled' : ''} onclick="electricBillsCurrentPage++; renderElectricBillsTable();">&gt;</button>`;
-    
+    if (totalPages > 10) {
+        html += `<button class="page-btn" ${electricBillsCurrentPage >= totalPages ? 'disabled' : ''} onclick="electricBillsCurrentPage=${totalPages}; renderElectricBillsTable();">Last &raquo;</button>`;
+    }
+
     container.innerHTML = html;
 }
 

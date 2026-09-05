@@ -134,11 +134,18 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             for (let i = start; i <= end; i++) pages.push(i);
         }
 
-        let buttonsHtml = `<button class="page-btn" data-action="prev" ${accountingCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+        let buttonsHtml = '';
+        if (totalPages > 10) {
+            buttonsHtml += `<button class="page-btn" data-action="first" ${accountingCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+        }
+        buttonsHtml += `<button class="page-btn" data-action="prev" ${accountingCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
         pages.forEach(i => {
             buttonsHtml += `<button class="page-btn ${i === accountingCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
         });
         buttonsHtml += `<button class="page-btn" data-action="next" ${accountingCurrentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+        if (totalPages > 10) {
+            buttonsHtml += `<button class="page-btn" data-action="last" ${accountingCurrentPage === totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+        }
 
         pagination.innerHTML = buttonsHtml;
     }
@@ -186,10 +193,14 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             if (!btn || btn.disabled) return;
 
             const totalPages = Math.ceil(accountingCodesData.length / accountingRowsPerPage);
-            if (btn.dataset.action === 'prev' && accountingCurrentPage > 1) {
+            if (btn.dataset.action === 'first' && accountingCurrentPage !== 1) {
+                accountingCurrentPage = 1;
+            } else if (btn.dataset.action === 'prev' && accountingCurrentPage > 1) {
                 accountingCurrentPage--;
             } else if (btn.dataset.action === 'next' && accountingCurrentPage < totalPages) {
                 accountingCurrentPage++;
+            } else if (btn.dataset.action === 'last' && accountingCurrentPage !== totalPages) {
+                accountingCurrentPage = totalPages;
             } else if (btn.dataset.page) {
                 accountingCurrentPage = Number(btn.dataset.page);
             }

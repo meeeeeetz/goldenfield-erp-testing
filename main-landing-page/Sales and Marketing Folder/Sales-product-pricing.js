@@ -408,14 +408,20 @@ async function loadProductsTable(page = 1) {
         }
         
         let paginationHTML = '';
+        if (totalPages > 10) {
+            paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadProductsTable(1)">&laquo; 1st</button>`;
+        }
         paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadProductsTable(${page - 1})">&laquo; Prev</button>`;
-        
+
         for (let i = 1; i <= totalPages; i++) {
             paginationHTML += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadProductsTable(${i})">${i}</button>`;
         }
-        
+
         paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadProductsTable(${page + 1})">Next &raquo;</button>`;
-        
+        if (totalPages > 10) {
+            paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadProductsTable(${totalPages})">Last &raquo;</button>`;
+        }
+
         paginationContainer.innerHTML = paginationHTML;
     } catch (err) {
         console.error('Failed to load products table', err);
@@ -1153,14 +1159,20 @@ async function loadPriceChangesTable(page = 1) {
         }
         
         let paginationHTML = '';
+        if (totalPages > 10) {
+            paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadPriceChangesTable(1)">&laquo; 1st</button>`;
+        }
         paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadPriceChangesTable(${page - 1})">&laquo; Prev</button>`;
-        
+
         for (let i = 1; i <= totalPages; i++) {
             paginationHTML += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadPriceChangesTable(${i})">${i}</button>`;
         }
-        
+
         paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${page + 1})">Next &raquo;</button>`;
-        
+        if (totalPages > 10) {
+            paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${totalPages})">Last &raquo;</button>`;
+        }
+
         paginationContainer.innerHTML = paginationHTML;
         updatePriceChangeSortIndicators();
     } catch (err) {

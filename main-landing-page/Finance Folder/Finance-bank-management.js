@@ -519,13 +519,19 @@ function renderBankAccountsPagination(totalPages) {
     }
     
     let html = '';
+    if (totalPages > 10) {
+        html += `<button class="page-btn" ${bankAccountsCurrentPage === 1 ? 'disabled' : ''} onclick="bankAccountsCurrentPage=1; renderBankAccountsTable();">&laquo; 1st</button>`;
+    }
     html += `<button class="page-btn" ${bankAccountsCurrentPage === 1 ? 'disabled' : ''} onclick="bankAccountsCurrentPage--; renderBankAccountsTable();">&lt;</button>`;
-    
+
     for (let i = 1; i <= totalPages; i++) {
         html += `<button class="page-btn ${i === bankAccountsCurrentPage ? 'active' : ''}" onclick="bankAccountsCurrentPage=${i}; renderBankAccountsTable();">${i}</button>`;
     }
-    
+
     html += `<button class="page-btn" ${bankAccountsCurrentPage === totalPages ? 'disabled' : ''} onclick="bankAccountsCurrentPage++; renderBankAccountsTable();">&gt;</button>`;
-    
+    if (totalPages > 10) {
+        html += `<button class="page-btn" ${bankAccountsCurrentPage === totalPages ? 'disabled' : ''} onclick="bankAccountsCurrentPage=${totalPages}; renderBankAccountsTable();">Last &raquo;</button>`;
+    }
+
     container.innerHTML = html;
 }

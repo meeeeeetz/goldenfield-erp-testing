@@ -378,11 +378,17 @@ ModuleComponents['finance-loans'] = (container) => {
         }
 
         let html = '';
+        if (totalPages > 10) {
+            html += `<button class="page-btn" ${loanAccountsCurrentPage === 1 ? 'disabled' : ''} onclick="loanAccountsCurrentPage=1; renderLoanAccountsTable();">&laquo; 1st</button>`;
+        }
         html += `<button class="page-btn" ${loanAccountsCurrentPage === 1 ? 'disabled' : ''} onclick="loanAccountsCurrentPage--; renderLoanAccountsTable();">&lt;</button>`;
         for (let i = 1; i <= totalPages; i++) {
             html += `<button class="page-btn ${i === loanAccountsCurrentPage ? 'active' : ''}" onclick="loanAccountsCurrentPage=${i}; renderLoanAccountsTable();">${i}</button>`;
         }
         html += `<button class="page-btn" ${loanAccountsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanAccountsCurrentPage++; renderLoanAccountsTable();">&gt;</button>`;
+        if (totalPages > 10) {
+            html += `<button class="page-btn" ${loanAccountsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanAccountsCurrentPage=${totalPages}; renderLoanAccountsTable();">Last &raquo;</button>`;
+        }
         container.innerHTML = html;
     }
 
@@ -954,11 +960,17 @@ ModuleComponents['finance-loans'] = (container) => {
         }
 
         let html = '';
+        if (totalPages > 10) {
+            html += `<button class="page-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''} onclick="loanTransactionsCurrentPage=1; renderLoanTransactionsTable();">&laquo; 1st</button>`;
+        }
         html += `<button class="page-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''} onclick="loanTransactionsCurrentPage--; renderLoanTransactionsTable();">&lt;</button>`;
         for (let i = 1; i <= totalPages; i++) {
             html += `<button class="page-btn ${i === loanTransactionsCurrentPage ? 'active' : ''}" onclick="loanTransactionsCurrentPage=${i}; renderLoanTransactionsTable();">${i}</button>`;
         }
         html += `<button class="page-btn" ${loanTransactionsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanTransactionsCurrentPage++; renderLoanTransactionsTable();">&gt;</button>`;
+        if (totalPages > 10) {
+            html += `<button class="page-btn" ${loanTransactionsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanTransactionsCurrentPage=${totalPages}; renderLoanTransactionsTable();">Last &raquo;</button>`;
+        }
         container.innerHTML = html;
     }
 

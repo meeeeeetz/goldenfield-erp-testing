@@ -878,6 +878,9 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="misc-suppliers-first-btn" ${currentMiscSupplierPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="misc-suppliers-prev-btn" ${currentMiscSupplierPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -885,8 +888,18 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
 
             html += `<button class="page-btn" id="misc-suppliers-next-btn" ${currentMiscSupplierPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="misc-suppliers-last-btn" ${currentMiscSupplierPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('misc-suppliers-first-btn')?.addEventListener('click', () => {
+                if (currentMiscSupplierPage !== 1) {
+                    currentMiscSupplierPage = 1;
+                    renderMiscSuppliersPage();
+                }
+            });
 
             document.getElementById('misc-suppliers-prev-btn')?.addEventListener('click', () => {
                 if (currentMiscSupplierPage > 1) {
@@ -898,6 +911,13 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             document.getElementById('misc-suppliers-next-btn')?.addEventListener('click', () => {
                 if (currentMiscSupplierPage < totalPages) {
                     currentMiscSupplierPage++;
+                    renderMiscSuppliersPage();
+                }
+            });
+
+            document.getElementById('misc-suppliers-last-btn')?.addEventListener('click', () => {
+                if (currentMiscSupplierPage !== totalPages) {
+                    currentMiscSupplierPage = totalPages;
                     renderMiscSuppliersPage();
                 }
             });
@@ -973,6 +993,9 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             if (!container) return;
 
             let html = '';
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="misc-transactions-first-btn" ${currentMiscTransactionPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+            }
             html += `<button class="page-btn" id="misc-transactions-prev-btn" ${currentMiscTransactionPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
@@ -980,8 +1003,18 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
 
             html += `<button class="page-btn" id="misc-transactions-next-btn" ${currentMiscTransactionPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+            if (totalPages > 10) {
+                html += `<button class="page-btn" id="misc-transactions-last-btn" ${currentMiscTransactionPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+            }
 
             container.innerHTML = html;
+
+            document.getElementById('misc-transactions-first-btn')?.addEventListener('click', () => {
+                if (currentMiscTransactionPage !== 1) {
+                    currentMiscTransactionPage = 1;
+                    renderMiscTransactionsPage();
+                }
+            });
 
             document.getElementById('misc-transactions-prev-btn')?.addEventListener('click', () => {
                 if (currentMiscTransactionPage > 1) {
@@ -993,6 +1026,13 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             document.getElementById('misc-transactions-next-btn')?.addEventListener('click', () => {
                 if (currentMiscTransactionPage < totalPages) {
                     currentMiscTransactionPage++;
+                    renderMiscTransactionsPage();
+                }
+            });
+
+            document.getElementById('misc-transactions-last-btn')?.addEventListener('click', () => {
+                if (currentMiscTransactionPage !== totalPages) {
+                    currentMiscTransactionPage = totalPages;
                     renderMiscTransactionsPage();
                 }
             });
