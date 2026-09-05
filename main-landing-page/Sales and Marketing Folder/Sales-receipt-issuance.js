@@ -361,7 +361,7 @@ function generateReceiptItems() {
 
 async function loadCustomersForReceipt() {
     try {
-        const res = await fetch(`${API_BASE_CUSTOMERS}`);
+        const res = await fetch(`${API_BASE_CUSTOMERS}`, { headers: getReceiptAuthHeaders() });
         const customers = await res.json();
         const select = document.getElementById('receipt-customer');
         if (!select) return;
@@ -378,7 +378,7 @@ async function loadCustomersForReceipt() {
 
 async function loadProductsForReceipt() {
     try {
-        const res = await fetch(`${API_BASE_PRODUCTS}`);
+        const res = await fetch(`${API_BASE_PRODUCTS}`, { headers: getReceiptAuthHeaders() });
         const products = await res.json();
         const selects = document.querySelectorAll('.receipt-product');
         selects.forEach(select => {
@@ -394,6 +394,31 @@ async function loadProductsForReceipt() {
         });
     } catch (err) {
         console.error('Failed to load products for receipt', err);
+    }
+}
+
+async function refreshCustomerLifetimeValue() {
+    try {
+        const res = await fetch(`${API_BASE_CUSTOMERS}/top-by-receipts`, { headers: getReceiptAuthHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        const tbody = document.getElementById('top-customers-body');
+        if (!tbody) return;
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">No data available</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(c => `
+            <tr>
+                <td>${c.company}</td>
+                <td>₱${parseFloat(c.gross_receipts).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to refresh customer lifetime value', err);
     }
 }
 
@@ -738,6 +763,7 @@ function initializeReceiptModal() {
             loadTotalReceivables();
             loadMonthlySales();
             loadWeeklySchedule();
+            refreshCustomerLifetimeValue();
         } catch (err) {
             console.error('Failed to save receipt', err);
             alert('Error saving receipt: ' + err.message);
@@ -948,8 +974,8 @@ function initializeReceiptModal() {
                     }
 
                     const [customersRes, productsRes] = await Promise.all([
-                        fetch(`${API_BASE_CUSTOMERS}`),
-                        fetch(`${API_BASE_PRODUCTS}`)
+                        fetch(`${API_BASE_CUSTOMERS}`, { headers: getReceiptAuthHeaders() }),
+                        fetch(`${API_BASE_PRODUCTS}`, { headers: getReceiptAuthHeaders() })
                     ]);
 
                     if (!customersRes.ok || !productsRes.ok) {

@@ -68,9 +68,14 @@ class CustomerDirectoryController {
             SELECT 
                 cl.customer_id,
                 cl.company,
-                COALESCE(SUM(ris.grand_total), 0) as gross_receipts
+                COALESCE(SUM(sub.actual_total), 0) as gross_receipts
             FROM customer_list cl
-            INNER JOIN receipt_issue_summaries ris ON cl.company = ris.customer
+            INNER JOIN (
+                SELECT si_number, date, customer, SUM(total) as actual_total
+                FROM receipt_issues
+                GROUP BY si_number, date, customer
+            ) sub ON cl.company = sub.customer
+            JOIN receipt_issue_summaries ris ON sub.si_number = ris.si_number
             WHERE cl.status = 'Active'
               AND ris.status != 'Voided'
             GROUP BY cl.customer_id, cl.company
