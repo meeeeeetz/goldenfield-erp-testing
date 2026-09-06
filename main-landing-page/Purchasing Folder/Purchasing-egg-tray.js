@@ -612,19 +612,19 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                             },
-                            body: JSON.stringify({
-                                expense_list_id: expenseListId,
-                                date: date,
-                                accounting_code: '5140',
-                                expense_type: 'Packaging & Production Consumables',
-                                description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierName}`,
-                                remarks: `${quantity} Egg Tray purchased at ${formatNumber(unitPrice)}`,
-                                total_amount: totalPrice,
-                                account_source: null,
-                                cleared_date: null,
-                                status: 'Pending',
-                                tracking_id: orderId
-                            })
+                        body: JSON.stringify({
+                            expense_list_id: expenseListId,
+                            date: date,
+                            accounting_code: '5140',
+                            expense_type: 'Packaging & Production Consumables',
+                            description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierId} ${supplierName}`,
+                            remarks: `${quantity} No of Egg Tray purchased at ${formatNumber(unitPrice)}`,
+                            total_amount: totalPrice,
+                            account_source: null,
+                            cleared_date: null,
+                            status: 'Pending',
+                            tracking_id: orderId
+                        })
                         });
                     }
                 } catch (expenseErr) {
