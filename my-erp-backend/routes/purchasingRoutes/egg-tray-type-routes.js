@@ -3,7 +3,10 @@ const router = express.Router();
 const EggTrayTypeController = require('../../Controllers/main-purchasing-controller/egg-tray-type-controller');
 const pool = require('../../config/database');
 const controller = new EggTrayTypeController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
+
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-egg-tray'));
 
 router.get('/active', async (req, res) => {
     try {
@@ -15,7 +18,7 @@ router.get('/active', async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const types = await controller.getAllTypes(search);
@@ -25,7 +28,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextTypeId();
         res.json({ type_id: nextId });
@@ -34,7 +37,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/active-suppliers', authenticateToken, async (req, res) => {
+router.get('/active-suppliers', async (req, res) => {
     try {
         const suppliers = await controller.getActiveSuppliers();
         res.json(suppliers);
@@ -43,7 +46,7 @@ router.get('/active-suppliers', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:typeId', authenticateToken, async (req, res) => {
+router.get('/code/:typeId', async (req, res) => {
     try {
         const type = await controller.getTypeByCode(req.params.typeId);
         if (type) {
@@ -56,7 +59,7 @@ router.get('/code/:typeId', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const type = await controller.getTypeByCode(req.params.id);
         if (type) {
@@ -69,7 +72,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addType(req.body);
         res.status(201).json(result);
@@ -78,7 +81,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateType(req.params.id, req.body);
         if (result) {
@@ -91,7 +94,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteType(req.params.id);
         if (result) {

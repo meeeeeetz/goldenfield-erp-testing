@@ -35,7 +35,8 @@ const USER_ALLOWED_MODULES = new Set([
     'operations-shipping-permit',
     'sales-receipt-issuance',
     'sales-product-pricing',
-    'purchasing-electricity'
+    'purchasing-electricity',
+    'purchasing-egg-tray'
 ]);
 
 const pathToModuleMap = {

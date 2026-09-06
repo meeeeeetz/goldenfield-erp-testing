@@ -3,9 +3,12 @@ const router = express.Router();
 const OrderEggTrayController = require('../../Controllers/main-purchasing-controller/order-egg-tray-controller');
 const pool = require('../../config/database');
 const controller = new OrderEggTrayController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-egg-tray'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const orders = await controller.getAllOrders(search);
@@ -15,7 +18,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextOrderId();
         res.json({ order_id: nextId });
@@ -24,7 +27,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/stats/total-quantity', authenticateToken, async (req, res) => {
+router.get('/stats/total-quantity', async (req, res) => {
     try {
         const totalQuantity = await controller.getTotalQuantityOrdered();
         res.json({ total_quantity: totalQuantity });
@@ -33,7 +36,7 @@ router.get('/stats/total-quantity', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/stats/outstanding-balance', authenticateToken, async (req, res) => {
+router.get('/stats/outstanding-balance', async (req, res) => {
     try {
         const outstandingBalance = await controller.getOutstandingBalance();
         res.json({ outstanding_balance: outstandingBalance });
@@ -42,7 +45,7 @@ router.get('/stats/outstanding-balance', authenticateToken, async (req, res) => 
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const order = await controller.getOrderByCode(req.params.id);
         if (order) {
@@ -55,7 +58,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addOrder(req.body);
         res.status(201).json(result);
@@ -64,7 +67,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateOrder(req.params.id, req.body);
         if (result) {
@@ -77,7 +80,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteOrder(req.params.id);
         if (result) {
