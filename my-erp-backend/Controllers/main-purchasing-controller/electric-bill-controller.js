@@ -1,6 +1,6 @@
 const pool = require('../../config/database');
 const ExpenseController = require('../main-finance-controller/expense-controller');
-const { getPublicUrl } = require('../../utils/supabaseStorage');
+const { getPublicUrl, deleteFile } = require('../../utils/supabaseStorage');
 
 class ElectricBillController {
     constructor(dbConnection) {
@@ -105,7 +105,7 @@ class ElectricBillController {
 
     async updateElectricBill(electricBillId, billData) {
         const { date, billing_start, billing_end, demand, kwh, rate_per_kwh, amount, status, payment_date, payment_source, check_number, file_path } = billData;
-        
+
         const updates = [];
         const values = [];
         let counter = 1;
@@ -136,13 +136,25 @@ class ElectricBillController {
         const result = await this.db.query(query, values);
 
         const updatedBill = result.rows[0];
-        
+
+        if (updatedBill && file_path === null) {
+            const existing = await this.db.query('SELECT file_path FROM electric_bills WHERE electric_bill_id = $1', [electricBillId]);
+            const oldPath = existing.rows[0]?.file_path;
+            if (oldPath) {
+                try {
+                    await deleteFile(oldPath);
+                } catch (e) {
+                    console.error('Failed to delete old electric bill file:', e.message);
+                }
+            }
+        }
+
         if (updatedBill) {
             const expenseResult = await this.db.query('SELECT id FROM expenses WHERE tracking_id = $1', [electricBillId]);
             if (expenseResult.rows.length > 0) {
                 const expenseId = expenseResult.rows[0].id;
                 const expenseStatus = payment_date && payment_source ? 'Paid' : 'Pending';
-                
+
                 await this.db.query(
                     `UPDATE expenses 
                     SET account_source = $1, cleared_date = $2, status = $3, updated_at = CURRENT_TIMESTAMP 
@@ -161,7 +173,16 @@ class ElectricBillController {
     }
 
     async deleteElectricBill(id) {
-        const query = 'DELETE FROM electric_bills WHERE id = $1';
+        const existing = await this.db.query('SELECT file_path FROM electric_bills WHERE electric_bill_id = $1', [id]);
+        const filePath = existing.rows[0]?.file_path;
+        if (filePath) {
+            try {
+                await deleteFile(filePath);
+            } catch (e) {
+                console.error('Failed to delete electric bill file:', e.message);
+            }
+        }
+        const query = 'DELETE FROM electric_bills WHERE electric_bill_id = $1';
         const result = await this.db.query(query, [id]);
         return result.rowCount > 0;
     }

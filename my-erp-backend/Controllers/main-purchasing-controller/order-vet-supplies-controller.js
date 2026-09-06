@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { deleteFile } = require('../../utils/supabaseStorage');
 
 class OrderVetSuppliesController {
     constructor(dbConnection) {
@@ -120,6 +121,15 @@ class OrderVetSuppliesController {
     }
 
     async removeOrderPhoto(orderId) {
+        const existing = await this.db.query('SELECT file_path FROM order_vet_supplies WHERE order_id = $1', [orderId]);
+        const filePath = existing.rows[0]?.file_path;
+        if (filePath) {
+            try {
+                await deleteFile(filePath);
+            } catch (e) {
+                console.error('Failed to delete vet supply order photo:', e.message);
+            }
+        }
         const query = `
             UPDATE order_vet_supplies 
             SET file_path = NULL, updated_at = CURRENT_TIMESTAMP
@@ -131,6 +141,15 @@ class OrderVetSuppliesController {
     }
 
     async deleteOrder(orderId) {
+        const existing = await this.db.query('SELECT file_path FROM order_vet_supplies WHERE order_id = $1', [orderId]);
+        const filePath = existing.rows[0]?.file_path;
+        if (filePath) {
+            try {
+                await deleteFile(filePath);
+            } catch (e) {
+                console.error('Failed to delete vet supply order photo:', e.message);
+            }
+        }
         const query = 'DELETE FROM order_vet_supplies WHERE order_id = $1';
         const result = await this.db.query(query, [orderId]);
         return result.rowCount > 0;

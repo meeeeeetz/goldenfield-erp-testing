@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const FeedInventoryController = require('./feed-inventory-controller');
+const { deleteFile } = require('../../utils/supabaseStorage');
 
 class OrderFeedController {
     constructor(dbConnection) {
@@ -155,6 +156,15 @@ class OrderFeedController {
     }
 
     async removeOrderPhoto(orderId) {
+        const existing = await this.db.query('SELECT receipt_path FROM order_feeds WHERE order_id = $1', [orderId]);
+        const receiptPath = existing.rows[0]?.receipt_path;
+        if (receiptPath) {
+            try {
+                await deleteFile(receiptPath);
+            } catch (e) {
+                console.error('Failed to delete feed order photo:', e.message);
+            }
+        }
         const query = `
             UPDATE order_feeds 
             SET receipt_path = NULL, updated_at = CURRENT_TIMESTAMP
@@ -166,6 +176,15 @@ class OrderFeedController {
     }
 
     async deleteOrder(orderId) {
+        const existing = await this.db.query('SELECT receipt_path FROM order_feeds WHERE order_id = $1', [orderId]);
+        const receiptPath = existing.rows[0]?.receipt_path;
+        if (receiptPath) {
+            try {
+                await deleteFile(receiptPath);
+            } catch (e) {
+                console.error('Failed to delete feed order photo:', e.message);
+            }
+        }
         const query = 'DELETE FROM order_feeds WHERE order_id = $1';
         const result = await this.db.query(query, [orderId]);
         return result.rowCount > 0;
