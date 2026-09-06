@@ -126,6 +126,9 @@ class ElectricBillController {
         updates.push(`updated_at = CURRENT_TIMESTAMP`);
         values.push(electricBillId);
 
+        const oldPathRow = await this.db.query('SELECT file_path FROM electric_bills WHERE electric_bill_id = $1', [electricBillId]);
+        const oldPath = oldPathRow.rows[0]?.file_path;
+
         const query = `
             UPDATE electric_bills 
             SET ${updates.join(', ')}
@@ -137,15 +140,11 @@ class ElectricBillController {
 
         const updatedBill = result.rows[0];
 
-        if (updatedBill && file_path === null) {
-            const existing = await this.db.query('SELECT file_path FROM electric_bills WHERE electric_bill_id = $1', [electricBillId]);
-            const oldPath = existing.rows[0]?.file_path;
-            if (oldPath) {
-                try {
-                    await deleteFile(oldPath);
-                } catch (e) {
-                    console.error('Failed to delete old electric bill file:', e.message);
-                }
+        if (updatedBill && file_path === null && oldPath) {
+            try {
+                await deleteFile(oldPath);
+            } catch (e) {
+                console.error('Failed to delete old electric bill file:', e.message);
             }
         }
 
@@ -154,7 +153,7 @@ class ElectricBillController {
             if (expenseResult.rows.length > 0) {
                 const expenseId = expenseResult.rows[0].id;
                 const expenseStatus = payment_date && payment_source ? 'Paid' : 'Pending';
-
+                
                 await this.db.query(
                     `UPDATE expenses 
                     SET account_source = $1, cleared_date = $2, status = $3, updated_at = CURRENT_TIMESTAMP 
