@@ -150,7 +150,8 @@ const rolePermissions = {
         'operations-layer-buildings',
         'operations-shipping-permit',
         'sales-receipt-issuance',
-        'sales-product-pricing'
+        'sales-product-pricing',
+        'purchasing-electricity'
     ])
 };
 

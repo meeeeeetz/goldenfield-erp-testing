@@ -34,7 +34,8 @@ const USER_ALLOWED_MODULES = new Set([
     'operations-layer-buildings',
     'operations-shipping-permit',
     'sales-receipt-issuance',
-    'sales-product-pricing'
+    'sales-product-pricing',
+    'purchasing-electricity'
 ]);
 
 const pathToModuleMap = {
@@ -42,7 +43,8 @@ const pathToModuleMap = {
     '/api/products': 'sales-product-pricing',
     '/api/price-changes': 'sales-product-pricing',
     '/api/customers': 'sales-product-pricing',
-    '/api/layer-buildings-reports': 'operations-layer-buildings'
+    '/api/layer-buildings-reports': 'operations-layer-buildings',
+    '/api/electric-bills': 'purchasing-electricity'
 };
 
 const getModuleFromPath = (reqPath) => {
