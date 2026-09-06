@@ -536,15 +536,6 @@ class EmployeeProfileController {
             return { photo_file_name: null, photo_url: null, folder_name: null };
         }
     }
-                }
-            }
-
-            return { photo_file_name: null, photo_url: null, folder_name: folderName };
-        } catch (e) {
-            console.error(`[findEmployeePhoto] Error:`, e.message, e.stack);
-            return { photo_file_name: null, photo_url: null, folder_name: null };
-        }
-    }
 
     async createEmployeeFolder({ employee_id, last_name, first_name }) {
         if (!employee_id) {
