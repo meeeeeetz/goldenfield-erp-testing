@@ -10,7 +10,7 @@ class ElectricBillController {
     async getAllElectricBills() {
         const query = `
             SELECT eb.*, 
-                   u.email as created_by_email,
+                   CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
                    ba.bank,
                    ba.bank_account_number
             FROM electric_bills eb
@@ -27,7 +27,7 @@ class ElectricBillController {
 
     async getElectricBillById(id) {
         const query = `
-            SELECT eb.*, u.email as created_by_email 
+            SELECT eb.*, CONCAT(u.first_name, ' ', u.last_name) as created_by_name
             FROM electric_bills eb
             LEFT JOIN users u ON eb.created_by = u.id
             WHERE eb.id = $1

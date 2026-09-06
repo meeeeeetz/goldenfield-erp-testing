@@ -724,7 +724,7 @@ function renderElectricBillsTable() {
             <td>${bill.rate_per_kwh || '-'}</td>
             <td>₱${Number(bill.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td>${bill.status || '-'}</td>
-            <td>${bill.created_by_email || '-'}</td>
+            <td>${bill.created_by_name || '-'}</td>
             <td><span class="photo-icon-wrap" data-receipt-path="${bill.file_url || ''}" data-bill-id="${bill.electric_bill_id || ''}" onclick="window._electricPhotoClick && window._electricPhotoClick(this)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${bill.file_url ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span></td>
             <td>
                 <button class="btn-payment" onclick="openPaymentModal('${bill.electric_bill_id}', '${formatDate(bill.payment_date)}', '${bill.payment_source || ''}', '${bill.check_number || ''}')" title="Add Payment">
