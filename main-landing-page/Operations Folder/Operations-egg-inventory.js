@@ -426,10 +426,47 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 </div>
         `;
 
-        document.getElementById('open-egg-modal').onclick = () => {
+        document.getElementById('open-egg-modal').onclick = async () => {
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('report-date');
             if (dateInput) dateInput.value = today;
+
+            const beginningInput = document.getElementById('beginning-inventory');
+            const soldInput = document.getElementById('egg-count-input');
+
+            try {
+                const [latestRes, receiptsRes, productsRes] = await Promise.all([
+                    fetch('/api/daily-egg-production/latest', { headers: getAuthHeaders() }),
+                    fetch('/api/receipt-issues', { headers: getAuthHeaders() }),
+                    fetch('/api/products', { headers: getAuthHeaders() })
+                ]);
+
+                if (latestRes.ok) {
+                    const latest = await latestRes.json();
+                    if (beginningInput) beginningInput.value = (latest.ending_inventory || 0).toLocaleString();
+                } else {
+                    if (beginningInput) beginningInput.value = '0';
+                }
+
+                if (receiptsRes.ok && productsRes.ok) {
+                    const receipts = await receiptsRes.json();
+                    const products = await productsRes.json();
+                    const productMap = new Map(products.map(p => [p.product, p.no_of_eggs || 0]));
+
+                    const todayStr = today;
+                    const totalEggsSold = receipts
+                        .filter(r => r.date === todayStr)
+                        .reduce((sum, r) => {
+                            const eggs = productMap.get(r.product) || 0;
+                            return sum + (parseFloat(r.qty) || 0) * eggs;
+                        }, 0);
+
+                    if (soldInput) soldInput.value = totalEggsSold.toLocaleString();
+                }
+            } catch (err) {
+                console.error('Failed to load modal data:', err);
+            }
+
             document.getElementById('egg-modal').classList.remove('hidden');
         };
         document.getElementById('close-egg-modal-btn').onclick = () => {

@@ -18,6 +18,19 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/latest', async (req, res) => {
+    try {
+        const report = await controller.getLatestReport();
+        if (report) {
+            res.json(report);
+        } else {
+            res.status(404).json({ error: 'No reports found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:reportId', async (req, res) => {
     try {
         const report = await controller.getReportById(req.params.reportId);

@@ -88,6 +88,16 @@ class DailyEggProductionController {
         }
         return 1;
     }
+
+    async getLatestReport() {
+        const query = `
+            SELECT ending_inventory FROM daily_egg_production
+            ORDER BY report_date DESC, created_at DESC
+            LIMIT 1
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0] || null;
+    }
 }
 
 module.exports = DailyEggProductionController;
