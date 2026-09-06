@@ -1305,7 +1305,15 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
             const modal = document.getElementById('egg-tray-type-modal');
             if (!modal) return;
 
-            document.getElementById('create-egg-tray-type-id').value = 'EgTraTyID-1';
+            try {
+                const idRes = await fetch(API_BASE_EGG_TRAY_TYPES + '/next-id', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                const idData = await idRes.json();
+                document.getElementById('create-egg-tray-type-id').value = idData.type_id || 'EgTraTyID-1';
+            } catch (err) {
+                document.getElementById('create-egg-tray-type-id').value = 'EgTraTyID-1';
+            }
 
             await loadActiveEggTraySuppliers();
             switchEggTrayTypeTab('create');
