@@ -85,7 +85,7 @@ class ElectricBillController {
             
             await expenseController.addExpense({
                 expense_list_id: nextExpenseId,
-                electric_bill_id: electric_bill_id,
+                tracking_id: electric_bill_id,
                 date: finalDate,
                 accounting_code: '5130',
                 expense_type: 'Direct Utilities & Energy',

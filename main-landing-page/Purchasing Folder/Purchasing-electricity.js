@@ -359,6 +359,7 @@ ModuleComponents['purchasing-electricity'] = (container) => {
             const zone = document.getElementById('electric-bill-upload-zone');
             if (zone && zone._clear) zone._clear();
             loadElectricBillsTable();
+            loadChartData();
         } catch (err) {
             alert('Error: ' + err.message);
         }
