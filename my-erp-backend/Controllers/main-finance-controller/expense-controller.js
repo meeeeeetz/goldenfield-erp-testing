@@ -100,11 +100,11 @@ class ExpenseController {
     }
 
     async updateExpenseByTrackingId(trackingId, expenseData) {
-        const { date, accounting_code, expense_type, description, remarks, total_amount, account_source, cleared_date, status, payment_date } = expenseData;
+        const { date, accounting_code, expense_type, description, remarks, total_amount, account_source, cleared_date, status } = expenseData;
         const query = `
             UPDATE expenses 
-            SET date = $1, accounting_code = $2, expense_type = $3, description = $4, remarks = $5, total_amount = $6, account_source = $7, cleared_date = $8, status = $9, payment_date = $10, updated_at = CURRENT_TIMESTAMP
-            WHERE tracking_id = $11
+            SET date = $1, accounting_code = $2, expense_type = $3, description = $4, remarks = $5, total_amount = $6, account_source = $7, cleared_date = $8, status = $9, updated_at = CURRENT_TIMESTAMP
+            WHERE tracking_id = $10
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -117,7 +117,6 @@ class ExpenseController {
             account_source || null,
             cleared_date || null,
             status || 'Pending',
-            payment_date || null,
             trackingId
         ]);
         return result.rows[0];
