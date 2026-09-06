@@ -140,7 +140,7 @@ app.use('/api/loan-accounts', loanAccountRoutes);
 app.use('/api/loan-transactions', loanTransactionRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/upload', uploadRoutes);
-// Note: File uploads now use Google Cloud Storage
+// Note: File uploads now use Supabase Storage
 // Static file serving is only for backward compatibility during migration
 
 // Serve static frontend files

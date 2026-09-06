@@ -494,7 +494,7 @@ class EmployeeProfileController {
     async findEmployeePhoto(employee_id) {
         try {
             const client = initializeSupabase();
-            const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfield-erp-2026';
+            const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfieldegg';
             const folderName = await this.computeEmployeeFolderName(employee_id);
             const lowerEmpId = String(employee_id).toLowerCase();
 
@@ -508,6 +508,11 @@ class EmployeeProfileController {
                     limit: 100,
                     sortBy: { column: 'name', order: 'asc' }
                 });
+
+                if (error) {
+                    console.error(`[findEmployeePhoto] Supabase list error for prefix ${prefix}:`, error);
+                    continue;
+                }
 
                 if (files && files.length > 0) {
                     const match = files.find(f => {
@@ -531,6 +536,15 @@ class EmployeeProfileController {
             return { photo_file_name: null, photo_url: null, folder_name: null };
         }
     }
+                }
+            }
+
+            return { photo_file_name: null, photo_url: null, folder_name: folderName };
+        } catch (e) {
+            console.error(`[findEmployeePhoto] Error:`, e.message, e.stack);
+            return { photo_file_name: null, photo_url: null, folder_name: null };
+        }
+    }
 
     async createEmployeeFolder({ employee_id, last_name, first_name }) {
         if (!employee_id) {
@@ -544,7 +558,7 @@ class EmployeeProfileController {
 
         const folderName = `${safe(employee_id)}_${safe(last_name)}_${safe(first_name)}`;
         
-        // GCS doesn't need folder creation - folders are auto-created on upload
+        // Supabase Storage doesn't need folder creation - folders are auto-created on upload
         return { folderName, fullPath: `employee-photos/${folderName}` };
     }
 

@@ -24,7 +24,7 @@ function initializeSupabase() {
 
 async function uploadFile(buffer, destination, options = {}) {
     const client = initializeSupabase();
-    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfieldegg';
 
     const { data, error } = await client.storage
         .from(bucketName)
@@ -49,7 +49,7 @@ async function uploadFile(buffer, destination, options = {}) {
 
 async function deleteFile(fileName) {
     const client = initializeSupabase();
-    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfieldegg';
 
     const { error } = await client.storage
         .from(bucketName)
@@ -63,13 +63,13 @@ async function deleteFile(fileName) {
 
 function getPublicUrl(fileName) {
     const projectId = process.env.SUPABASE_PROJECT_ID || 'lhypktkkymfkdkcrtvik';
-    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfieldegg';
     return `https://${projectId}.supabase.co/storage/v1/object/public/${bucketName}/${fileName}`;
 }
 
 async function fileExists(fileName) {
     const client = initializeSupabase();
-    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfieldegg';
 
     const { data, error } = await client.storage
         .from(bucketName)
