@@ -76,7 +76,7 @@ class EggTrayTypeController {
     }
 
     async getNextTypeId() {
-        const query = "SELECT MAX(CAST(SUBSTRING(type_id FROM '\\d+') AS INTEGER)) as max_num FROM egg_tray_types";
+        const query = "SELECT MAX(CAST(SUBSTRING(type_id FROM '[0-9]+') AS INTEGER)) as max_num FROM egg_tray_types";
         const result = await this.db.query(query);
         const maxNum = result.rows[0]?.max_num || 0;
         return 'EgTraTyID-' + (maxNum + 1);

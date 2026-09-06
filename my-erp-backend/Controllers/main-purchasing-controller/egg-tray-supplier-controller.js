@@ -80,7 +80,7 @@ class EggTraySupplierController {
     }
 
     async getNextSupplierId() {
-        const query = "SELECT MAX(CAST(SUBSTRING(supplier_id FROM '\\d+') AS INTEGER)) as max_num FROM egg_tray_suppliers";
+        const query = "SELECT MAX(CAST(SUBSTRING(supplier_id FROM '[0-9]+') AS INTEGER)) as max_num FROM egg_tray_suppliers";
         const result = await this.db.query(query);
         const maxNum = result.rows[0]?.max_num || 0;
         return 'EgTrSuID-' + (maxNum + 1);
