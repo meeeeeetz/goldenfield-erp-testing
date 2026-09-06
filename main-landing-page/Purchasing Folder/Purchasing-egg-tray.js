@@ -551,6 +551,8 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
         async function saveOrderEggTray() {
             const orderId = document.getElementById('order-egg-tray-id').value;
             const supplierId = document.getElementById('order-egg-tray-supplier').value;
+            const supplierSelect = document.getElementById('order-egg-tray-supplier');
+            const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.textContent || supplierId;
             const invoice = document.getElementById('order-egg-tray-invoice').value.trim();
             const date = document.getElementById('order-egg-tray-date').value;
             const productId = document.getElementById('order-egg-tray-product').value;
@@ -594,6 +596,39 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || 'Failed to save order');
+                }
+
+                try {
+                    const expenseNextRes = await fetch('/api/expenses/next-id', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (expenseNextRes.ok) {
+                        const expenseNextData = await expenseNextRes.json();
+                        const expenseListId = expenseNextData.expense_list_id;
+
+                        await fetch('/api/expenses', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                            },
+                            body: JSON.stringify({
+                                expense_list_id: expenseListId,
+                                date: date,
+                                accounting_code: '5140',
+                                expense_type: 'Packaging & Production Consumables',
+                                description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierName}`,
+                                remarks: `${quantity} Egg Tray purchased at ${formatNumber(unitPrice)}`,
+                                total_amount: totalPrice,
+                                account_source: null,
+                                cleared_date: null,
+                                status: 'Pending',
+                                tracking_id: orderId
+                            })
+                        });
+                    }
+                } catch (expenseErr) {
+                    console.error('Failed to create expense:', expenseErr);
                 }
 
                 alert('Order Egg Tray saved successfully\n\nOrder ID: ' + orderId + '\nDate: ' + date + '\nSupplier: ' + supplierId + '\nInvoice: ' + (invoice || 'N/A') + '\nProduct: ' + productId + '\nQuantity: ' + quantity + '\nTotal Price: P ' + formatNumber(totalPrice));

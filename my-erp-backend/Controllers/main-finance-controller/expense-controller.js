@@ -93,7 +93,7 @@ class ExpenseController {
     }
 
     async getNextExpenseId() {
-        const query = "SELECT MAX(CAST(SUBSTRING(expense_list_id FROM '\\d+') AS INTEGER)) as max_num FROM expenses";
+        const query = "SELECT MAX(CAST(SUBSTRING(expense_list_id FROM '[0-9]+') AS INTEGER)) as max_num FROM expenses";
         const result = await this.db.query(query);
         const maxNum = result.rows[0]?.max_num || 0;
         return 'ExLiID-' + (maxNum + 1);
