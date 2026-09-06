@@ -7,15 +7,15 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                     <h2>Shipping Permit</h2>
                 </div>
                 <div class="action-buttons-row">
-                    <button id="open-permit-modal" class="btn-icon-circle">
+                    <button id="open-permit-modal" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Shipping Permit</span>
                     </button>
-                    <button id="renew-licenses-btn" class="btn-icon-circle">
+                    <button id="renew-licenses-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.5"></path><polyline points="17 2 21 7 17 3.5 23 8.5 17 12"></polyline><polyline points="7 22 11 17 7 21.5 3 16.5 7 12"></polyline></svg>
                         <span class="btn-label">Renew Licenses</span>
                     </button>
-                    <button id="add-recipient-details-btn" class="btn-icon-circle">
+                    <button id="add-recipient-details-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                         <span class="btn-label">Add Recipient Details</span>
                     </button>

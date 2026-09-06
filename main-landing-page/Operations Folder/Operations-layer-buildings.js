@@ -12,19 +12,19 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                     <h2>Layer Buildings</h2>
                 </div>
                 <div class="action-buttons-row">
-                    <button id="open-building-modal" class="btn-icon-circle">
+                    <button id="open-building-modal" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Report Daily Layer</span>
                     </button>
-                    <button id="print-monthly-report-btn" class="btn-icon-circle">
+                    <button id="print-monthly-report-btn" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Print Monthly Layer Report</span>
                     </button>
-                    <button id="add-remove-building-btn" class="btn-icon-circle">
+                    <button id="add-remove-building-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add/Remove Buidling</span>
                     </button>
-                    <button id="upload-bldg-report-admin-btn" class="btn-icon-circle" style="background: #1ea672; color: #fff;">
+                    <button id="upload-bldg-report-admin-btn" class="btn-icon-circle" style="background-color: #D8A309; color: #fff;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Upload Bldg Report Admin</span>
                     </button>

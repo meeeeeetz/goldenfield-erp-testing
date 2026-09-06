@@ -115,11 +115,11 @@ ModuleComponents['sales-receipt-issuance'] = (container) => {
                 <h2>Receipt Issuance</h2>
             </div>
             <div class="action-buttons-row">
-                <button id="issue-receipt-btn" class="btn-icon-circle">
+                <button id="issue-receipt-btn" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span class="btn-label">Issue Receipt</span>
                 </button>
-                <button id="upload-db-btn" class="btn-icon-circle btn-upload-db">
+                <button id="upload-db-btn" class="btn-icon-circle btn-upload-db" style="background-color: #D8A309; color: #fff;">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     <span class="btn-label">Upload Receipts Database</span>
                 </button>
