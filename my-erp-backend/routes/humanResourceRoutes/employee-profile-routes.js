@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const EmployeeProfileController = require('../../Controllers/main-human-resources-controller/employee-profile-controller');
-const { uploadFile, getPublicUrl } = require('../../utils/gcs');
+const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const pool = require('../../config/database');
 const controller = new EmployeeProfileController(pool);
 

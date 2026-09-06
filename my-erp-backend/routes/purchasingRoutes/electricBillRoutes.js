@@ -3,7 +3,7 @@ const router = express.Router();
 const ElectricBillController = require('../../Controllers/main-purchasing-controller/electric-bill-controller');
 const pool = require('../../config/database');
 const multer = require('multer');
-const { uploadFile, getPublicUrl } = require('../../utils/gcs');
+const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const controller = new ElectricBillController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
 

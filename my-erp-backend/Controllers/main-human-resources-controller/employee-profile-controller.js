@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { getPublicUrl, initializeGCS } = require('../../utils/gcs');
+const { getPublicUrl, initializeSupabase } = require('../../utils/supabaseStorage');
 
 class EmployeeProfileController {
     constructor(dbConnection) {
@@ -493,33 +493,32 @@ class EmployeeProfileController {
 
     async findEmployeePhoto(employee_id) {
         try {
-            const { bucket } = initializeGCS();
+            const client = initializeSupabase();
+            const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfield-erp-2026';
             const folderName = await this.computeEmployeeFolderName(employee_id);
             const lowerEmpId = String(employee_id).toLowerCase();
 
             const prefixes = [
-                `employee-photos/${folderName}/`,
-                `employee-photos/${employee_id}/`
+                `employee-photos/${folderName}`,
+                `employee-photos/${employee_id}`
             ];
 
             for (const prefix of prefixes) {
-                const [files] = await bucket.getFiles({ prefix });
-                if (files.length > 0) {
-                    for (const f of files) {
-                        const lower = f.name.toLowerCase();
-                        const lowerPrefix = prefix.toLowerCase();
-                        const startsWithPrefix = lower.startsWith(`${lowerPrefix}${lowerEmpId}`);
-                        const includes2x2 = lower.includes('2x2');
-                    }
+                const { data: files, error } = await client.storage.from(bucketName).list(prefix, {
+                    limit: 100,
+                    sortBy: { column: 'name', order: 'asc' }
+                });
+
+                if (files && files.length > 0) {
                     const match = files.find(f => {
                         const lower = f.name.toLowerCase();
-                        const lowerPrefix = prefix.toLowerCase();
-                        return lower.startsWith(`${lowerPrefix}${lowerEmpId}`) && lower.includes('2x2');
+                        return lower.startsWith(lowerEmpId) && lower.includes('2x2');
                     });
                     if (match) {
+                        const fullPath = `${prefix}/${match.name}`;
                         return {
-                            photo_file_name: match.name.replace(prefix, ''),
-                            photo_url: getPublicUrl(match.name),
+                            photo_file_name: match.name,
+                            photo_url: getPublicUrl(fullPath),
                             folder_name: folderName
                         };
                     }
@@ -550,20 +549,24 @@ class EmployeeProfileController {
     }
 
     async getEmployeeDocuments(employee_id) {
-        const { bucket } = require('../../utils/gcs').initializeGCS();
+        const client = initializeSupabase();
+        const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'goldenfield-erp-2026';
         const folderName = await this.computeEmployeeFolderName(employee_id);
         const lowerEmpId = String(employee_id || '').toLowerCase();
 
         const prefixes = [
-            `employee-photos/${folderName}/`,
-            `employee-photos/${employee_id}/`
+            `employee-photos/${folderName}`,
+            `employee-photos/${employee_id}`
         ];
 
         let files = [];
         for (const prefix of prefixes) {
             try {
-                const [gcsFiles] = await bucket.getFiles({ prefix });
-                files = gcsFiles.map(f => ({ name: f.name, prefix }));
+                const { data: supabaseFiles, error } = await client.storage.from(bucketName).list(prefix, {
+                    limit: 100,
+                    sortBy: { column: 'name', order: 'asc' }
+                });
+                files = supabaseFiles.map(f => ({ name: `${prefix}/${f.name}`, prefix }));
                 if (files.length > 0) break;
             } catch (e) {
                 console.error(`[getEmployeeDocuments] Error listing files with prefix ${prefix}:`, e.message);
@@ -588,13 +591,11 @@ class EmployeeProfileController {
 
         const result = [];
 
-        for (const doc of Object.entries(patterns)) {
-            const docType = doc[0];
-            const keywords = doc[1];
+        for (const [docType, keywords] of Object.entries(patterns)) {
             const found = files.find(f => {
                 const lower = f.name.toLowerCase();
                 const lowerPrefix = f.prefix.toLowerCase();
-                if (!lower.startsWith(`${lowerPrefix}${lowerEmpId}`)) return false;
+                if (!lower.startsWith(`${lowerPrefix}/${lowerEmpId}`) && !lower.startsWith(`${lowerPrefix}_${lowerEmpId}`)) return false;
                 return keywords.some(k => lower.includes(k));
             });
             if (found) {

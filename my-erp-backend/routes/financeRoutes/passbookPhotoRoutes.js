@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const pool = require('../../config/database');
-const { uploadFile, getPublicUrl } = require('../../utils/gcs');
+const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const router = express.Router();
 
 const storage = multer.memoryStorage();

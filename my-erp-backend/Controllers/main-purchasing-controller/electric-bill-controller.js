@@ -1,6 +1,6 @@
 const pool = require('../../config/database');
 const ExpenseController = require('../main-finance-controller/expense-controller');
-const { getPublicUrl } = require('../../utils/gcs');
+const { getPublicUrl } = require('../../utils/supabaseStorage');
 
 class ElectricBillController {
     constructor(dbConnection) {
