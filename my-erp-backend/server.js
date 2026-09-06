@@ -35,6 +35,7 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const schedulingRoutes = require('./routes/humanResourceRoutes/scheduling-routes');
     const pettyCashRoutes = require('./routes/operationRoutes/petty-cash-routes');
     const layerBuildingsRoutes = require('./routes/operationRoutes/layer-buildings-routes');
+    const dailyEggProductionRoutes = require('./routes/operationRoutes/daily-egg-production-routes');
     const feedsSupplierRoutes = require('./routes/purchasingRoutes/feeds-supplier-routes');
     const feedTypeRoutes = require('./routes/purchasingRoutes/feed-type-routes');
     const feedInventoryRoutes = require('./routes/purchasingRoutes/feed-inventory-routes');
@@ -112,6 +113,7 @@ app.use('/api/offenses', offensesRoutes);
 app.use('/api/schedules', schedulingRoutes);
 app.use('/api/petty-cash', pettyCashRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
+app.use('/api/daily-egg-production', dailyEggProductionRoutes);
 app.use('/api/feeds-suppliers', feedsSupplierRoutes);
 app.use('/api/feed-types', feedTypeRoutes);
 app.use('/api/feed-inventory', feedInventoryRoutes);

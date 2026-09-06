@@ -1,5 +1,10 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 ModuleComponents['operations-egg-inventory'] = (container) => {
         container.innerHTML = `
             <div class="egg-inventory-layout">
@@ -223,13 +228,19 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                             <button id="close-egg-modal-btn" class="modal-close-btn" title="Close">&times;</button>
                         </div>
                         <div class="egg-modal-body">
-                            <div class="modal-field">
-                                <label>Beginning Inventory</label>
-                                <input type="text" id="beginning-inventory" class="readonly-field" value="50,000" readonly />
-                            </div>
-                            <div class="modal-field">
-                                <label>Total Eggs Sold today</label>
-                                <input type="text" id="egg-count-input" class="readonly-field" value="48,300" readonly />
+                            <div class="time-fields-row" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: nowrap;">
+                                <div class="modal-field">
+                                    <label>Date</label>
+                                    <input type="date" id="report-date" class="readonly-field" readonly />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Beginning Inventory</label>
+                                    <input type="text" id="beginning-inventory" class="readonly-field" value="50,000" readonly />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Total Eggs Sold today</label>
+                                    <input type="text" id="egg-count-input" class="readonly-field" value="48,300" readonly />
+                                </div>
                             </div>
                             <div class="weighed-layout">
                                 <div class="weighed-left">
@@ -322,6 +333,31 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                                 </div>
                             </div>
                         </div>
+                        <div class="modal-section">
+                            <h4>Work Hours</h4>
+                            <div class="time-fields-row" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: nowrap;">
+                                <div class="modal-field">
+                                    <label>Time Start</label>
+                                    <input type="time" id="time-start-1" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Time End</label>
+                                    <input type="time" id="time-end-1" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Time Start</label>
+                                    <input type="time" id="time-start-2" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Time End</label>
+                                    <input type="time" id="time-end-2" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Total Time (Hours)</label>
+                                    <input type="text" id="total-time-hours" class="readonly-field" readonly value="0" />
+                                </div>
+                            </div>
+                        </div>
                         <div class="modal-tab-actions">
                             <button id="save-egg-btn" class="btn-primary">Save</button>
                         </div>
@@ -388,10 +424,12 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                         </div>
                     </div>
                 </div>
-            </div>
         `;
 
         document.getElementById('open-egg-modal').onclick = () => {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('report-date');
+            if (dateInput) dateInput.value = today;
             document.getElementById('egg-modal').classList.remove('hidden');
         };
         document.getElementById('close-egg-modal-btn').onclick = () => {
@@ -488,11 +526,122 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
             inp.addEventListener('input', recalcBroken);
         });
         recalcBroken();
+
+        function calculateTotalTime() {
+            const start1 = document.getElementById('time-start-1')?.value || '';
+            const end1 = document.getElementById('time-end-1')?.value || '';
+            const start2 = document.getElementById('time-start-2')?.value || '';
+            const end2 = document.getElementById('time-end-2')?.value || '';
+
+            function timeToHours(t) {
+                if (!t) return 0;
+                const [h, m] = t.split(':').map(Number);
+                return h + (m || 0) / 60;
+            }
+
+            let total = 0;
+            if (start1 && end1) {
+                let diff = timeToHours(end1) - timeToHours(start1);
+                if (diff < 0) diff += 24;
+                total += diff;
+            }
+            if (start2 && end2) {
+                let diff = timeToHours(end2) - timeToHours(start2);
+                if (diff < 0) diff += 24;
+                total += diff;
+            }
+
+            const totalEl = document.getElementById('total-time-hours');
+            if (totalEl) totalEl.value = total.toFixed(2);
+        }
+
+        ['time-start-1', 'time-end-1', 'time-start-2', 'time-end-2'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', calculateTotalTime);
+        });
         recalcSummary();
-        document.getElementById('save-egg-btn').onclick = () => {
-            const count = document.getElementById('egg-count-input').value;
-            alert(`Saving ${count} eggs to database...`);
-            document.getElementById('egg-modal').classList.add('hidden');
+        document.getElementById('save-egg-btn').onclick = async () => {
+            const reportDate = document.getElementById('report-date').value || new Date().toISOString().split('T')[0];
+            const beginningInventory = parseNum(document.getElementById('beginning-inventory').value);
+            const totalEggsSoldToday = parseNum(document.getElementById('egg-count-input').value);
+            const timeWorked = parseNum(document.getElementById('total-time-hours').value);
+
+            const dispatchTotals = ['dispatch-total-1', 'dispatch-total-2', 'dispatch-total-3'].map(id => parseNum(document.getElementById(id).value));
+            const mobaTotals = ['moba-total-1', 'moba-total-2', 'moba-total-3'].map(id => parseNum(document.getElementById(id).value));
+
+            const dispatchNW = dispatchTotals[0] || 0;
+            const dispatchPW = dispatchTotals[1] || 0;
+            const dispatchXS = dispatchTotals[2] || 0;
+            const mobaNW = mobaTotals[0] || 0;
+            const mobaPW = mobaTotals[1] || 0;
+            const mobaS = mobaTotals[2] || 0;
+
+            const weighedNW = dispatchNW + mobaNW;
+            const weighedPW = dispatchPW + mobaPW;
+            const weighedXS = dispatchXS;
+            const weighedS = mobaS;
+            const weighedM = 0;
+            const weighedL = 0;
+            const weighedXL = 0;
+            const weighedJ = 0;
+            const weighedOthers = 0;
+
+            const totalWeighed = weighedNW + weighedPW + weighedXS + weighedS + weighedM + weighedL + weighedXL + weighedJ + weighedOthers;
+
+            const unweighedTotals = ['unweighed-total-1', 'unweighed-total-2', 'unweighed-total-3'].map(id => parseNum(document.getElementById(id).value));
+            const unweighedDirty = unweighedTotals[0] || 0;
+            const unweighedClean = unweighedTotals[1] || 0;
+            const sellableBroken = unweighedTotals[2] || 0;
+
+            const totalUnweighed = unweighedDirty + unweighedClean + sellableBroken;
+            const brokenTotal = parseNum(document.getElementById('total-broken').value);
+            const totalBroken = totalUnweighed + brokenTotal;
+
+            const endingInventory = totalEggsSoldToday + totalWeighed + totalUnweighed + brokenTotal;
+
+            const payload = {
+                report_date: reportDate,
+                beginning_inventory: beginningInventory,
+                total_eggs_sold_today: totalEggsSoldToday,
+                weighed_nw: weighedNW,
+                weighed_pw: weighedPW,
+                weighed_xs: weighedXS,
+                weighed_s: weighedS,
+                weighed_m: weighedM,
+                weighed_l: weighedL,
+                weighed_xl: weighedXL,
+                weighed_j: weighedJ,
+                weighed_others: weighedOthers,
+                total_weighed: totalWeighed,
+                unweighed_dirty: unweighedDirty,
+                unweighed_clean: unweighedClean,
+                sellable_broken: sellableBroken,
+                total_unweighed: totalUnweighed,
+                total_broken: totalBroken,
+                ending_inventory: endingInventory,
+                time_worked: timeWorked
+            };
+
+            try {
+                const res = await fetch('/api/daily-egg-production', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to save');
+                }
+
+                alert('Saved successfully!');
+                document.getElementById('egg-modal').classList.add('hidden');
+            } catch (err) {
+                alert('Error saving: ' + err.message);
+            }
         };
 
         const productsModal = document.getElementById('egg-products-modal');
