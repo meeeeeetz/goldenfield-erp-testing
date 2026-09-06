@@ -2,11 +2,6 @@ if (typeof ModuleComponents === 'undefined') {
     window.ModuleComponents = {}; 
 }
 
-function getAuthHeaders() {
-    const token = localStorage.getItem('goldenfield_auth_token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
-}
-
 ModuleComponents['operations-egg-inventory'] = (container) => {
     container.innerHTML = `
         <div class="egg-inventory-layout">
@@ -286,111 +281,34 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         </div>
     `;
 
-    // Handle Open Egg Modal Event
-    const openEggBtn = document.getElementById('open-egg-modal');
-    if (openEggBtn) {
-        openEggBtn.onclick = async () => {
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('report-date');
-            if (dateInput) dateInput.value = today;
+    // Attach Event Listeners for Modals
+    const eggModal = container.querySelector('#egg-modal');
+    const openEggModalBtn = container.querySelector('#open-egg-modal');
+    const closeEggModalBtn = container.querySelector('#close-egg-modal-btn');
 
-            try {
-                const [receiptsRes, productsRes] = await Promise.all([
-                    fetch('/api/receipt-issues', { headers: getAuthHeaders() }),
-                    fetch('/api/products', { headers: getAuthHeaders() })
-                ]);
-
-                if (receiptsRes.ok && productsRes.ok) {
-                    const receipts = await receiptsRes.json();
-                    const products = await productsRes.json();
-                    const productMap = new Map(products.map(p => [p.product, p.no_of_eggs || 0]));
-
-                    const soldBySize = {};
-                    receipts
-                        .filter(r => r.date === today)
-                        .forEach(r => {
-                            const product = r.product || 'Unknown';
-                            const eggs = productMap.get(product) || 0;
-                            const qty = parseFloat(r.qty) || 0;
-                            const pcs = qty * eggs;
-                            soldBySize[product] = (soldBySize[product] || 0) + pcs;
-                        });
-
-                    const tbody = document.getElementById('sold-by-size-table-body');
-                    if (tbody) {
-                        tbody.innerHTML = '';
-                        Object.entries(soldBySize)
-                            .sort((a, b) => a[0].localeCompare(b[0]))
-                            .forEach(([item, pcs]) => {
-                                const row = document.createElement('tr');
-                                row.innerHTML = `<td>${item}</td><td>${pcs.toLocaleString()}</td>`;
-                                tbody.appendChild(row);
-                            });
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to load modal data:', err);
-            }
-
-            document.getElementById('egg-modal')?.classList.remove('hidden');
-        };
+    if (openEggModalBtn && eggModal) {
+        openEggModalBtn.addEventListener('click', () => eggModal.classList.remove('hidden'));
+    }
+    if (closeEggModalBtn && eggModal) {
+        closeEggModalBtn.addEventListener('click', () => eggModal.classList.add('hidden'));
     }
 
-    // Handle Modal Close Events
-    const closeEggBtn = document.getElementById('close-egg-modal-btn');
-    if (closeEggBtn) {
-        closeEggBtn.onclick = () => {
-            document.getElementById('egg-modal')?.classList.add('hidden');
-        };
+    const eggProductsModal = container.querySelector('#egg-products-modal');
+    const openEggProductsBtn = container.querySelector('#add-egg-products-btn');
+    const closeEggProductsBtn = container.querySelector('#close-egg-products-btn');
+
+    if (openEggProductsBtn && eggProductsModal) {
+        openEggProductsBtn.addEventListener('click', () => eggProductsModal.classList.remove('hidden'));
     }
-
-    // Helper: Parse string numbers with commas
-    function parseNum(v) {
-        return parseFloat(String(v).replace(/,/g, '')) || 0;
-    }
-
-    // Helper: Calculate total pieces from table rows
-    function calculateTotalSoldFromTable() {
-        const tbody = document.getElementById('sold-by-size-table-body');
-        if (!tbody) return 0;
-        let total = 0;
-        tbody.querySelectorAll('tr').forEach(row => {
-            const pcsCell = row.querySelector('td:last-child');
-            if (pcsCell) total += parseNum(pcsCell.textContent);
-        });
-        return total;
-    }
-
-    // Helper: Convert time string to fractional hours
-    function timeToHours(t) {
-        if (!t) return 0;
-        const [h, m] = t.split(':').map(Number);
-        return h + (m || 0) / 60;
-    }
-
-    // Helper: Calculate work hours across two shifts
-    function calculateShiftHours(start1, end1, start2, end2) {
-        let total = 0;
-        if (start1 && end1) {
-            let diff = timeToHours(end1) - timeToHours(start1);
-            if (diff < 0) diff += 24;
-            total += diff;
-        }
-        if (start2 && end2) {
-            let diff = timeToHours(end2) - timeToHours(start2);
-            if (diff < 0) diff += 24;
-            total += diff;
-        }
-
-        const totalEl = document.getElementById('total-time-hours');
-        if (totalEl) totalEl.value = total.toFixed(2);
-        return total;
+    if (closeEggProductsBtn && eggProductsModal) {
+        closeEggProductsBtn.addEventListener('click', () => eggProductsModal.classList.add('hidden'));
     }
 };
 
+// Global Initialization Routine
 function initializeModule(contentArea) {
-    const currentTab = window.__currentTabId || 'operations';
-    const render = ModuleComponents[currentTab] || ModuleComponents['operations'];
+    const currentTab = window.__currentTabId || 'operations-egg-inventory';
+    const render = ModuleComponents[currentTab] || ModuleComponents['operations-egg-inventory'];
     if (typeof render === 'function') {
         render(contentArea);
     }
