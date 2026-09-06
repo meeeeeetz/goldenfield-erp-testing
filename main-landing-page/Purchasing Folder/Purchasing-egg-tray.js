@@ -606,26 +606,50 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                         const expenseNextData = await expenseNextRes.json();
                         const expenseListId = expenseNextData.expense_list_id;
 
-                        await fetch('/api/expenses', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                            },
-                        body: JSON.stringify({
-                            expense_list_id: expenseListId,
-                            date: date,
-                            accounting_code: '5140',
-                            expense_type: 'Packaging & Production Consumables',
-                            description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierId} ${supplierName}`,
-                            remarks: `${quantity} No of Egg Tray purchased at ${formatNumber(unitPrice)}`,
-                            total_amount: totalPrice,
-                            account_source: null,
-                            cleared_date: null,
-                            status: 'Pending',
-                            tracking_id: orderId
-                        })
+                        const existingRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                         });
+                        const existingExpenses = existingRes.ok ? await existingRes.json() : [];
+
+                        if (existingExpenses.length > 0) {
+                            await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                },
+                                body: JSON.stringify({
+                                    date: date,
+                                    accounting_code: '5140',
+                                    expense_type: 'Packaging & Production Consumables',
+                                    description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierId} ${supplierName}`,
+                                    remarks: `${quantity} No of Egg Tray purchased at ${formatNumber(unitPrice)}`,
+                                    total_amount: totalPrice,
+                                    status: 'Pending'
+                                })
+                            });
+                        } else {
+                            await fetch('/api/expenses', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                },
+                                body: JSON.stringify({
+                                    expense_list_id: expenseListId,
+                                    date: date,
+                                    accounting_code: '5140',
+                                    expense_type: 'Packaging & Production Consumables',
+                                    description: `Egg Tray SI # ${invoice || 'N/A'} from ${supplierId} ${supplierName}`,
+                                    remarks: `${quantity} No of Egg Tray purchased at ${formatNumber(unitPrice)}`,
+                                    total_amount: totalPrice,
+                                    account_source: null,
+                                    cleared_date: null,
+                                    status: 'Pending',
+                                    tracking_id: orderId
+                                })
+                            });
+                        }
                     }
                 } catch (expenseErr) {
                     console.error('Failed to create expense:', expenseErr);
