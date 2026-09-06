@@ -566,8 +566,14 @@ class EmployeeProfileController {
                     limit: 100,
                     sortBy: { column: 'name', order: 'asc' }
                 });
-                files = supabaseFiles.map(f => ({ name: `${prefix}/${f.name}`, prefix }));
-                if (files.length > 0) break;
+                if (error) {
+                    console.error(`[getEmployeeDocuments] Error listing files with prefix ${prefix}:`, error.message);
+                    continue;
+                }
+                if (supabaseFiles && supabaseFiles.length > 0) {
+                    files = supabaseFiles.map(f => ({ name: `${prefix}/${f.name}`, prefix }));
+                    if (files.length > 0) break;
+                }
             } catch (e) {
                 console.error(`[getEmployeeDocuments] Error listing files with prefix ${prefix}:`, e.message);
             }
