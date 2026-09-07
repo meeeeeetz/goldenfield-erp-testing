@@ -18,7 +18,7 @@ class EggProductsController {
     }
 
     async getNextEggProductId() {
-        const query = 'SELECT product_id FROM egg_products ORDER BY product_id DESC LIMIT 1';
+        const query = 'SELECT product_id FROM egg_products ORDER BY id DESC LIMIT 1';
         const result = await this.db.query(query);
         if (result.rows.length > 0) {
             const lastId = result.rows[0].product_id;

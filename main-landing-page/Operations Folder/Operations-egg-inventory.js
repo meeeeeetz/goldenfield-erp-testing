@@ -221,12 +221,292 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 <div class="modal-content daily-egg-modal">
                     <div class="modal-header-row">
                         <h3>Add Daily Egg Production</h3>
+                        <div class="egg-header-right">
+                            <label>Date</label>
+                            <input type="text" id="egg-production-date" readonly />
+                        </div>
                         <button id="close-egg-modal-btn" class="modal-close-btn" title="Close">&times;</button>
                     </div>
                     <div class="egg-modal-body">
-                        <p>Modal content placeholder</p>
+                        <div class="egg-production-form">
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Beginning Inventory</label>
+                                    <input type="text" id="egg-beginning-inventory" readonly />
+                                    <span class="egg-unit">Pieces</span>
+                                </div>
+                            </div>
+                            <div class="table-wrap">
+                                <table class="data-table egg-types-table">
+                                    <thead>
+                                        <tr>
+                                            <th>NW</th>
+                                            <th>PW</th>
+                                            <th>XS</th>
+                                            <th>S</th>
+                                            <th>M</th>
+                                            <th>L</th>
+                                            <th>XL</th>
+                                            <th>J</th>
+                                            <th>Broken</th>
+                                            <th>Dirty</th>
+                                            <th>Unweighed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" class="egg-type-input" data-type="NW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="PW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XS" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="S" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="M" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="L" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XL" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="J" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Broken" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Dirty" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Unweighed" readonly /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <hr class="egg-section-divider" />
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Ending Inventory</label>
+                                    <input type="text" id="egg-ending-inventory" readonly />
+                                    <span class="egg-unit">Pieces</span>
+                                </div>
+                            </div>
+                            <div class="table-wrap">
+                                <table class="data-table egg-types-table">
+                                    <thead>
+                                        <tr>
+                                            <th>NW</th>
+                                            <th>PW</th>
+                                            <th>XS</th>
+                                            <th>S</th>
+                                            <th>M</th>
+                                            <th>L</th>
+                                            <th>XL</th>
+                                            <th>J</th>
+                                            <th>Broken</th>
+                                            <th>Dirty</th>
+                                            <th>Unweighed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" class="egg-type-input" data-type="NW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="PW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XS" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="S" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="M" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="L" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XL" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="J" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Broken" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Dirty" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Unweighed" readonly /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="egg-gap"></div>
+                            <h4 class="egg-sub-title">Cases Ready for Dispatch</h4>
+                            <div class="table-wrap">
+                                <table class="data-table egg-cases-table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>NW</th>
+                                            <th>PW</th>
+                                            <th>XS</th>
+                                            <th>S</th>
+                                            <th>M</th>
+                                            <th>L</th>
+                                            <th>XL</th>
+                                            <th>J</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="egg-case-label">Lot 1</td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="egg-case-label">Lot 2</td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="egg-case-label">Lot 3</td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                            <td><input type="text" class="egg-case-input" /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <div class="egg-gap"></div>
+                            <h4 class="egg-sub-title">Moba Assembly Line</h4>
+                            <div class="table-wrap">
+                                <table class="data-table egg-moba-table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>NW</th>
+                                            <th>PW</th>
+                                            <th>XS</th>
+                                            <th>S</th>
+                                            <th>M</th>
+                                            <th>L</th>
+                                            <th>XL</th>
+                                            <th>J</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="egg-case-label">Cases</td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="cases" /></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="egg-case-label">Tray</td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="tray" /></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="egg-case-label">Pieces</td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                            <td><input type="text" class="egg-moba-input" data-row="pieces" /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="egg-gap"></div>
+                            <h4 class="egg-sub-title">Unweighed</h4>
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Cases</label>
+                                    <input type="text" id="unweighed-cases" class="egg-unweighed-input" data-row="cases" />
+                                </div>
+                                <div class="egg-form-field">
+                                    <label>Tray</label>
+                                    <input type="text" id="unweighed-tray" class="egg-unweighed-input" data-row="tray" />
+                                </div>
+                                <div class="egg-form-field">
+                                    <label>Pieces</label>
+                                    <input type="text" id="unweighed-pieces" class="egg-unweighed-input" data-row="pieces" />
+                                </div>
+                            </div>
+                            <hr class="egg-section-divider" />
+                            <div class="egg-gap"></div>
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Egg Waste</label>
+                                    <input type="text" id="egg-waste-total" readonly />
+                                    <span class="egg-unit">Pieces</span>
+                                </div>
+                            </div>
+                            <div class="egg-gap"></div>
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Cases</label>
+                                    <input type="text" class="egg-waste-input" data-row="cases" />
+                                </div>
+                                <div class="egg-form-field">
+                                    <label>Tray</label>
+                                    <input type="text" class="egg-waste-input" data-row="tray" />
+                                </div>
+                                <div class="egg-form-field">
+                                    <label>Pieces</label>
+                                    <input type="text" class="egg-waste-input" data-row="pieces" />
+                                </div>
+                            </div>
+                            <div class="egg-gap"></div>
+                            <hr class="egg-section-divider" />
+                            <div class="egg-gap"></div>
+                            <div class="egg-form-row">
+                                <div class="egg-form-field">
+                                    <label>Total Eggs Sold</label>
+                                    <input type="text" id="egg-total-sold" readonly />
+                                    <span class="egg-unit">Pieces</span>
+                                </div>
+                            </div>
+                            <div class="table-wrap">
+                                <table class="data-table egg-types-table">
+                                    <thead>
+                                        <tr>
+                                            <th>NW</th>
+                                            <th>PW</th>
+                                            <th>XS</th>
+                                            <th>S</th>
+                                            <th>M</th>
+                                            <th>L</th>
+                                            <th>XL</th>
+                                            <th>J</th>
+                                            <th>Broken</th>
+                                            <th>Dirty</th>
+                                            <th>Unweighed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" class="egg-type-input" data-type="NW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="PW" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XS" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="S" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="M" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="L" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="XL" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="J" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Broken" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Dirty" readonly /></td>
+                                            <td><input type="text" class="egg-type-input" data-type="Unweighed" readonly /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
             </div>
 
             <div id="egg-products-modal" class="modal hidden">
@@ -297,11 +577,151 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     const closeEggModalBtn = container.querySelector('#close-egg-modal-btn');
 
     if (openEggModalBtn && eggModal) {
-        openEggModalBtn.addEventListener('click', () => eggModal.classList.remove('hidden'));
+        openEggModalBtn.addEventListener('click', () => {
+            eggModal.classList.remove('hidden');
+            const dateInput = eggModal.querySelector('#egg-production-date');
+            if (dateInput && !dateInput.value) {
+                const today = new Date();
+                const formatted = today.toISOString().split('T')[0];
+                dateInput.value = formatted;
+            }
+            updateBeginningInventory();
+            updateEndingInventory();
+            const eggWasteInputs = eggModal.querySelectorAll('.egg-waste-input');
+            eggWasteInputs.forEach(input => input.value = '');
+            const eggWasteTotal = eggModal.querySelector('#egg-waste-total');
+            if (eggWasteTotal) eggWasteTotal.value = '';
+        });
     }
     if (closeEggModalBtn && eggModal) {
         closeEggModalBtn.addEventListener('click', () => eggModal.classList.add('hidden'));
     }
+
+    const updateBeginningInventory = () => {
+        const beginningInventoryInput = eggModal.querySelector('#egg-beginning-inventory');
+        const eggTypeInputs = eggModal.querySelectorAll('.egg-type-input');
+        if (!beginningInventoryInput) return;
+        let total = 0;
+        eggTypeInputs.forEach(input => {
+            const value = parseInt(input.value, 10);
+            if (!isNaN(value)) total += value;
+        });
+        beginningInventoryInput.value = total;
+    };
+
+    const updateEndingInventory = () => {
+        const endingInventoryInput = eggModal.querySelector('#egg-ending-inventory');
+        const eggTypeInputs = eggModal.querySelectorAll('.egg-type-input');
+        if (!endingInventoryInput) return;
+        let total = 0;
+        eggTypeInputs.forEach(input => {
+            const value = parseInt(input.value, 10);
+            if (!isNaN(value)) total += value;
+        });
+        endingInventoryInput.value = total;
+    };
+
+    const eggTypeInputs = eggModal ? eggModal.querySelectorAll('.egg-type-input') : [];
+    eggTypeInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            updateBeginningInventory();
+            updateEndingInventory();
+        });
+    });
+
+    const updateEndingInventoryFromDispatch = () => {
+        const endingTable = eggModal.querySelectorAll('.egg-types-table')[1];
+        if (!endingTable) return;
+        const endingInputs = Array.from(endingTable.querySelectorAll('.egg-type-input'));
+        const columnTotals = new Array(endingInputs.length).fill(0);
+
+        const caseInputs = Array.from(eggModal.querySelectorAll('.egg-case-input'));
+        caseInputs.forEach(input => {
+            const row = input.closest('tr');
+            if (!row) return;
+            const cells = row.querySelectorAll('td');
+            const cellIndex = Array.from(cells).indexOf(input.parentElement);
+            if (cellIndex <= 0) return;
+            const colIndex = cellIndex - 1;
+            const value = parseInt(input.value, 10);
+            columnTotals[colIndex] += isNaN(value) ? 0 : value * 360;
+        });
+
+        const mobaInputs = Array.from(eggModal.querySelectorAll('.egg-moba-input'));
+        mobaInputs.forEach(input => {
+            const row = input.closest('tr');
+            if (!row) return;
+            const cells = row.querySelectorAll('td');
+            const cellIndex = Array.from(cells).indexOf(input.parentElement);
+            if (cellIndex <= 0) return;
+            const colIndex = cellIndex - 1;
+            const value = parseInt(input.value, 10);
+            const rowType = input.dataset.row || '';
+            const multiplier = rowType === 'cases' ? 360 : rowType === 'tray' ? 30 : 1;
+            columnTotals[colIndex] += isNaN(value) ? 0 : value * multiplier;
+        });
+
+        const unweighedCases = eggModal.querySelector('#unweighed-cases');
+        const unweighedTray = eggModal.querySelector('#unweighed-tray');
+        const unweighedPieces = eggModal.querySelector('#unweighed-pieces');
+        let unweighedTotal = 0;
+        if (unweighedCases) {
+            const value = parseInt(unweighedCases.value, 10);
+            unweighedTotal += isNaN(value) ? 0 : value * 360;
+        }
+        if (unweighedTray) {
+            const value = parseInt(unweighedTray.value, 10);
+            unweighedTotal += isNaN(value) ? 0 : value * 30;
+        }
+        if (unweighedPieces) {
+            const value = parseInt(unweighedPieces.value, 10);
+            unweighedTotal += isNaN(value) ? 0 : value * 1;
+        }
+
+        endingInputs.forEach((input, index) => {
+            if (index === endingInputs.length - 1) {
+                input.value = unweighedTotal > 0 ? unweighedTotal : '';
+            } else {
+                input.value = columnTotals[index] > 0 ? columnTotals[index] : '';
+            }
+        });
+
+        updateEndingInventory();
+    };
+
+    const eggCaseInputs = eggModal ? eggModal.querySelectorAll('.egg-case-input') : [];
+    eggCaseInputs.forEach(input => {
+        input.addEventListener('input', updateEndingInventoryFromDispatch);
+    });
+
+    const eggMobaInputs = eggModal ? eggModal.querySelectorAll('.egg-moba-input') : [];
+    eggMobaInputs.forEach(input => {
+        input.addEventListener('input', updateEndingInventoryFromDispatch);
+    });
+
+    const eggUnweighedInputs = eggModal ? eggModal.querySelectorAll('.egg-unweighed-input') : [];
+    eggUnweighedInputs.forEach(input => {
+        input.addEventListener('input', updateEndingInventoryFromDispatch);
+    });
+
+    const updateEggWasteTotal = () => {
+        const wasteTotalInput = eggModal.querySelector('#egg-waste-total');
+        if (!wasteTotalInput) return;
+        const wasteInputs = eggModal.querySelectorAll('.egg-waste-input');
+        let total = 0;
+        wasteInputs.forEach(input => {
+            const rowType = input.dataset.row || '';
+            const value = parseInt(input.value, 10);
+            const multiplier = rowType === 'cases' ? 360 : rowType === 'tray' ? 30 : 1;
+            total += isNaN(value) ? 0 : value * multiplier;
+        });
+        wasteTotalInput.value = total > 0 ? total : '';
+    };
+
+    const eggWasteInputs = eggModal ? eggModal.querySelectorAll('.egg-waste-input') : [];
+    eggWasteInputs.forEach(input => {
+        input.addEventListener('input', updateEggWasteTotal);
+    });
 
     const eggProductsModal = container.querySelector('#egg-products-modal');
     const openEggProductsBtn = container.querySelector('#add-egg-products-btn');
@@ -313,7 +733,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         const productNameInput = eggProductsModal.querySelector('#new-product-name');
         const statusSelect = eggProductsModal.querySelector('#new-product-status');
         const remarksTextarea = eggProductsModal.querySelector('#tab-add textarea');
-        if (productIdInput) productIdInput.value = 'EgRoProID-1';
+        if (productIdInput) productIdInput.value = '';
         if (productNameInput) productNameInput.value = '';
         if (statusSelect) statusSelect.value = 'Active';
         if (remarksTextarea) remarksTextarea.value = '';
@@ -505,14 +925,28 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
             const statusSelect = eggProductsModal.querySelector('#new-product-status');
             const remarksTextarea = eggProductsModal.querySelector('#tab-add textarea');
 
-            const product_id = productIdInput ? productIdInput.value : '';
+            let product_id = productIdInput ? productIdInput.value.trim() : '';
             const product_name = productNameInput ? productNameInput.value.trim() : '';
             const status = statusSelect ? statusSelect.value : 'Active';
             const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
 
-            if (!product_id || !product_name) {
-                alert('Product ID and Product Name are required');
+            if (!product_name) {
+                alert('Product Name is required');
                 return;
+            }
+
+            if (!product_id) {
+                try {
+                    const res = await fetch(`${API_BASE_EGG_PRODUCTS}/next-id`, { headers: getAuthHeaders() });
+                    if (res.ok) {
+                        const data = await res.json();
+                        product_id = data.product_id || 'EgRoProID-1';
+                    } else {
+                        product_id = 'EgRoProID-1';
+                    }
+                } catch {
+                    product_id = 'EgRoProID-1';
+                }
             }
 
             try {
@@ -530,17 +964,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 if (productNameInput) productNameInput.value = '';
                 if (remarksTextarea) remarksTextarea.value = '';
                 if (statusSelect) statusSelect.value = 'Active';
-                try {
-                    const res = await fetch(`${API_BASE_EGG_PRODUCTS}/next-id`, { headers: getAuthHeaders() });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (productIdInput) productIdInput.value = data.product_id || 'EgRoProID-1';
-                    } else {
-                        if (productIdInput) productIdInput.value = 'EgRoProID-1';
-                    }
-                } catch {
-                    if (productIdInput) productIdInput.value = 'EgRoProID-1';
-                }
+                if (productIdInput) productIdInput.value = 'EgRoProID-1';
                 eggProductCurrentPage = 1;
                 await loadEggProductList();
             } catch (err) {
