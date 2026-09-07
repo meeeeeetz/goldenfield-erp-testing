@@ -136,6 +136,7 @@ ModuleComponents['sales-product-pricing'] = (container) => {
                                 <th>Product ID</th>
                                 <th>Product</th>
                                 <th>Remarks</th>
+                                <th>Egg Category</th>
                                 <th>No. of Eggs</th>
                                 <th>Egg Trays Used</th>
                                 <th>Status</th>
@@ -199,6 +200,10 @@ ModuleComponents['sales-product-pricing'] = (container) => {
                     <input type="text" id="new-product-name" placeholder="Enter product name">
                     <label>Remarks</label>
                     <input type="text" id="new-product-remarks" placeholder="Enter remarks">
+                    <label>Egg Category</label>
+                    <select id="new-product-egg-category" class="modal-select">
+                        <option value="">Select category...</option>
+                    </select>
                     <label>No. of Eggs</label>
                     <input type="number" id="new-product-no-of-eggs" placeholder="0" step="1">
                     <label>Egg Trays Used</label>
@@ -221,6 +226,10 @@ ModuleComponents['sales-product-pricing'] = (container) => {
                     <input type="text" id="edit-product-id" readonly>
                     <label>Remarks</label>
                     <input type="text" id="edit-product-remarks">
+                    <label>Egg Category</label>
+                    <select id="edit-product-egg-category" class="modal-select">
+                        <option value="">Select category...</option>
+                    </select>
                     <label>No. of Eggs</label>
                     <input type="number" id="edit-product-no-of-eggs" step="1">
                     <label>Egg Trays Used</label>
@@ -336,6 +345,7 @@ ModuleComponents['sales-product-pricing'] = (container) => {
 var API_BASE = '/api/products';
 var API_BASE_CUSTOMERS = '/api/customers';
 var API_BASE_PRICE_CHANGES = '/api/price-changes';
+var API_BASE_EGG_PRODUCTS = '/api/egg-products';
 
 var priceChangeSortColumn = 'transaction_id';
 var priceChangeSortDirection = 'asc';
@@ -375,6 +385,25 @@ async function getNextProductId() {
     }
 }
 
+async function loadEggCategories() {
+    try {
+        const res = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch egg products');
+        const products = await res.json();
+        const activeCategories = products
+            .filter(p => p.status === 'Active')
+            .map(p => p.product_name);
+        const optionsHtml = '<option value="">Select category...</option>' +
+            activeCategories.map(name => `<option value="${name}">${name}</option>`).join('');
+        const addSelect = document.getElementById('new-product-egg-category');
+        const editSelect = document.getElementById('edit-product-egg-category');
+        if (addSelect) addSelect.innerHTML = optionsHtml;
+        if (editSelect) editSelect.innerHTML = optionsHtml;
+    } catch (err) {
+        console.error('Failed to load egg categories', err);
+    }
+}
+
 var currentProductPage = 1;
 var PRODUCTS_PER_PAGE = 12;
 
@@ -396,6 +425,7 @@ async function loadProductsTable(page = 1) {
                 <td>${p.product_id}</td>
                 <td>${p.product}</td>
                 <td>${p.remarks || ''}</td>
+                <td>${p.egg_category || ''}</td>
                 <td>${p.no_of_eggs || 0}</td>
                 <td>${p.egg_tray_used || 0}</td>
                 <td>${p.status}</td>
@@ -404,7 +434,7 @@ async function loadProductsTable(page = 1) {
         
         const emptyRows = PRODUCTS_PER_PAGE - pageProducts.length;
         for (let i = 0; i < emptyRows; i++) {
-            tbody.innerHTML += `<tr><td colspan="6">&nbsp;</td></tr>`;
+            tbody.innerHTML += `<tr><td colspan="7">&nbsp;</td></tr>`;
         }
         
         let paginationHTML = '';
@@ -425,7 +455,7 @@ async function loadProductsTable(page = 1) {
         paginationContainer.innerHTML = paginationHTML;
     } catch (err) {
         console.error('Failed to load products table', err);
-        tbody.innerHTML = '<tr><td colspan="6">No products found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">No products found</td></tr>';
     }
 }
 
@@ -449,6 +479,8 @@ function initializeProductModal() {
         document.getElementById('new-product-no-of-eggs').value = '';
         document.getElementById('new-product-egg-trays').value = '';
         document.getElementById('new-product-status').value = 'Active';
+        document.getElementById('new-product-egg-category').value = '';
+        await loadEggCategories();
     });
 
     closeBtn.addEventListener('click', () => {
@@ -479,6 +511,7 @@ function initializeProductModal() {
             const data = await res.json();
             document.getElementById('edit-product-id').value = data.product_id;
             document.getElementById('edit-product-remarks').value = data.remarks;
+            document.getElementById('edit-product-egg-category').value = data.egg_category || '';
             document.getElementById('edit-product-no-of-eggs').value = data.no_of_eggs;
             document.getElementById('edit-product-egg-trays').value = data.egg_tray_used;
             document.getElementById('edit-product-status').value = data.status;
@@ -491,6 +524,7 @@ function initializeProductModal() {
         const productId = document.getElementById('new-product-id').value;
         const product = document.getElementById('new-product-name').value;
         const remarks = document.getElementById('new-product-remarks').value;
+        const eggCategory = document.getElementById('new-product-egg-category').value;
         const noOfEggs = document.getElementById('new-product-no-of-eggs').value || 0;
         const eggTrays = document.getElementById('new-product-egg-trays').value || 0;
         const status = document.getElementById('new-product-status').value;
@@ -501,7 +535,7 @@ function initializeProductModal() {
             const res = await fetch(`${API_BASE}`, {
                 method: 'POST',
                 headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product_id: productId, product, remarks, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
+                body: JSON.stringify({ product_id: productId, product, remarks, egg_category: eggCategory, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
@@ -522,6 +556,7 @@ function initializeProductModal() {
         const productSelect = document.getElementById('edit-product-name');
         const product = productSelect.selectedOptions[0].textContent.trim();
         const remarks = document.getElementById('edit-product-remarks').value;
+        const eggCategory = document.getElementById('edit-product-egg-category').value;
         const noOfEggs = document.getElementById('edit-product-no-of-eggs').value || 0;
         const eggTrays = document.getElementById('edit-product-egg-trays').value || 0;
         const status = document.getElementById('edit-product-status').value;
@@ -532,7 +567,7 @@ function initializeProductModal() {
             const res = await fetch(`${API_BASE}/${productId}`, {
                 method: 'PUT',
                 headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product, remarks, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
+                body: JSON.stringify({ product, remarks, egg_category: eggCategory, no_of_eggs: noOfEggs, egg_tray_used: eggTrays, status })
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));

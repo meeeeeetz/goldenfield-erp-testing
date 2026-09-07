@@ -16,16 +16,17 @@ class ProductListController {
     }
 
     async addProduct(productData) {
-        const { product_id, product, remarks, no_of_eggs, egg_tray_used, status } = productData;
+        const { product_id, product, remarks, egg_category, no_of_eggs, egg_tray_used, status } = productData;
         const query = `
             INSERT INTO product_list 
-            (product_id, product, remarks, no_of_eggs, egg_tray_used, status) 
-            VALUES ($1, $2, $3, $4, $5, $6)
+            (product_id, product, remarks, egg_category, no_of_eggs, egg_tray_used, status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
         const result = await this.db.query(query, [
             product_id, 
             product, 
             remarks, 
+            egg_category || null, 
             no_of_eggs === '' ? 0 : no_of_eggs, 
             egg_tray_used === '' ? 0 : egg_tray_used, 
             status
@@ -34,16 +35,17 @@ class ProductListController {
     }
 
     async updateProduct(productId, productData) {
-        const { product, remarks, no_of_eggs, egg_tray_used, status } = productData;
+        const { product, remarks, egg_category, no_of_eggs, egg_tray_used, status } = productData;
         const query = `
             UPDATE product_list 
-            SET product = $2, remarks = $3, no_of_eggs = $4, egg_tray_used = $5, status = $6 
+            SET product = $2, remarks = $3, egg_category = $4, no_of_eggs = $5, egg_tray_used = $6, status = $7 
             WHERE product_id = $1
         `;
         const result = await this.db.query(query, [
             productId, 
             product, 
             remarks, 
+            egg_category || null, 
             no_of_eggs === '' ? 0 : no_of_eggs, 
             egg_tray_used === '' ? 0 : egg_tray_used, 
             status

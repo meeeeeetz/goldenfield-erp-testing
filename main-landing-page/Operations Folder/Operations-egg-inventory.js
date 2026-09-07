@@ -2,6 +2,13 @@ if (typeof ModuleComponents === 'undefined') {
     window.ModuleComponents = {}; 
 }
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('goldenfield_auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+var API_BASE_EGG_PRODUCTS = '/api/egg-products';
+
 ModuleComponents['operations-egg-inventory'] = (container) => {
     container.innerHTML = `
         <div class="egg-inventory-layout">
@@ -160,23 +167,14 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                                     <th>Product ID</th>
                                     <th>Product</th>
                                     <th>Remarks</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr><td>EP#001</td><td>NW</td><td>35g and Below</td></tr>
-                                <tr><td>EP#002</td><td>PW</td><td>36g to 40g</td></tr>
-                                <tr><td>EP#003</td><td>XS</td><td>41g to 45g</td></tr>
-                                <tr><td>EP#004</td><td>S</td><td>46g to 50g</td></tr>
-                                <tr><td>EP#005</td><td>M</td><td>51g to 55g</td></tr>
-                                <tr><td>EP#006</td><td>L</td><td>56g to 60g</td></tr>
-                                <tr><td>EP#007</td><td>XL</td><td>61g to 65g</td></tr>
-                                <tr><td>EP#008</td><td>J</td><td>66g to 70g</td></tr>
-                                <tr><td>EP#009</td><td>Broken</td><td>Cracked / Damaged</td></tr>
-                                <tr><td>EP#010</td><td>Reject</td><td>Oversize / Undersize</td></tr>
+                            <tbody id="egg-product-list-body">
                             </tbody>
                         </table>
                     </div>
-                    <div class="pagination">
+                    <div class="pagination" id="egg-product-pagination">
                         <button class="page-btn">&laquo; Prev</button>
                         <button class="page-btn active">1</button>
                         <button class="page-btn">2</button>
@@ -242,10 +240,15 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                         <button class="modal-tab" data-tab="change">Change or Remove Products</button>
                     </div>
                     <div class="modal-tab-panel" id="tab-add">
+                        <label>Product ID</label>
+                        <input type="text" id="new-product-id" readonly placeholder="EgRoProID-1" />
                         <label>Product</label>
                         <input type="text" id="new-product-name" placeholder="Product name" />
-                        <label>Product ID</label>
-                        <input type="text" id="new-product-id" readonly placeholder="Auto-generated" />
+                        <label>Status</label>
+                        <select id="new-product-status" class="modal-select">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
                         <label>Remarks</label>
                         <textarea rows="3" placeholder="Remarks"></textarea>
                         <div class="modal-tab-actions">
@@ -253,9 +256,11 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                         </div>
                     </div>
                     <div class="modal-tab-panel hidden" id="tab-change">
+                        <label>Search Products</label>
+                        <input type="text" id="product-search" placeholder="Search products..." />
                         <label>Product</label>
                         <select class="modal-select" id="change-product">
-                            <option value="">Search available products...</option>
+                            <option value="">Select a product...</option>
                             <option value="EP#001">NW</option>
                             <option value="EP#002">PW</option>
                             <option value="EP#003">XS</option>
@@ -269,6 +274,11 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                         </select>
                         <label>Product ID</label>
                         <input type="text" id="change-product-id" readonly placeholder="Product ID" />
+                        <label>Status</label>
+                        <select id="change-product-status" class="modal-select">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
                         <label>Remarks</label>
                         <textarea id="change-remarks" rows="3" readonly placeholder="Remarks"></textarea>
                         <div class="modal-tab-actions">
@@ -296,13 +306,334 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     const eggProductsModal = container.querySelector('#egg-products-modal');
     const openEggProductsBtn = container.querySelector('#add-egg-products-btn');
     const closeEggProductsBtn = container.querySelector('#close-egg-products-btn');
+    const productListBody = container.querySelector('#egg-product-list-body');
+
+    const resetAddTab = () => {
+        const productIdInput = eggProductsModal.querySelector('#new-product-id');
+        const productNameInput = eggProductsModal.querySelector('#new-product-name');
+        const statusSelect = eggProductsModal.querySelector('#new-product-status');
+        const remarksTextarea = eggProductsModal.querySelector('#tab-add textarea');
+        if (productIdInput) productIdInput.value = 'EgRoProID-1';
+        if (productNameInput) productNameInput.value = '';
+        if (statusSelect) statusSelect.value = 'Active';
+        if (remarksTextarea) remarksTextarea.value = '';
+    };
+
+    const resetChangeTab = () => {
+        if (changeProductSelect) changeProductSelect.value = '';
+        if (changeProductId) changeProductId.value = '';
+        if (changeRemarks) {
+            changeRemarks.value = '';
+            changeRemarks.setAttribute('readonly', true);
+        }
+        if (changeStatus) {
+            changeStatus.value = 'Active';
+            changeStatus.disabled = true;
+        }
+        if (productSearchInput) productSearchInput.value = '';
+    };
+
+    let eggProductCurrentPage = 1;
+    const EGG_PRODUCTS_PER_PAGE = 5;
+
+    const renderEggProductPagination = (totalItems) => {
+        const pagination = container.querySelector('#egg-product-pagination');
+        if (!pagination) return;
+        const totalPages = Math.max(1, Math.ceil(totalItems / EGG_PRODUCTS_PER_PAGE));
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+        pagination.style.display = 'flex';
+        let buttonsHtml = '';
+        if (eggProductCurrentPage > 1) {
+            buttonsHtml += `<button class="page-btn" data-page="${eggProductCurrentPage - 1}">&laquo; Prev</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>&laquo; Prev</button>`;
+        }
+        for (let i = 1; i <= totalPages; i++) {
+            buttonsHtml += `<button class="page-btn ${i === eggProductCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+        if (eggProductCurrentPage < totalPages) {
+            buttonsHtml += `<button class="page-btn" data-page="${eggProductCurrentPage + 1}">Next &raquo;</button>`;
+        } else {
+            buttonsHtml += `<button class="page-btn" disabled>Next &raquo;</button>`;
+        }
+        pagination.innerHTML = buttonsHtml;
+        pagination.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.dataset.page, 10);
+                if (!isNaN(page)) {
+                    eggProductCurrentPage = page;
+                    loadEggProductList();
+                }
+            });
+        });
+    };
+
+    const loadEggProductList = async () => {
+        if (!productListBody) return;
+        try {
+            const res = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('Failed to fetch products');
+            const products = await res.json();
+            const totalItems = products.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / EGG_PRODUCTS_PER_PAGE));
+            if (eggProductCurrentPage > totalPages) eggProductCurrentPage = totalPages;
+            const start = (eggProductCurrentPage - 1) * EGG_PRODUCTS_PER_PAGE;
+            const paginatedProducts = products.slice(start, start + EGG_PRODUCTS_PER_PAGE);
+            productListBody.innerHTML = paginatedProducts.map(p => `
+                <tr>
+                    <td>${p.product_id}</td>
+                    <td>${p.product_name}</td>
+                    <td>${p.remarks || ''}</td>
+                    <td>${p.status || 'Active'}</td>
+                </tr>
+            `).join('');
+            if (totalItems === 0) {
+                productListBody.innerHTML = '<tr><td colspan="4">No products found</td></tr>';
+            }
+            renderEggProductPagination(totalItems);
+        } catch (err) {
+            console.error('Failed to load egg product list', err);
+            productListBody.innerHTML = '<tr><td colspan="4">No products found</td></tr>';
+            const pagination = container.querySelector('#egg-product-pagination');
+            if (pagination) pagination.style.display = 'none';
+        }
+    };
 
     if (openEggProductsBtn && eggProductsModal) {
-        openEggProductsBtn.addEventListener('click', () => eggProductsModal.classList.remove('hidden'));
+        openEggProductsBtn.addEventListener('click', async () => {
+            eggProductsModal.classList.remove('hidden');
+            eggProductCurrentPage = 1;
+            resetAddTab();
+            resetChangeTab();
+            eggProductTabs.forEach(t => t.classList.remove('active'));
+            const firstTab = eggProductsModal.querySelector('.modal-tab[data-tab="add"]');
+            if (firstTab) firstTab.classList.add('active');
+            Object.keys(eggProductPanels).forEach(key => {
+                if (eggProductPanels[key]) {
+                    eggProductPanels[key].classList.toggle('hidden', key !== 'add');
+                }
+            });
+            const productIdInput = eggProductsModal.querySelector('#new-product-id');
+            if (productIdInput) {
+                try {
+                    const res = await fetch(`${API_BASE_EGG_PRODUCTS}/next-id`, { headers: getAuthHeaders() });
+                    if (res.ok) {
+                        const data = await res.json();
+                        productIdInput.value = data.product_id || 'EgRoProID-1';
+                    } else {
+                        productIdInput.value = 'EgRoProID-1';
+                    }
+                } catch {
+                    productIdInput.value = 'EgRoProID-1';
+                }
+            }
+            await loadEggProductsForChange();
+        });
     }
-    if (closeEggProductsBtn && eggProductsModal) {
-        closeEggProductsBtn.addEventListener('click', () => eggProductsModal.classList.add('hidden'));
+    if (eggProductsModal) {
+        eggProductsModal.addEventListener('click', (e) => {
+            if (e.target === eggProductsModal) {
+                eggProductsModal.classList.add('hidden');
+            }
+        });
     }
+
+    const eggProductTabs = eggProductsModal ? eggProductsModal.querySelectorAll('.modal-tab') : [];
+    const eggProductPanels = {
+        add: eggProductsModal ? eggProductsModal.querySelector('#tab-add') : null,
+        change: eggProductsModal ? eggProductsModal.querySelector('#tab-change') : null
+    };
+
+    eggProductTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            eggProductTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const tabName = tab.dataset.tab;
+            Object.keys(eggProductPanels).forEach(key => {
+                if (eggProductPanels[key]) {
+                    eggProductPanels[key].classList.toggle('hidden', key !== tabName);
+                }
+            });
+        });
+    });
+
+    const productSearchInput = eggProductsModal ? eggProductsModal.querySelector('#product-search') : null;
+    const changeProductSelect = eggProductsModal ? eggProductsModal.querySelector('#change-product') : null;
+    const changeProductId = eggProductsModal ? eggProductsModal.querySelector('#change-product-id') : null;
+    const changeRemarks = eggProductsModal ? eggProductsModal.querySelector('#change-remarks') : null;
+    const changeStatus = eggProductsModal ? eggProductsModal.querySelector('#change-product-status') : null;
+
+    if (productSearchInput && changeProductSelect) {
+        productSearchInput.addEventListener('input', () => {
+            const query = productSearchInput.value.toLowerCase();
+            Array.from(changeProductSelect.options).forEach(option => {
+                const text = option.text.toLowerCase();
+                option.style.display = text.includes(query) || !query ? '' : 'none';
+            });
+        });
+    }
+
+    if (changeProductSelect) {
+        changeProductSelect.addEventListener('change', () => {
+            if (changeProductSelect.value) {
+                const parts = changeProductSelect.value.split('#');
+                if (parts.length === 2) {
+                    const num = parseInt(parts[1], 10);
+                    if (changeProductId) changeProductId.value = `EgRoProID-${num}`;
+                }
+                if (changeRemarks) changeRemarks.removeAttribute('readonly');
+                if (changeStatus) changeStatus.disabled = false;
+            } else {
+                if (changeProductId) changeProductId.value = '';
+                if (changeRemarks) {
+                    changeRemarks.value = '';
+                    changeRemarks.setAttribute('readonly', true);
+                }
+                if (changeStatus) changeStatus.disabled = true;
+            }
+        });
+    }
+
+    const saveNewProductBtn = eggProductsModal ? eggProductsModal.querySelector('#tab-add .btn-primary') : null;
+    if (saveNewProductBtn) {
+        saveNewProductBtn.addEventListener('click', async () => {
+            const productIdInput = eggProductsModal.querySelector('#new-product-id');
+            const productNameInput = eggProductsModal.querySelector('#new-product-name');
+            const statusSelect = eggProductsModal.querySelector('#new-product-status');
+            const remarksTextarea = eggProductsModal.querySelector('#tab-add textarea');
+
+            const product_id = productIdInput ? productIdInput.value : '';
+            const product_name = productNameInput ? productNameInput.value.trim() : '';
+            const status = statusSelect ? statusSelect.value : 'Active';
+            const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
+
+            if (!product_id || !product_name) {
+                alert('Product ID and Product Name are required');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE_EGG_PRODUCTS, {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id, product_name, remarks, status })
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error: ${res.status}`);
+                }
+                alert('Product saved: ' + product_name);
+                eggProductsModal.classList.add('hidden');
+                if (productNameInput) productNameInput.value = '';
+                if (remarksTextarea) remarksTextarea.value = '';
+                if (statusSelect) statusSelect.value = 'Active';
+                try {
+                    const res = await fetch(`${API_BASE_EGG_PRODUCTS}/next-id`, { headers: getAuthHeaders() });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (productIdInput) productIdInput.value = data.product_id || 'EgRoProID-1';
+                    } else {
+                        if (productIdInput) productIdInput.value = 'EgRoProID-1';
+                    }
+                } catch {
+                    if (productIdInput) productIdInput.value = 'EgRoProID-1';
+                }
+                eggProductCurrentPage = 1;
+                await loadEggProductList();
+            } catch (err) {
+                console.error('Failed to save egg product', err);
+                alert('Error saving product: ' + err.message);
+            }
+        });
+    }
+
+    const saveChangeProductBtn = eggProductsModal ? eggProductsModal.querySelector('#tab-change .btn-primary') : null;
+    const deleteChangeProductBtn = eggProductsModal ? eggProductsModal.querySelector('#tab-change .btn-danger') : null;
+
+    if (saveChangeProductBtn) {
+        saveChangeProductBtn.addEventListener('click', async () => {
+            const productId = changeProductId ? changeProductId.value : '';
+            const productSelect = changeProductSelect;
+            const productName = productSelect && productSelect.selectedOptions[0] ? productSelect.selectedOptions[0].textContent.trim() : '';
+            const remarks = changeRemarks ? changeRemarks.value.trim() : '';
+            const status = changeStatus ? changeStatus.value : 'Active';
+
+            if (!productSelect || !productSelect.value) {
+                alert('Please select a product');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_EGG_PRODUCTS}/${encodeURIComponent(productId)}`, {
+                    method: 'PUT',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_name: productName, remarks, status })
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error: ${res.status}`);
+                }
+                alert('Product updated: ' + productName);
+                eggProductsModal.classList.add('hidden');
+                eggProductCurrentPage = 1;
+                await loadEggProductList();
+            } catch (err) {
+                console.error('Failed to update egg product', err);
+                alert('Error updating product: ' + err.message);
+            }
+        });
+    }
+
+    if (deleteChangeProductBtn) {
+        deleteChangeProductBtn.addEventListener('click', async () => {
+            const productId = changeProductId ? changeProductId.value : '';
+            const productSelect = changeProductSelect;
+            const productName = productSelect && productSelect.selectedOptions[0] ? productSelect.selectedOptions[0].textContent.trim() : '';
+
+            if (!productSelect || !productSelect.value) {
+                alert('Please select a product');
+                return;
+            }
+            if (!confirm('Delete ' + productName + '?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE_EGG_PRODUCTS}/${encodeURIComponent(productId)}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error: ${res.status}`);
+                }
+                alert('Product deleted');
+                eggProductsModal.classList.add('hidden');
+                eggProductCurrentPage = 1;
+                await loadEggProductList();
+            } catch (err) {
+                console.error('Failed to delete egg product', err);
+                alert('Error deleting product: ' + err.message);
+            }
+        });
+    }
+
+    const loadEggProductsForChange = async () => {
+        try {
+            const res = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('Failed to fetch products');
+            const products = await res.json();
+            if (changeProductSelect) {
+                changeProductSelect.innerHTML = '<option value="">Select a product...</option>' +
+                    products.map(p => `<option value="${p.product_id}">${p.product_name}</option>`).join('');
+            }
+        } catch (err) {
+            console.error('Failed to load egg products', err);
+        }
+    };
+
+    loadEggProductList();
 };
 
 // Global Initialization Routine

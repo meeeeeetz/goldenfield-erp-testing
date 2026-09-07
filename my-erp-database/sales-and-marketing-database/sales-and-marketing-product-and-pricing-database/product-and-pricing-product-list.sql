@@ -3,6 +3,7 @@ CREATE TABLE product_list (
     product_id VARCHAR(50) UNIQUE NOT NULL,
     product VARCHAR(255) NOT NULL,
     remarks TEXT,
+    egg_category VARCHAR(255),
     no_of_eggs INT DEFAULT 0,
     egg_tray_used DECIMAL(10,2) DEFAULT 0,
     status ENUM('Active', 'Terminated') DEFAULT 'Active',
