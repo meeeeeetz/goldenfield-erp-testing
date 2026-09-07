@@ -51,6 +51,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                                     <th>Expense Code</th>
                                     <th>Expense Type</th>
                                     <th>Amount</th>
+                                    <th style="width: 40px;">Photo</th>
                                     <th>Payment Date</th>
                                     <th>Payment Source</th>
                                     <th>Check Number</th>
@@ -262,6 +263,22 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                                 <input type="text" id="order-misc-accounting-code" readonly style="background: #f1f5f9;" placeholder="Auto-filled" />
                             </div>
                         </div>
+                        <div class="modal-field" style="margin-top: 12px;">
+                            <label>Order Photo</label>
+                            <div id="order-misc-order-photo-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: border-color 0.2s, background 0.2s; position: relative;">
+                                <div class="upload-zone-content" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <div class="upload-placeholder" style="color: #64748b; font-size: 14px;">
+                                        <span>Drag & Drop or Click to Upload Order Photo (JPG only, max 5MB, auto-compressed to under 1MB)</span>
+                                    </div>
+                                    <div class="upload-preview" style="display:none; flex-direction: column; align-items: center; gap: 8px; position: relative;">
+                                        <img src="" alt="preview" style="max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                        <button type="button" class="remove-upload-btn" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;">&times;</button>
+                                    </div>
+                                </div>
+                                <input type="file" accept="image/jpeg,image/jpg" style="display:none">
+                            </div>
+                            <input type="hidden" id="order-misc-file-input" />
+                        </div>
                         <div class="table-wrap" style="max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 12px;">
                             <table class="data-table product-table" style="border-spacing: 0 4px; border-collapse: separate; border: none !important;">
                                 <thead>
@@ -271,7 +288,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                                         <th style="padding: 6px 8px; border: none !important; width: 25%;">Item</th>
                                         <th style="padding: 6px 8px; border: none !important; width: 15%;">Price</th>
                                         <th style="padding: 6px 8px; border: none !important; width: 25%;">Remarks</th>
-                                        <th style="padding: 6px 8px; border: none !important; width: 25%;">Amount</th>
+                                        <th style="padding: 6px 8px; border: none !important; width: 15%;">Amount</th>
+                                        <th style="padding: 6px 8px; width: 40px; border: none !important;">Photo</th>
                                         <th style="padding: 6px 8px; width: 40px; border: none !important;"></th>
                                     </tr>
                                 </thead>
@@ -295,6 +313,35 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         </div>
                     </div>
                 </div>
+
+                <div id="order-misc-photo-modal" class="modal hidden">
+                    <div class="modal-content" style="max-width: 420px; width: 95%;">
+                        <div class="modal-header-row">
+                            <h3>Upload Receipt Photo</h3>
+                            <button class="modal-close-btn" id="close-order-misc-photo-modal">&times;</button>
+                        </div>
+                        <div class="modal-field">
+                            <label>Receipt Image</label>
+                            <div id="order-misc-photo-upload-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: border-color 0.2s, background 0.2s; position: relative;">
+                                <div class="upload-zone-content" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <div class="upload-placeholder" style="color: #64748b; font-size: 14px;">
+                                        <span>Drag & Drop or Click to Upload (JPG only, max 5MB, auto-compressed to under 1MB)</span>
+                                    </div>
+                                    <div class="upload-preview" style="display:none; flex-direction: column; align-items: center; gap: 8px; position: relative;">
+                                        <img src="" alt="preview" style="max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                        <button type="button" class="remove-upload-btn" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;">&times;</button>
+                                    </div>
+                                </div>
+                                <input type="file" accept="image/jpeg,image/jpg" style="display:none">
+                            </div>
+                        </div>
+                        <div class="modal-tab-actions" style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <button id="save-order-misc-photo-btn" class="btn-primary">Save Photo</button>
+                            <button id="remove-order-misc-photo-btn" class="btn-danger" disabled>Remove Photo</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="pay-misc-modal" class="modal hidden">
                     <div class="modal-content" style="max-width: 900px; width: 95%;">
                         <div class="modal-header-row">
@@ -364,6 +411,11 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
 
             document.getElementById('order-misc-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('order-misc-invoice').value = '';
+            document.getElementById('order-misc-id').value = 'OrMiscID-1';
+            document.getElementById('order-misc-file-input').value = '';
+            const orderPhotoZone = document.getElementById('order-misc-order-photo-zone');
+            if (orderPhotoZone && orderPhotoZone._clear) orderPhotoZone._clear();
+
             orderMiscItems = [];
             renderOrderMiscItems();
             modal.classList.remove('hidden');
@@ -426,6 +478,11 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         function closeOrderMiscModal() {
             const modal = document.getElementById('order-misc-modal');
             if (modal) modal.classList.add('hidden');
+            orderMiscItems = [];
+            orderMiscPhotoBlob = null;
+            orderMiscPhotoFileUrl = null;
+            const orderPhotoZone = document.getElementById('order-misc-order-photo-zone');
+            if (orderPhotoZone && orderPhotoZone._clear) orderPhotoZone._clear();
         }
 
         function addOrderMiscItemRow() {
@@ -454,13 +511,14 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             if (!tbody) return;
 
             if (orderMiscItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #94a3b8;">No items added</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #94a3b8;">No items added</td></tr>';
                 document.getElementById('order-misc-grand-total').value = '';
                 return;
             }
 
             tbody.innerHTML = orderMiscItems.map((item, index) => {
                 const amount = item.qty * item.price;
+                const hasPhoto = !!item.file_path;
                 return `
                     <tr>
                         <td><input type="number" class="modal-input" value="${item.qty}" min="0" onchange="updateOrderMiscItem(${index}, 'qty', this.value)" /></td>
@@ -469,6 +527,15 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         <td><input type="number" class="modal-input" value="${item.price}" min="0" step="0.01" onchange="updateOrderMiscItem(${index}, 'price', this.value)" /></td>
                         <td><input type="text" class="modal-input" value="${item.remarks}" onchange="updateOrderMiscItem(${index}, 'remarks', this.value)" /></td>
                         <td>P ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td style="text-align: center;">
+                            <span class="photo-icon-wrap" data-receipt-path="${item.file_url || ''}" data-item-index="${index}" onclick="window._miscPhotoClick && window._miscPhotoClick(this)" style="cursor: pointer;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${hasPhoto ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </span>
+                        </td>
                         <td style="text-align: center;">
                             <button onclick="removeOrderMiscItemRow(${index})" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 18px; font-weight: bold; padding: 4px;" title="Remove">&times;</button>
                         </td>
@@ -501,6 +568,33 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
 
             try {
+                const itemsWithFilePaths = orderMiscItems.map(item => ({
+                    item: item.item,
+                    qty: item.qty,
+                    unit: item.unit,
+                    price: item.price,
+                    remarks: item.remarks,
+                    file_path: item.file_path || null
+                }));
+
+                let orderFilePath = null;
+                if (orderMiscPhotoBlob) {
+                    const formData = new FormData();
+                    const fileName = `misc-expense-order_${orderId}_${Date.now()}.webp`;
+                    formData.append('file', orderMiscPhotoBlob, fileName);
+                    const uploadRes = await fetch('/api/order-misc/upload', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` },
+                        body: formData
+                    });
+                    if (!uploadRes.ok) {
+                        const errData = await uploadRes.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to upload order photo');
+                    }
+                    const uploadData = await uploadRes.json();
+                    orderFilePath = uploadData.fileName;
+                }
+
                 const res = await fetch('/api/order-misc', {
                     method: 'POST',
                     headers: {
@@ -515,14 +609,27 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         customer_name: customerName || null,
                         expense_code: accountingCode || null,
                         expense_type: expenseCode || null,
-                        items: orderMiscItems,
-                        grand_total: grandTotal
+                        items: itemsWithFilePaths,
+                        grand_total: grandTotal,
+                        file_path: orderFilePath
                     })
                 });
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || 'Failed to save order');
+                }
+
+                const savedOrder = await res.json();
+                if (savedOrder.items && savedOrder.items.length > 0) {
+                    for (let i = 0; i < orderMiscItems.length; i++) {
+                        const savedItem = savedOrder.items[i];
+                        if (savedItem) {
+                            orderMiscItems[i].item_id = savedItem.id;
+                            orderMiscItems[i].file_path = savedItem.file_path || null;
+                            orderMiscItems[i].file_url = savedItem.file_url || null;
+                        }
+                    }
                 }
 
                 alert('Order saved successfully');
@@ -533,6 +640,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
         }
 
+        var API_BASE_ORDER_MISC = '/api/order-misc';
         var API_BASE_ORDER_MISC_REPAYMENTS = '/api/order-misc-repayments';
 
         async function openPayMiscModal() {
@@ -752,6 +860,32 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             });
         }
 
+        const closeOrderMiscPhotoBtn = document.getElementById('close-order-misc-photo-modal');
+        if (closeOrderMiscPhotoBtn) {
+            closeOrderMiscPhotoBtn.onclick = closeOrderMiscPhotoModal;
+        }
+
+        const saveOrderMiscPhotoBtn = document.getElementById('save-order-misc-photo-btn');
+        if (saveOrderMiscPhotoBtn) {
+            saveOrderMiscPhotoBtn.onclick = saveOrderMiscPhoto;
+        }
+
+        const removeOrderMiscPhotoBtn = document.getElementById('remove-order-misc-photo-btn');
+        if (removeOrderMiscPhotoBtn) {
+            removeOrderMiscPhotoBtn.onclick = removeOrderMiscPhoto;
+        }
+
+        if (document.getElementById('order-misc-photo-modal')) {
+            document.getElementById('order-misc-photo-modal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('order-misc-photo-modal')) {
+                    closeOrderMiscPhotoModal();
+                }
+            });
+        }
+
+        setupOrderMiscPhotoUploadZone();
+        setupOrderPhotoUploadZone();
+
         const payMiscBtn = document.getElementById('pay-misc-btn');
         if (payMiscBtn) {
             payMiscBtn.onclick = openPayMiscModal;
@@ -962,27 +1096,39 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             const pageData = miscTransactionsData.slice(start, end);
 
             if (pageData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No transactions found</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = pageData.map(order => `
-                <tr>
-                    <td>${order.order_id || '-'}</td>
-                    <td>${order.date ? new Date(order.date).toISOString().split('T')[0] : '-'}</td>
-                    <td>${order.customer || '-'}</td>
-                    <td>${order.expense_code || '-'}</td>
-                    <td>${order.expense_type || '-'}</td>
-                    <td>P ${parseFloat(order.grand_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                    <td>${order.payment_date ? new Date(order.payment_date).toISOString().split('T')[0] : '-'}</td>
-                    <td>${order.payment_source || '-'}</td>
-                    <td>${order.check_number || '-'}</td>
-                    <td>${order.status || '-'}</td>
-                    <td style="text-align: center;">
-                        <button onclick="deleteMiscTransaction('${order.order_id}')" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 18px; font-weight: bold; padding: 4px;" title="Delete">&times;</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = pageData.map(order => {
+                const hasPhoto = !!order.file_path;
+                return `
+                    <tr>
+                        <td>${order.order_id || '-'}</td>
+                        <td>${order.date ? new Date(order.date).toISOString().split('T')[0] : '-'}</td>
+                        <td>${order.customer || '-'}</td>
+                        <td>${order.expense_code || '-'}</td>
+                        <td>${order.expense_type || '-'}</td>
+                        <td>P ${parseFloat(order.grand_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td style="text-align: center;">
+                            <span class="photo-icon-wrap" data-receipt-path="${order.file_url || ''}" data-order-id="${order.order_id || ''}" onclick="window._miscPhotoClick && window._miscPhotoClick(this)" style="cursor: pointer;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${hasPhoto ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </span>
+                        </td>
+                        <td>${order.payment_date ? new Date(order.payment_date).toISOString().split('T')[0] : '-'}</td>
+                        <td>${order.payment_source || '-'}</td>
+                        <td>${order.check_number || '-'}</td>
+                        <td>${order.status || '-'}</td>
+                        <td style="text-align: center;">
+                            <button onclick="deleteMiscTransaction('${order.order_id}')" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 18px; font-weight: bold; padding: 4px;" title="Delete">&times;</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
 
             const totalPages = Math.max(1, Math.ceil(miscTransactionsData.length / miscTransactionsPerPage));
             renderMiscTransactionsPagination(totalPages);
@@ -1396,6 +1542,411 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 }
             });
         }
+
+        var currentMiscPhotoItemIndex = null;
+        var currentMiscPhotoOrderId = null;
+        var miscPhotoFileBlob = null;
+        var orderMiscPhotoBlob = null;
+        var orderMiscPhotoFileUrl = null;
+
+        function convertImageToWebP(dataUrl, quality = 0.85, maxWidth = null) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (maxWidth && width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('Canvas toBlob failed'));
+                    }, 'image/webp', quality);
+                };
+                img.onerror = () => reject(new Error('Image load failed'));
+                img.src = dataUrl;
+            });
+        }
+
+        async function processMiscPhotoFile(file) {
+            const validTypes = ['image/jpeg', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                throw new Error('Only JPG images are allowed');
+            }
+            const maxInputSize = 5 * 1024 * 1024;
+            if (file.size > maxInputSize) {
+                throw new Error('File size must be under 5MB');
+            }
+
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('File read failed'));
+                reader.readAsDataURL(file);
+            });
+
+            let blob = await convertImageToWebP(dataUrl, 0.85, 1200);
+            let quality = 0.85;
+            while (blob.size > 1 * 1024 * 1024 && quality > 0.1) {
+                quality -= 0.1;
+                blob = await convertImageToWebP(dataUrl, quality, 1200);
+            }
+            if (blob.size > 1 * 1024 * 1024) {
+                blob = await convertImageToWebP(dataUrl, quality, 800);
+            }
+            const dataUrlCompressed = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+            return { blob, dataUrl: dataUrlCompressed };
+        }
+
+        function setupOrderMiscPhotoUploadZone() {
+            const zone = document.getElementById('order-misc-photo-upload-zone');
+            if (!zone) return;
+            const input = zone.querySelector('input[type="file"]');
+            const placeholder = zone.querySelector('.upload-placeholder');
+            const preview = zone.querySelector('.upload-preview');
+            const previewImg = preview ? preview.querySelector('img') : null;
+            const removeBtn = preview ? preview.querySelector('.remove-upload-btn') : null;
+            if (!input || !placeholder || !preview || !previewImg || !removeBtn) return;
+
+            const showPreview = (dataUrl) => {
+                placeholder.style.display = 'none';
+                preview.style.display = 'flex';
+                previewImg.src = dataUrl;
+            };
+
+            const clearPreview = () => {
+                placeholder.style.display = 'block';
+                preview.style.display = 'none';
+                previewImg.src = '';
+                input.value = '';
+                miscPhotoFileBlob = null;
+            };
+
+            zone._clear = clearPreview;
+            zone.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-upload-btn')) return;
+                input.click();
+            });
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const result = await processMiscPhotoFile(file);
+                    miscPhotoFileBlob = result.blob;
+                    showPreview(result.dataUrl);
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearPreview();
+            });
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#1ea672';
+                zone.style.background = '#f0fdf4';
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.style.borderColor = '#cbd5e1';
+                zone.style.background = '#f8fafc';
+            });
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#cbd5e1';
+                zone.style.background = '#f8fafc';
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                try {
+                    const result = await processMiscPhotoFile(file);
+                    miscPhotoFileBlob = result.blob;
+                    showPreview(result.dataUrl);
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        function setupOrderPhotoUploadZone() {
+            const zone = document.getElementById('order-misc-order-photo-zone');
+            if (!zone) return;
+            const input = zone.querySelector('input[type="file"]');
+            const placeholder = zone.querySelector('.upload-placeholder');
+            const preview = zone.querySelector('.upload-preview');
+            const previewImg = preview ? preview.querySelector('img') : null;
+            const removeBtn = preview ? preview.querySelector('.remove-upload-btn') : null;
+            const fileInput = document.getElementById('order-misc-file-input');
+            if (!input || !placeholder || !preview || !previewImg || !removeBtn || !fileInput) return;
+
+            const showPreview = (dataUrl) => {
+                placeholder.style.display = 'none';
+                preview.style.display = 'flex';
+                previewImg.src = dataUrl;
+            };
+
+            const clearPreview = () => {
+                placeholder.style.display = 'block';
+                preview.style.display = 'none';
+                previewImg.src = '';
+                input.value = '';
+                fileInput.value = '';
+                orderMiscPhotoBlob = null;
+                orderMiscPhotoFileUrl = null;
+            };
+
+            zone._clear = clearPreview;
+            zone.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-upload-btn')) return;
+                input.click();
+            });
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const result = await processMiscPhotoFile(file);
+                    orderMiscPhotoBlob = result.blob;
+                    orderMiscPhotoFileUrl = result.dataUrl;
+                    showPreview(result.dataUrl);
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearPreview();
+            });
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#1ea672';
+                zone.style.background = '#f0fdf4';
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.style.borderColor = '#cbd5e1';
+                zone.style.background = '#f8fafc';
+            });
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#cbd5e1';
+                zone.style.background = '#f8fafc';
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                try {
+                    const result = await processMiscPhotoFile(file);
+                    orderMiscPhotoBlob = result.blob;
+                    orderMiscPhotoFileUrl = result.dataUrl;
+                    showPreview(result.dataUrl);
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        function openOrderMiscPhotoModal(itemIndex) {
+            currentMiscPhotoItemIndex = itemIndex;
+            currentMiscPhotoOrderId = null;
+            const item = orderMiscItems[itemIndex];
+            const modal = document.getElementById('order-misc-photo-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const zone = document.getElementById('order-misc-photo-upload-zone');
+            const removeBtn = document.getElementById('remove-order-misc-photo-btn');
+            if (zone && zone._clear) zone._clear();
+            if (removeBtn) removeBtn.disabled = !item.file_path;
+        }
+
+        function openOrderPhotoModal(orderId) {
+            currentMiscPhotoOrderId = orderId;
+            currentMiscPhotoItemIndex = null;
+            const modal = document.getElementById('order-misc-photo-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const zone = document.getElementById('order-misc-photo-upload-zone');
+            const removeBtn = document.getElementById('remove-order-misc-photo-btn');
+            if (zone && zone._clear) zone._clear();
+            const order = miscTransactionsData.find(o => o.order_id === orderId);
+            if (removeBtn) removeBtn.disabled = !(order && order.file_path);
+        }
+
+        function closeOrderMiscPhotoModal() {
+            const modal = document.getElementById('order-misc-photo-modal');
+            if (modal) modal.classList.add('hidden');
+            currentMiscPhotoItemIndex = null;
+            currentMiscPhotoOrderId = null;
+            miscPhotoFileBlob = null;
+            const removeBtn = document.getElementById('remove-order-misc-photo-btn');
+            if (removeBtn) removeBtn.disabled = true;
+        }
+
+        async function saveOrderMiscPhoto() {
+            try {
+                if (currentMiscPhotoItemIndex !== null) {
+                    const item = orderMiscItems[currentMiscPhotoItemIndex];
+                    if (!item || !item.item_id) return;
+
+                    let filePath = item.file_path || null;
+                    if (miscPhotoFileBlob) {
+                        const formData = new FormData();
+                        const fileName = `misc-expense_${item.item_id}_${Date.now()}.webp`;
+                        formData.append('file', miscPhotoFileBlob, fileName);
+                        const uploadRes = await fetch('/api/order-misc/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` },
+                            body: formData
+                        });
+                        if (!uploadRes.ok) {
+                            const errData = await uploadRes.json().catch(() => ({}));
+                            throw new Error(errData.error || 'Failed to upload photo');
+                        }
+                        const uploadData = await uploadRes.json();
+                        filePath = uploadData.fileName;
+                    }
+
+                    const updateRes = await fetch(`/api/order-misc/item/${item.item_id}/photo`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                        },
+                        body: JSON.stringify({ file_path: filePath })
+                    });
+
+                    if (!updateRes.ok) {
+                        const errData = await updateRes.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to save photo');
+                    }
+
+                    orderMiscItems[currentMiscPhotoItemIndex].file_path = filePath;
+                    orderMiscItems[currentMiscPhotoItemIndex].file_url = filePath ? `/api/order-misc/item/${item.item_id}/photo` : null;
+                    renderOrderMiscItems();
+                } else if (currentMiscPhotoOrderId) {
+                    const order = miscTransactionsData.find(o => o.order_id === currentMiscPhotoOrderId);
+                    if (!order) return;
+
+                    let filePath = order.file_path || null;
+                    if (miscPhotoFileBlob) {
+                        const formData = new FormData();
+                        const fileName = `misc-expense-order_${order.order_id}_${Date.now()}.webp`;
+                        formData.append('file', miscPhotoFileBlob, fileName);
+                        const uploadRes = await fetch('/api/order-misc/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` },
+                            body: formData
+                        });
+                        if (!uploadRes.ok) {
+                            const errData = await uploadRes.json().catch(() => ({}));
+                            throw new Error(errData.error || 'Failed to upload photo');
+                        }
+                        const uploadData = await uploadRes.json();
+                        filePath = uploadData.fileName;
+                    }
+
+                    const updateRes = await fetch(`/api/order-misc/${encodeURIComponent(order.order_id)}/photo`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                        },
+                        body: JSON.stringify({ file_path: filePath })
+                    });
+
+                    if (!updateRes.ok) {
+                        const errData = await updateRes.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to save photo');
+                    }
+
+                    order.file_path = filePath;
+                    order.file_url = filePath;
+                    renderMiscTransactionsPage();
+                }
+
+                closeOrderMiscPhotoModal();
+            } catch (err) {
+                alert('Error saving photo: ' + err.message);
+            }
+        }
+
+        async function removeOrderMiscPhoto() {
+            try {
+                if (currentMiscPhotoItemIndex !== null) {
+                    const item = orderMiscItems[currentMiscPhotoItemIndex];
+                    if (!item || !item.item_id) return;
+
+                    const res = await fetch(`/api/order-misc/item/${item.item_id}/photo`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to remove photo');
+                    }
+                    orderMiscItems[currentMiscPhotoItemIndex].file_path = null;
+                    orderMiscItems[currentMiscPhotoItemIndex].file_url = null;
+                    renderOrderMiscItems();
+                } else if (currentMiscPhotoOrderId) {
+                    const order = miscTransactionsData.find(o => o.order_id === currentMiscPhotoOrderId);
+                    if (!order) return;
+
+                    const res = await fetch(`/api/order-misc/${encodeURIComponent(order.order_id)}/photo`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to remove photo');
+                    }
+                    order.file_path = null;
+                    order.file_url = null;
+                    renderMiscTransactionsPage();
+                }
+
+                closeOrderMiscPhotoModal();
+            } catch (err) {
+                alert('Error removing photo: ' + err.message);
+            }
+        }
+
+        var miscPhotoTooltip = document.createElement('div');
+        miscPhotoTooltip.className = 'photo-preview-tooltip';
+        miscPhotoTooltip.style.cssText = 'display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); pointer-events:none;';
+        document.body.appendChild(miscPhotoTooltip);
+
+        document.addEventListener('mouseover', (e) => {
+            const wrap = e.target.closest('.photo-icon-wrap');
+            if (!wrap) return;
+            const src = wrap.getAttribute('data-receipt-path');
+            if (!src) return;
+            miscPhotoTooltip.innerHTML = `<img src="${src}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
+            miscPhotoTooltip.style.display = 'block';
+            const rect = wrap.getBoundingClientRect();
+            miscPhotoTooltip.style.left = rect.left + 'px';
+            miscPhotoTooltip.style.top = (rect.bottom + 8) + 'px';
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const wrap = e.target.closest('.photo-icon-wrap');
+            if (!wrap) return;
+            miscPhotoTooltip.style.display = 'none';
+        });
+
+        window._miscPhotoClick = function(el) {
+            const itemIndex = el.getAttribute('data-item-index');
+            const orderId = el.getAttribute('data-order-id');
+            if (itemIndex !== null) {
+                openOrderMiscPhotoModal(parseInt(itemIndex, 10));
+            } else if (orderId) {
+                openOrderPhotoModal(orderId);
+            }
+        };
 
         window.switchMiscSupplierTab = switchMiscSupplierTab;
         window.openMiscSuppliersModal = openMiscSuppliersModal;

@@ -2246,6 +2246,54 @@ body {
     font-weight: 700;
 }
 
+.egg-confirm-modal {
+    max-width: 360px;
+    gap: 8px;
+}
+
+.egg-confirm-modal h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1f2e;
+    text-align: center;
+}
+
+.egg-confirm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #1a1f2e;
+}
+
+.egg-confirm-value {
+    font-weight: 700;
+}
+
+.egg-confirm-divider {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 4px 0;
+}
+
+.egg-confirm-total {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.egg-confirm-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.egg-confirm-actions .btn-primary,
+.egg-confirm-actions .btn-danger {
+    flex: 1;
+    text-align: center;
+}
+
 .egg-types-table {
     width: 100%;
     border-collapse: collapse;

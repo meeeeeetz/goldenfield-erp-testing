@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const ExpenseController = require('../main-finance-controller/expense-controller');
+const { getPublicUrl, deleteFile } = require('../../utils/supabaseStorage');
 
 class OrderMiscController {
     constructor(dbConnection) {
@@ -15,24 +16,24 @@ class OrderMiscController {
     }
 
     async createOrder(orderData) {
-        const { order_id, date, sales_invoice, customer, customer_name, expense_code, expense_type, items, grand_total } = orderData;
+        const { order_id, date, sales_invoice, customer, customer_name, expense_code, expense_type, items, grand_total, file_path } = orderData;
 
         const client = await this.db.connect();
         try {
             await client.query('BEGIN');
 
             const orderResult = await client.query(
-                `INSERT INTO order_misc (order_id, date, sales_invoice, customer, customer_name, expense_code, expense_type, grand_total, status)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                `INSERT INTO order_misc (order_id, date, sales_invoice, customer, customer_name, expense_code, expense_type, grand_total, status, file_path)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                  RETURNING *`,
-                [order_id, date, sales_invoice || null, customer || null, customer_name || null, expense_code || null, expense_type || null, parseFloat(grand_total) || 0, 'Pending']
+                [order_id, date, sales_invoice || null, customer || null, customer_name || null, expense_code || null, expense_type || null, parseFloat(grand_total) || 0, 'Pending', file_path || null]
             );
 
             for (const item of items) {
                 await client.query(
                     `INSERT INTO order_misc_items
-                    (order_id, item, quantity, unit, price, remarks, amount)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    (order_id, item, quantity, unit, price, remarks, amount, file_path)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
                     [
                         order_id,
                         item.item,
@@ -40,7 +41,8 @@ class OrderMiscController {
                         item.unit || 'Unit',
                         parseFloat(item.price) || 0,
                         item.remarks || null,
-                        (parseFloat(item.price) || 0) * (parseInt(item.qty) || 1)
+                        (parseFloat(item.price) || 0) * (parseInt(item.qty) || 1),
+                        item.file_path || null
                     ]
                 );
             }
@@ -66,7 +68,16 @@ class OrderMiscController {
                 status: 'Pending'
             });
 
-            return orderResult.rows[0];
+            const itemsResult = await this.db.query('SELECT * FROM order_misc_items WHERE order_id = $1', [order_id]);
+            const itemsWithUrls = itemsResult.rows.map(row => ({
+                ...row,
+                file_url: row.file_path ? getPublicUrl(row.file_path) : null
+            }));
+
+            return {
+                ...orderResult.rows[0],
+                items: itemsWithUrls
+            };
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -87,7 +98,10 @@ class OrderMiscController {
 
         query += ' ORDER BY date DESC, created_at DESC';
         const result = await this.db.query(query, values);
-        return result.rows;
+        return result.rows.map(row => ({
+            ...row,
+            file_url: row.file_path ? getPublicUrl(row.file_path) : null
+        }));
     }
 
     async getOrderWithItems(orderId) {
@@ -97,10 +111,32 @@ class OrderMiscController {
         if (!order) return null;
 
         const itemsResult = await this.db.query('SELECT * FROM order_misc_items WHERE order_id = $1', [orderId]);
+        const items = itemsResult.rows.map(row => ({
+            ...row,
+            file_url: row.file_path ? getPublicUrl(row.file_path) : null
+        }));
         return {
             ...order,
-            items: itemsResult.rows
+            file_url: order.file_path ? getPublicUrl(order.file_path) : null,
+            items
         };
+    }
+
+    async updateOrderPhoto(orderId, filePath) {
+        const query = 'UPDATE order_misc SET file_path = $2 WHERE order_id = $1 RETURNING *';
+        const result = await this.db.query(query, [orderId, filePath]);
+        return result.rows[0];
+    }
+
+    async deleteOrderPhoto(orderId) {
+        const existing = await this.db.query('SELECT file_path FROM order_misc WHERE order_id = $1', [orderId]);
+        const filePath = existing.rows[0]?.file_path;
+        if (filePath) {
+            try { await deleteFile(filePath); } catch (e) { console.error('Failed to delete file', e); }
+        }
+        const query = 'UPDATE order_misc SET file_path = NULL WHERE order_id = $1 RETURNING *';
+        const result = await this.db.query(query, [orderId]);
+        return result.rows[0];
     }
 
     async deleteOrder(orderId) {
@@ -119,6 +155,29 @@ class OrderMiscController {
         } finally {
             client.release();
         }
+    }
+
+    async updateOrderItemPhoto(itemId, filePath) {
+        const query = 'UPDATE order_misc_items SET file_path = $2 WHERE id = $1 RETURNING *';
+        const result = await this.db.query(query, [itemId, filePath]);
+        return result.rows[0];
+    }
+
+    async getOrderItemById(itemId) {
+        const query = 'SELECT * FROM order_misc_items WHERE id = $1';
+        const result = await this.db.query(query, [itemId]);
+        return result.rows[0];
+    }
+
+    async deleteOrderItemPhoto(itemId) {
+        const existing = await this.db.query('SELECT file_path FROM order_misc_items WHERE id = $1', [itemId]);
+        const filePath = existing.rows[0]?.file_path;
+        if (filePath) {
+            try { await deleteFile(filePath); } catch (e) { console.error('Failed to delete file', e); }
+        }
+        const query = 'UPDATE order_misc_items SET file_path = NULL WHERE id = $1 RETURNING *';
+        const result = await this.db.query(query, [itemId]);
+        return result.rows[0];
     }
 }
 

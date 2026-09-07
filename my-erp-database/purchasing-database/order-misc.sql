@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS order_misc (
     payment_date DATE,
     payment_source TEXT,
     check_number TEXT,
+    file_path VARCHAR(500),
     created_by VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS order_misc_items (
     price NUMERIC(12,2) NOT NULL DEFAULT 0,
     remarks TEXT,
     amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+    file_path VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

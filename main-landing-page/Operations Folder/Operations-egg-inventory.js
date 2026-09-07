@@ -9,6 +9,7 @@ function getAuthHeaders() {
 
 var API_BASE_EGG_PRODUCTS = '/api/egg-products';
 var API_BASE_RECEIPT_ISSUES = '/api/receipt-issues';
+var API_BASE_DAILY_EGG_PRODUCTION = '/api/daily-egg-production';
 
 ModuleComponents['operations-egg-inventory'] = (container) => {
     container.innerHTML = `
@@ -31,8 +32,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     <h3>Egg Availability</h3>
                     <p class="card-sub-label">Total Eggs Available in the Warehouse</p>
                     <div class="card-value-row">
-                        <div class="card-value">123,000 pcs</div>
-                        <span class="trend-up">▲ 5%</span>
+                        <div class="card-value" id="egg-availability-value">-- pcs</div>
+                        <span class="trend-up" id="egg-availability-trend"></span>
                     </div>
                     <p class="vs-last-month">VS Yesterday</p>
                 </div>
@@ -40,8 +41,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     <h3>Egg Production</h3>
                     <p class="card-sub-label">Daily Average of Egg Production</p>
                     <div class="card-value-row">
-                        <div class="card-value">235,000 Pcs</div>
-                        <span class="trend-up">▲ 5%</span>
+                        <div class="card-value" id="egg-production-value">-- pcs</div>
+                        <span class="trend-up" id="egg-production-trend"></span>
                     </div>
                     <p class="vs-last-month">VS Yesterday</p>
                 </div>
@@ -49,8 +50,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     <h3>Egg Waste</h3>
                     <p class="card-sub-label">Discarded Eggs Daily (Sold as Plastic Eggs)</p>
                     <div class="card-value-row">
-                        <div class="card-value">1,500 pcs</div>
-                        <span class="trend-down">▼ 1%</span>
+                        <div class="card-value" id="egg-waste-value">-- pcs</div>
+                        <span id="egg-waste-trend"></span>
                     </div>
                     <p class="vs-last-month">VS Yesterday</p>
                 </div>
@@ -58,10 +59,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     <h3>Good to Broken %</h3>
                     <p class="card-sub-label">Percentage between Good and Waste Eggs</p>
                     <div class="card-value-row">
-                        <div class="card-value">98%-2%</div>
-                        <span class="trend-down">▼ 1%</span>
+                        <div class="card-value" id="good-broken-value">--%-%</div>
                     </div>
-                    <p class="vs-last-month">VS Yesterday</p>
                 </div>
             </div>
             <div class="chart-and-sidebar">
@@ -196,15 +195,16 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                                     <th>Graded</th>
                                     <th>Ungraded</th>
                                     <th>Ending Inventory</th>
+                                    <th>Egg Production</th>
                                     <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>2026-07-01</td><td>50,000</td><td>12,000</td><td>500</td><td>11,800</td><td>200</td><td>37,500</td><td>48,300</td></tr>
-                                <tr><td>2026-07-02</td><td>52,000</td><td>13,500</td><td>600</td><td>13,200</td><td>300</td><td>38,000</td><td>50,400</td></tr>
-                                <tr><td>2026-07-03</td><td>48,000</td><td>11,800</td><td>400</td><td>11,600</td><td>200</td><td>35,800</td><td>47,000</td></tr>
-                                <tr><td>2026-07-04</td><td>51,000</td><td>14,200</td><td>700</td><td>13,900</td><td>300</td><td>36,100</td><td>49,700</td></tr>
-                                <tr><td>2026-07-05</td><td>49,500</td><td>12,600</td><td>550</td><td>12,350</td><td>250</td><td>36,350</td><td>48,450</td></tr>
+                                <tr><td>2026-07-01</td><td>50,000</td><td>12,000</td><td>500</td><td>11,800</td><td>200</td><td>37,500</td><td>0</td><td>48,300</td></tr>
+                                <tr><td>2026-07-02</td><td>52,000</td><td>13,500</td><td>600</td><td>13,200</td><td>300</td><td>38,000</td><td>0</td><td>50,400</td></tr>
+                                <tr><td>2026-07-03</td><td>48,000</td><td>11,800</td><td>400</td><td>11,600</td><td>200</td><td>35,800</td><td>0</td><td>47,000</td></tr>
+                                <tr><td>2026-07-04</td><td>51,000</td><td>14,200</td><td>700</td><td>13,900</td><td>300</td><td>36,100</td><td>0</td><td>49,700</td></tr>
+                                <tr><td>2026-07-05</td><td>49,500</td><td>12,600</td><td>550</td><td>12,350</td><td>250</td><td>36,350</td><td>0</td><td>48,450</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -223,6 +223,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     <div class="modal-header-row">
                         <h3>Add Daily Egg Production</h3>
                         <div class="egg-header-right">
+                            <label>Prod ID</label>
+                            <input type="text" id="egg-production-id" readonly />
                             <label>Date</label>
                             <input type="text" id="egg-production-date" readonly />
                         </div>
@@ -548,6 +550,37 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                             </div>
                             <div class="egg-gap-15"></div>
                             <button class="btn-primary egg-save-btn">Save</button>
+
+                            <div id="egg-confirm-modal" class="modal hidden">
+                                <div class="modal-content egg-confirm-modal">
+                                    <h3>Total Egg Production Today</h3>
+                                    <div class="egg-confirm-row">
+                                        <span>Beginning Inventory</span>
+                                        <span id="confirm-beginning" class="egg-confirm-value">0</span>
+                                    </div>
+                                    <div class="egg-confirm-row">
+                                        <span>Ending Inventory</span>
+                                        <span id="confirm-ending" class="egg-confirm-value">0</span>
+                                    </div>
+                                    <div class="egg-confirm-row">
+                                        <span>Egg Waste</span>
+                                        <span id="confirm-waste" class="egg-confirm-value">0</span>
+                                    </div>
+                                    <div class="egg-confirm-row">
+                                        <span>Eggs Sold</span>
+                                        <span id="confirm-sold" class="egg-confirm-value">0</span>
+                                    </div>
+                                    <hr class="egg-confirm-divider" />
+                                    <div class="egg-confirm-row egg-confirm-total">
+                                        <span>Total Egg Produced</span>
+                                        <span id="confirm-total" class="egg-confirm-value">0</span>
+                                    </div>
+                                    <div class="egg-confirm-actions">
+                                        <button class="btn-primary" id="confirm-yes-btn">Proceed</button>
+                                        <button class="btn-danger" id="confirm-no-btn">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -625,12 +658,24 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         openEggModalBtn.addEventListener('click', async () => {
             eggModal.classList.remove('hidden');
             const dateInput = eggModal.querySelector('#egg-production-date');
-            if (dateInput && !dateInput.value) {
+            if (dateInput) {
                 const today = new Date();
-                const formatted = today.toISOString().split('T')[0];
-                dateInput.value = formatted;
+                dateInput.value = today.toISOString().split('T')[0];
             }
-            updateBeginningInventory();
+            const productionIdInput = eggModal.querySelector('#egg-production-id');
+            if (productionIdInput) {
+                try {
+                    const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/next-id`, { headers: getAuthHeaders() });
+                    if (res.ok) {
+                        const data = await res.json();
+                        productionIdInput.value = data.production_id || 'DaEggProdID-1';
+                    } else {
+                        productionIdInput.value = 'DaEggProdID-1';
+                    }
+                } catch {
+                    productionIdInput.value = 'DaEggProdID-1';
+                }
+            }
             updateEndingInventory();
             const eggWasteInputs = eggModal.querySelectorAll('.egg-waste-input');
             eggWasteInputs.forEach(input => input.value = '');
@@ -641,6 +686,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
             const eggTotalHours = eggModal.querySelector('#egg-total-hours');
             if (eggTotalHours) eggTotalHours.value = '';
             await loadTodayEggsSold();
+            await loadPreviousDayEndingInventory();
+            updateBeginningInventory();
         });
     }
     if (closeEggModalBtn && eggModal) {
@@ -842,6 +889,218 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     eggTimeInputs.forEach(input => {
         input.addEventListener('input', updateTotalHoursOperated);
     });
+
+    const loadPreviousDayEndingInventory = async () => {
+        const beginningTable = eggModal.querySelectorAll('.egg-types-table')[0];
+        if (!beginningTable) return;
+        const beginningInputs = Array.from(beginningTable.querySelectorAll('.egg-type-input'));
+        beginningInputs.forEach(input => input.value = '');
+        try {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
+            if (!res.ok) return;
+            const checkData = await res.json();
+            if (!checkData.exists) return;
+            const record = checkData.record;
+            const mapping = {
+                'B-NW': record.e_nw,
+                'B-PW': record.e_pw,
+                'B-XS': record.e_xs,
+                'B-S': record.e_s,
+                'B-M': record.e_m,
+                'B-L': record.e_l,
+                'B-XL': record.e_xl,
+                'B-J': record.e_j,
+                'B-Broken': record.e_broken,
+                'B-Dirty': record.e_dirty,
+                'B-Unweighed': record.e_unweighed
+            };
+            beginningInputs.forEach(input => {
+                const type = input.dataset.type || '';
+                if (mapping[type] !== undefined) {
+                    input.value = mapping[type] || '';
+                }
+            });
+        } catch (err) {
+            console.error('Failed to load previous day ending inventory', err);
+        }
+    };
+
+    const saveDailyEggProductionBtn = eggModal ? eggModal.querySelector('.egg-save-btn') : null;
+    if (saveDailyEggProductionBtn) {
+        saveDailyEggProductionBtn.addEventListener('click', async () => {
+            const productionIdInput = eggModal.querySelector('#egg-production-id');
+            const dateInput = eggModal.querySelector('#egg-production-date');
+            const production_id = productionIdInput ? productionIdInput.value.trim() : '';
+            const date = dateInput ? dateInput.value : '';
+
+            if (!production_id || !date) {
+                alert('Production ID and Date are required');
+                return;
+            }
+
+            const getInputValue = (selector) => {
+                const el = eggModal.querySelector(selector);
+                return el ? parseInt(el.value, 10) || 0 : 0;
+            };
+
+            const getTotalSoldValue = (selector) => {
+                const el = eggModal.querySelector(selector);
+                if (!el) return 0;
+                const raw = el.value.replace(/,/g, '');
+                return parseFloat(raw) || 0;
+            };
+
+            const formatNumber = (num) => {
+                return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+
+            const beginningInventory = getInputValue('#egg-beginning-inventory');
+            const endingInventory = getInputValue('#egg-ending-inventory');
+            const eggWaste = getInputValue('#egg-waste-total');
+            const eggsSold = getTotalSoldValue('#egg-total-sold');
+            const totalProduced = endingInventory + eggWaste + eggsSold - beginningInventory;
+
+            const payload = {
+                production_id,
+                date,
+                e_nw: getInputValue('.egg-type-input[data-type="E-NW"]'),
+                e_pw: getInputValue('.egg-type-input[data-type="E-PW"]'),
+                e_xs: getInputValue('.egg-type-input[data-type="E-XS"]'),
+                e_s: getInputValue('.egg-type-input[data-type="E-S"]'),
+                e_m: getInputValue('.egg-type-input[data-type="E-M"]'),
+                e_l: getInputValue('.egg-type-input[data-type="E-L"]'),
+                e_xl: getInputValue('.egg-type-input[data-type="E-XL"]'),
+                e_j: getInputValue('.egg-type-input[data-type="E-J"]'),
+                e_broken: getInputValue('.egg-type-input[data-type="E-Broken"]'),
+                e_dirty: getInputValue('.egg-type-input[data-type="E-Dirty"]'),
+                e_unweighed: getInputValue('.egg-type-input[data-type="E-Unweighed"]'),
+                egg_waste: getInputValue('#egg-waste-total'),
+                total_eggs_sold: getTotalSoldValue('#egg-total-sold'),
+                s_nw: getInputValue('.egg-type-input[data-type="S-NW"]'),
+                s_pw: getInputValue('.egg-type-input[data-type="S-PW"]'),
+                s_xs: getInputValue('.egg-type-input[data-type="S-XS"]'),
+                s_s: getInputValue('.egg-type-input[data-type="S-S"]'),
+                s_m: getInputValue('.egg-type-input[data-type="S-M"]'),
+                s_l: getInputValue('.egg-type-input[data-type="S-L"]'),
+                s_xl: getInputValue('.egg-type-input[data-type="S-XL"]'),
+                s_j: getInputValue('.egg-type-input[data-type="S-J"]'),
+                s_broken: getInputValue('.egg-type-input[data-type="S-Broken"]'),
+                s_dirty: getInputValue('.egg-type-input[data-type="S-Dirty"]'),
+                s_unweighed: getInputValue('.egg-type-input[data-type="S-Unweighed"]'),
+                total_hours_operated: getTotalSoldValue('#egg-total-hours'),
+                egg_production: totalProduced
+            };
+
+            let existingRecord = null;
+            try {
+                const checkRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${encodeURIComponent(date)}`, { headers: getAuthHeaders() });
+                if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    if (checkData.exists) {
+                        existingRecord = checkData.record;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check existing record', err);
+            }
+
+            const confirmModal = eggModal.querySelector('#egg-confirm-modal');
+            if (!confirmModal) return;
+
+            const confirmYesBtn = confirmModal.querySelector('#confirm-yes-btn');
+            const confirmNoBtn = confirmModal.querySelector('#confirm-no-btn');
+            const closeConfirm = () => confirmModal.classList.add('hidden');
+
+            const saveNew = async () => {
+                try {
+                    const res = await fetch(API_BASE_DAILY_EGG_PRODUCTION, {
+                        method: 'POST',
+                        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `Server error: ${res.status}`);
+                    }
+                    alert('Daily egg production saved successfully');
+                    eggModal.classList.add('hidden');
+                } catch (err) {
+                    console.error('Failed to save daily egg production', err);
+                    alert('Error saving daily egg production: ' + err.message);
+                } finally {
+                    closeConfirm();
+                }
+            };
+
+            const updateExisting = async () => {
+                if (!existingRecord) return;
+                try {
+                    const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/${existingRecord.id}`, {
+                        method: 'PUT',
+                        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `Server error: ${res.status}`);
+                    }
+                    alert('Daily egg production updated successfully');
+                    eggModal.classList.add('hidden');
+                } catch (err) {
+                    console.error('Failed to update daily egg production', err);
+                    alert('Error updating daily egg production: ' + err.message);
+                } finally {
+                    closeConfirm();
+                }
+            };
+
+            if (existingRecord) {
+                document.querySelector('#egg-confirm-modal h3').textContent = 'Record already exists for this date';
+                document.getElementById('confirm-beginning').textContent = formatNumber(beginningInventory);
+                document.getElementById('confirm-ending').textContent = formatNumber(endingInventory);
+                document.getElementById('confirm-waste').textContent = formatNumber(eggWaste);
+                document.getElementById('confirm-sold').textContent = formatNumber(eggsSold);
+                document.getElementById('confirm-total').textContent = formatNumber(totalProduced);
+                confirmModal.classList.remove('hidden');
+
+                if (confirmYesBtn) {
+                    confirmYesBtn.textContent = 'Update';
+                    confirmYesBtn.onclick = () => {
+                        closeConfirm();
+                        updateExisting();
+                    };
+                }
+                if (confirmNoBtn) {
+                    confirmNoBtn.textContent = 'Cancel';
+                    confirmNoBtn.onclick = closeConfirm;
+                }
+            } else {
+                document.querySelector('#egg-confirm-modal h3').textContent = 'Total Egg Production Today';
+                document.getElementById('confirm-beginning').textContent = formatNumber(beginningInventory);
+                document.getElementById('confirm-ending').textContent = formatNumber(endingInventory);
+                document.getElementById('confirm-waste').textContent = formatNumber(eggWaste);
+                document.getElementById('confirm-sold').textContent = formatNumber(eggsSold);
+                document.getElementById('confirm-total').textContent = formatNumber(totalProduced);
+                confirmModal.classList.remove('hidden');
+
+                if (confirmYesBtn) {
+                    confirmYesBtn.textContent = 'Proceed';
+                    confirmYesBtn.onclick = () => {
+                        closeConfirm();
+                        saveNew();
+                    };
+                }
+                if (confirmNoBtn) {
+                    confirmNoBtn.textContent = 'Cancel';
+                    confirmNoBtn.onclick = closeConfirm;
+                }
+            }
+        });
+    }
 
     const eggProductsModal = container.querySelector('#egg-products-modal');
     const openEggProductsBtn = container.querySelector('#add-egg-products-btn');
@@ -1163,6 +1422,202 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         });
     }
 
+    const loadEggAvailabilityCard = async () => {
+        const valueEl = document.getElementById('egg-availability-value');
+        const trendEl = document.getElementById('egg-availability-trend');
+        if (!valueEl || !trendEl) return;
+
+        try {
+            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            if (!latestRes.ok) throw new Error('Failed to fetch latest production');
+            const latestRecord = await latestRes.json();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
+            let yesterdayRecord = null;
+            if (yesterdayRes.ok) {
+                const checkData = await yesterdayRes.json();
+                if (checkData.exists) yesterdayRecord = checkData.record;
+            }
+
+            const calcTotal = (record) => {
+                if (!record) return 0;
+                return (
+                    (record.e_nw || 0) + (record.e_pw || 0) + (record.e_xs || 0) + (record.e_s || 0) +
+                    (record.e_m || 0) + (record.e_l || 0) + (record.e_xl || 0) + (record.e_j || 0) +
+                    (record.e_broken || 0) + (record.e_dirty || 0) + (record.e_unweighed || 0)
+                );
+            };
+
+            const latestTotal = calcTotal(latestRecord);
+            const yesterdayTotal = calcTotal(yesterdayRecord);
+
+            valueEl.textContent = latestTotal.toLocaleString('en-US') + ' pcs';
+
+            if (yesterdayRecord && yesterdayTotal > 0) {
+                const change = latestTotal - yesterdayTotal;
+                const percentChange = ((change / yesterdayTotal) * 100).toFixed(1);
+                if (change > 0) {
+                    trendEl.className = 'trend-up';
+                    trendEl.textContent = `▲ ${percentChange}%`;
+                } else if (change < 0) {
+                    trendEl.className = 'trend-down';
+                    trendEl.textContent = `▼ ${Math.abs(percentChange)}%`;
+                } else {
+                    trendEl.className = '';
+                    trendEl.textContent = '0%';
+                }
+            } else {
+                trendEl.className = '';
+                trendEl.textContent = '';
+            }
+        } catch (err) {
+            console.error('Failed to load egg availability card', err);
+            valueEl.textContent = '-- pcs';
+            trendEl.className = '';
+            trendEl.textContent = '';
+        }
+    };
+
+    const loadEggProductionCard = async () => {
+        const valueEl = document.getElementById('egg-production-value');
+        const trendEl = document.getElementById('egg-production-trend');
+        if (!valueEl || !trendEl) return;
+
+        try {
+            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            if (!latestRes.ok) throw new Error('Failed to fetch latest production');
+            const latestRecord = await latestRes.json();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
+            let yesterdayRecord = null;
+            if (yesterdayRes.ok) {
+                const checkData = await yesterdayRes.json();
+                if (checkData.exists) yesterdayRecord = checkData.record;
+            }
+
+            const latestProduction = latestRecord.egg_production || 0;
+            const yesterdayProduction = yesterdayRecord ? (yesterdayRecord.egg_production || 0) : null;
+
+            valueEl.textContent = latestProduction.toLocaleString('en-US') + ' pcs';
+
+            if (yesterdayProduction !== null && yesterdayProduction > 0) {
+                const change = latestProduction - yesterdayProduction;
+                const percentChange = ((change / yesterdayProduction) * 100).toFixed(1);
+                if (change > 0) {
+                    trendEl.className = 'trend-up';
+                    trendEl.textContent = `▲ ${percentChange}%`;
+                } else if (change < 0) {
+                    trendEl.className = 'trend-down';
+                    trendEl.textContent = `▼ ${Math.abs(percentChange)}%`;
+                } else {
+                    trendEl.className = '';
+                    trendEl.textContent = '0%';
+                }
+            } else {
+                trendEl.className = '';
+                trendEl.textContent = '';
+            }
+        } catch (err) {
+            console.error('Failed to load egg production card', err);
+            valueEl.textContent = '-- pcs';
+            trendEl.className = '';
+            trendEl.textContent = '';
+        }
+    };
+
+    const loadEggWasteCard = async () => {
+        const valueEl = document.getElementById('egg-waste-value');
+        const trendEl = document.getElementById('egg-waste-trend');
+        if (!valueEl || !trendEl) return;
+
+        try {
+            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            if (!latestRes.ok) throw new Error('Failed to fetch latest production');
+            const latestRecord = await latestRes.json();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
+            let yesterdayRecord = null;
+            if (yesterdayRes.ok) {
+                const checkData = await yesterdayRes.json();
+                if (checkData.exists) yesterdayRecord = checkData.record;
+            }
+
+            const latestWaste = latestRecord.egg_waste || 0;
+            const yesterdayWaste = yesterdayRecord ? (yesterdayRecord.egg_waste || 0) : null;
+
+            valueEl.textContent = latestWaste.toLocaleString('en-US') + ' pcs';
+
+            if (yesterdayWaste !== null && yesterdayWaste > 0) {
+                const change = latestWaste - yesterdayWaste;
+                const percentChange = ((change / yesterdayWaste) * 100).toFixed(1);
+                if (change > 0) {
+                    trendEl.className = '';
+                    trendEl.style.color = '#e74c3c';
+                    trendEl.textContent = `▲ ${percentChange}%`;
+                } else if (change < 0) {
+                    trendEl.className = '';
+                    trendEl.style.color = '#1ea672';
+                    trendEl.textContent = `▼ ${Math.abs(percentChange)}%`;
+                } else {
+                    trendEl.className = '';
+                    trendEl.style.color = '';
+                    trendEl.textContent = '0%';
+                }
+            } else {
+                trendEl.className = '';
+                trendEl.style.color = '';
+                trendEl.textContent = '';
+            }
+        } catch (err) {
+            console.error('Failed to load egg waste card', err);
+            valueEl.textContent = '-- pcs';
+            trendEl.className = '';
+            trendEl.style.color = '';
+            trendEl.textContent = '';
+        }
+    };
+
+    const loadGoodBrokenCard = async () => {
+        const valueEl = document.getElementById('good-broken-value');
+        if (!valueEl) return;
+
+        try {
+            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            if (!latestRes.ok) throw new Error('Failed to fetch latest production');
+            const latestRecord = await latestRes.json();
+
+            const production = latestRecord.egg_production || 0;
+            const waste = latestRecord.egg_waste || 0;
+
+            let goodPercent = 0;
+            let brokenPercent = 0;
+            if (production > 0) {
+                brokenPercent = ((waste / production) * 100).toFixed(2);
+                goodPercent = (100 - parseFloat(brokenPercent)).toFixed(2);
+            }
+
+            valueEl.textContent = `${goodPercent}%-${brokenPercent}%`;
+        } catch (err) {
+            console.error('Failed to load good to broken card', err);
+            valueEl.textContent = '--%-%';
+        }
+    };
+
     const loadEggProductsForChange = async () => {
         try {
             const res = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
@@ -1178,6 +1633,10 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     };
 
     loadEggProductList();
+    loadEggAvailabilityCard();
+    loadEggProductionCard();
+    loadEggWasteCard();
+    loadGoodBrokenCard();
 };
 
 // Global Initialization Routine

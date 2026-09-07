@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS daily_egg_production (
+    id SERIAL PRIMARY KEY,
+    production_id VARCHAR(50) UNIQUE NOT NULL,
+    date DATE NOT NULL,
+    e_nw INTEGER DEFAULT 0,
+    e_pw INTEGER DEFAULT 0,
+    e_xs INTEGER DEFAULT 0,
+    e_s INTEGER DEFAULT 0,
+    e_m INTEGER DEFAULT 0,
+    e_l INTEGER DEFAULT 0,
+    e_xl INTEGER DEFAULT 0,
+    e_j INTEGER DEFAULT 0,
+    e_broken INTEGER DEFAULT 0,
+    e_dirty INTEGER DEFAULT 0,
+    e_unweighed INTEGER DEFAULT 0,
+    egg_waste INTEGER DEFAULT 0,
+    total_eggs_sold INTEGER DEFAULT 0,
+    egg_production INTEGER DEFAULT 0,
+    s_nw INTEGER DEFAULT 0,
+    s_pw INTEGER DEFAULT 0,
+    s_xs INTEGER DEFAULT 0,
+    s_s INTEGER DEFAULT 0,
+    s_m INTEGER DEFAULT 0,
+    s_l INTEGER DEFAULT 0,
+    s_xl INTEGER DEFAULT 0,
+    s_j INTEGER DEFAULT 0,
+    s_broken INTEGER DEFAULT 0,
+    s_dirty INTEGER DEFAULT 0,
+    s_unweighed INTEGER DEFAULT 0,
+    total_hours_operated DECIMAL(5,2) DEFAULT 0,
+    created_by INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_egg_production_production_id ON daily_egg_production(production_id);
+CREATE INDEX IF NOT EXISTS idx_daily_egg_production_date ON daily_egg_production(date);

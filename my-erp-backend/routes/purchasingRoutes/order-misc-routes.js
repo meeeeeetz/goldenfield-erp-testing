@@ -4,6 +4,10 @@ const OrderMiscController = require('../../Controllers/main-purchasing-controlle
 const pool = require('../../config/database');
 const controller = new OrderMiscController(pool);
 const { authenticateToken } = require('../../middleware/authMiddleware');
+const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.get('/next-id', authenticateToken, async (req, res) => {
     try {
@@ -58,6 +62,97 @@ router.delete('/:orderId', authenticateToken, async (req, res) => {
         } else {
             res.status(404).json({ error: 'Order not found' });
         }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        const timestamp = Date.now();
+        const originalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const destination = `misc-expenses/${timestamp}_${originalName}`;
+
+        const result = await uploadFile(req.file.buffer, destination, {
+            contentType: req.file.mimetype
+        });
+
+        res.status(201).json({
+            message: 'File uploaded successfully',
+            fileName: result.fileName,
+            publicUrl: result.publicUrl,
+            size: req.file.size
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/item/:itemId/photo', authenticateToken, async (req, res) => {
+    try {
+        const { file_path } = req.body;
+        const item = await controller.getOrderItemById(req.params.itemId);
+        if (!item) {
+            return res.status(404).json({ error: 'Order item not found' });
+        }
+        if (file_path === null && item.file_path) {
+            await controller.deleteOrderItemPhoto(req.params.itemId);
+        } else {
+            await controller.updateOrderItemPhoto(req.params.itemId, file_path);
+        }
+        const updated = await controller.getOrderItemById(req.params.itemId);
+        res.json({
+            ...updated,
+            file_url: updated.file_path ? getPublicUrl(updated.file_path) : null
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/item/:itemId/photo', authenticateToken, async (req, res) => {
+    try {
+        const item = await controller.getOrderItemById(req.params.itemId);
+        if (!item) {
+            return res.status(404).json({ error: 'Order item not found' });
+        }
+        await controller.deleteOrderItemPhoto(req.params.itemId);
+        res.json({ message: 'Photo removed successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/:orderId/photo', authenticateToken, async (req, res) => {
+    try {
+        const { file_path } = req.body;
+        const order = await controller.getOrderWithItems(req.params.orderId);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        if (file_path === null && order.file_path) {
+            await controller.deleteOrderPhoto(req.params.orderId);
+        } else {
+            await controller.updateOrderPhoto(req.params.orderId, file_path);
+        }
+        const updated = await controller.getOrderWithItems(req.params.orderId);
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/:orderId/photo', authenticateToken, async (req, res) => {
+    try {
+        const order = await controller.getOrderWithItems(req.params.orderId);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        await controller.deleteOrderPhoto(req.params.orderId);
+        res.json({ message: 'Photo removed successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
