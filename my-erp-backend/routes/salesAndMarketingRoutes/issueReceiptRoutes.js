@@ -110,6 +110,15 @@ router.get('/weekly-schedule', async (req, res) => {
   }
 });
 
+router.get('/today-eggs-sold', async (req, res) => {
+  try {
+    const totals = await controller.getTodayEggsSold();
+    res.json(totals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/weekly-schedule', async (req, res) => {
   try {
     const { schedule } = req.body;

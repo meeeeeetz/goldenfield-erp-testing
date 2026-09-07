@@ -161,6 +161,40 @@ class ReceiptIssueController {
         return result.rows[0];
     }
 
+    async getTodayEggsSold() {
+        const query = `
+            SELECT 
+                ri.product,
+                ri.qty,
+                pl.egg_category,
+                pl.no_of_eggs
+            FROM receipt_issues ri
+            LEFT JOIN product_list pl 
+                ON pl.product = TRIM(ri.product)
+                OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
+                OR TRIM(ri.product) LIKE pl.product || '%'
+            WHERE ri.date = CURRENT_DATE
+        `;
+        const result = await this.db.query(query);
+        const totals = {};
+        const validCategories = ['NW', 'PW', 'XS', 'S', 'M', 'L', 'XL', 'J', 'Broken', 'Dirty', 'Unweighed'];
+        result.rows.forEach(row => {
+            const category = row.egg_category;
+            if (!category || !validCategories.includes(category)) return;
+            const productLower = row.product.toLowerCase();
+            let multiplier = 1;
+            if (row.no_of_eggs && parseFloat(row.no_of_eggs) > 0) {
+                multiplier = parseFloat(row.no_of_eggs);
+            } else if (productLower.includes('case')) {
+                multiplier = 360;
+            } else if (productLower.includes('tray')) {
+                multiplier = 30;
+            }
+            totals[category] = (totals[category] || 0) + (parseFloat(row.qty) || 0) * multiplier;
+        });
+        return totals;
+    }
+
     async getWeeklySchedule() {
         const query = 'SELECT * FROM weekly_schedules ORDER BY day_of_week ASC';
         const result = await this.db.query(query);
