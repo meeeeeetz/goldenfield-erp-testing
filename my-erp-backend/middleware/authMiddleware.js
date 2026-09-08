@@ -35,8 +35,12 @@ const USER_ALLOWED_MODULES = new Set([
     'operations-shipping-permit',
     'sales-receipt-issuance',
     'sales-product-pricing',
+    'purchasing-feeds',
     'purchasing-electricity',
-    'purchasing-egg-tray'
+    'purchasing-egg-tray',
+    'purchasing-veterinary-supplies',
+    'purchasing-ready-to-lay',
+    'purchasing-other-expenses'
 ]);
 
 const pathToModuleMap = {
@@ -45,7 +49,29 @@ const pathToModuleMap = {
     '/api/price-changes': 'sales-product-pricing',
     '/api/customers': 'sales-product-pricing',
     '/api/layer-buildings-reports': 'operations-layer-buildings',
-    '/api/electric-bills': 'purchasing-electricity'
+    '/api/electric-bills': 'purchasing-electricity',
+    '/api/feeds-suppliers': 'purchasing-feeds',
+    '/api/feed-types': 'purchasing-feeds',
+    '/api/feed-inventory': 'purchasing-feeds',
+    '/api/order-feeds': 'purchasing-feeds',
+    '/api/order-feeds-repayments': 'purchasing-feeds',
+    '/api/egg-tray-suppliers': 'purchasing-egg-tray',
+    '/api/egg-tray-types': 'purchasing-egg-tray',
+    '/api/order-egg-trays': 'purchasing-egg-tray',
+    '/api/vet-suppliers': 'purchasing-veterinary-supplies',
+    '/api/vet-products': 'purchasing-veterinary-supplies',
+    '/api/vet-products-inventory': 'purchasing-veterinary-supplies',
+    '/api/vet-supplies-use': 'purchasing-veterinary-supplies',
+    '/api/vet-supplies-categories': 'purchasing-veterinary-supplies',
+    '/api/order-vet-supplies': 'purchasing-veterinary-supplies',
+    '/api/order-vet-supplies-repayments': 'purchasing-veterinary-supplies',
+    '/api/rtl-suppliers': 'purchasing-ready-to-lay',
+    '/api/rtl-types': 'purchasing-ready-to-lay',
+    '/api/order-rtl': 'purchasing-ready-to-lay',
+    '/api/order-rtl-repayments': 'purchasing-ready-to-lay',
+    '/api/misc-suppliers': 'purchasing-other-expenses',
+    '/api/order-misc': 'purchasing-other-expenses',
+    '/api/order-misc-repayments': 'purchasing-other-expenses'
 };
 
 const getModuleFromPath = (reqPath) => {

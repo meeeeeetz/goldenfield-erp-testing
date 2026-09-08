@@ -5,14 +5,17 @@ const OrderFeedController = require('../../Controllers/main-purchasing-controlle
 const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const pool = require('../../config/database');
 const controller = new OrderFeedController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-feeds'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const orders = await controller.getAllOrders(search);
@@ -22,7 +25,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextOrderId();
         res.json({ order_id: nextId });
@@ -31,7 +34,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/outstanding-balance', authenticateToken, async (req, res) => {
+router.get('/outstanding-balance', async (req, res) => {
     try {
         const result = await controller.getOutstandingBalance();
         res.json(result);
@@ -40,7 +43,7 @@ router.get('/outstanding-balance', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const order = await controller.getOrderByCode(req.params.id);
         if (order) {
@@ -53,7 +56,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addOrder(req.body);
         res.status(201).json(result);
@@ -62,7 +65,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateOrder(req.params.id, req.body);
         if (result) {
@@ -75,7 +78,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteOrder(req.params.id);
         if (result) {
@@ -88,7 +91,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -114,7 +117,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     }
 });
 
-router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, res) => {
+router.put('/:id/photo', upload.single('file'), async (req, res) => {
     try {
         const orderId = req.params.id;
         if (!req.file) {
@@ -138,7 +141,7 @@ router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, r
     }
 });
 
-router.delete('/:id/photo', authenticateToken, async (req, res) => {
+router.delete('/:id/photo', async (req, res) => {
     try {
         const orderId = req.params.id;
         const result = await controller.removeOrderPhoto(orderId);
@@ -148,7 +151,7 @@ router.delete('/:id/photo', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/claim-rebates', authenticateToken, async (req, res) => {
+router.post('/claim-rebates', async (req, res) => {
     try {
         const { order_ids, rebate_total, rebate_price } = req.body;
         if (!order_ids || !Array.isArray(order_ids) || order_ids.length === 0) {
@@ -164,7 +167,7 @@ router.post('/claim-rebates', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/settle', authenticateToken, async (req, res) => {
+router.post('/settle', async (req, res) => {
     try {
         const { order_ids } = req.body;
         if (!order_ids || !Array.isArray(order_ids) || order_ids.length === 0) {
@@ -177,7 +180,7 @@ router.post('/settle', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/bulk', authenticateToken, async (req, res) => {
+router.post('/bulk', async (req, res) => {
     try {
         const rows = req.body.rows || [];
         if (!Array.isArray(rows) || rows.length === 0) {

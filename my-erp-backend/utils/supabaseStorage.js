@@ -5,6 +5,15 @@ let supabase;
 function initializeSupabase() {
     if (supabase) return supabase;
 
+    try {
+        const ws = require('ws');
+        if (!global.WebSocket) {
+            global.WebSocket = ws;
+        }
+    } catch (e) {
+        console.warn('ws package not available, realtime features may not work');
+    }
+
     const url = process.env.SUPABASE_URL || 'https://lhypktkkymfkdkcrtvik.supabase.co';
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 

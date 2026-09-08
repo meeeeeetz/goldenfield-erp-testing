@@ -3,9 +3,12 @@ const router = express.Router();
 const RtlTypesController = require('../../Controllers/main-purchasing-controller/rtl-types-controller');
 const pool = require('../../config/database');
 const controller = new RtlTypesController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-ready-to-lay'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextTypeId();
         res.json({ type_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { type_id, company, item, remarks, price, status } = req.body;
         if (!type_id || !company || !item) {
@@ -27,7 +30,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const types = await controller.getAllTypes(search);
@@ -37,7 +40,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:typeId', authenticateToken, async (req, res) => {
+router.get('/code/:typeId', async (req, res) => {
     try {
         const type = await controller.getTypeByCode(req.params.typeId);
         if (type) {
@@ -50,7 +53,7 @@ router.get('/code/:typeId', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:typeId', authenticateToken, async (req, res) => {
+router.put('/:typeId', async (req, res) => {
     try {
         const result = await controller.updateType(req.params.typeId, req.body);
         if (result) {

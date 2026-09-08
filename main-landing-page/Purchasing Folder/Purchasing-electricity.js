@@ -919,12 +919,26 @@ async function loadLatestComparison() {
     }
 }
 
-    var photoTooltip = document.createElement('div');
-    photoTooltip.className = 'photo-preview-tooltip';
-    photoTooltip.style.cssText = 'display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); pointer-events:none;';
-    document.body.appendChild(photoTooltip);
+    var electricPhotoTooltipInitialized = false;
+    var photoTooltip = null;
 
-    document.addEventListener('mouseover', (e) => {
+    function ensureElectricPhotoTooltip() {
+        if (electricPhotoTooltipInitialized) return;
+        electricPhotoTooltipInitialized = true;
+
+        photoTooltip = document.querySelector('.photo-preview-tooltip');
+        if (!photoTooltip) {
+            photoTooltip = document.createElement('div');
+            photoTooltip.className = 'photo-preview-tooltip';
+            document.body.appendChild(photoTooltip);
+        }
+
+        document.addEventListener('mouseover', handleElectricPhotoMouseOver);
+        document.addEventListener('mouseout', handleElectricPhotoMouseOut);
+        document.addEventListener('mousemove', handleElectricPhotoMouseMove);
+    }
+
+    function handleElectricPhotoMouseOver(e) {
         const wrap = e.target.closest('.photo-icon-wrap');
         if (!wrap) return;
         const src = wrap.getAttribute('data-receipt-path');
@@ -932,19 +946,19 @@ async function loadLatestComparison() {
         photoTooltip.innerHTML = `<img src="${src}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
         photoTooltip.style.display = 'block';
         positionElectricPhotoTooltip();
-    });
+    }
 
-    document.addEventListener('mouseout', (e) => {
+    function handleElectricPhotoMouseOut(e) {
         const wrap = e.target.closest('.photo-icon-wrap');
         if (!wrap) return;
         photoTooltip.style.display = 'none';
-    });
+    }
 
-    document.addEventListener('mousemove', (e) => {
+    function handleElectricPhotoMouseMove(e) {
         if (photoTooltip.style.display === 'block') {
             positionElectricPhotoTooltip();
         }
-    });
+    }
 
     function positionElectricPhotoTooltip() {
         const rect = photoTooltip.getBoundingClientRect();
@@ -953,6 +967,8 @@ async function loadLatestComparison() {
         photoTooltip.style.left = left + 'px';
         photoTooltip.style.top = top + 'px';
     }
+
+    ensureElectricPhotoTooltip();
 
     var currentElectricPhotoBillId = null;
     var electricPhotoFileBlob = null;

@@ -3,9 +3,12 @@ const router = express.Router();
 const VetProductsInventoryController = require('../../Controllers/main-purchasing-controller/vet-products-inventory-controller');
 const pool = require('../../config/database');
 const controller = new VetProductsInventoryController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const inventory = await controller.getAllInventory(search);
@@ -15,7 +18,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/product/:productId', authenticateToken, async (req, res) => {
+router.get('/product/:productId', async (req, res) => {
     try {
         const inventory = await controller.getInventoryByProductId(req.params.productId);
         if (inventory) {
@@ -28,7 +31,7 @@ router.get('/product/:productId', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/add', authenticateToken, async (req, res) => {
+router.post('/add', async (req, res) => {
     try {
         const { product_id, quantity } = req.body;
         if (!product_id || quantity === undefined) {
@@ -41,7 +44,7 @@ router.post('/add', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/subtract', authenticateToken, async (req, res) => {
+router.post('/subtract', async (req, res) => {
     try {
         const { product_id, quantity } = req.body;
         if (!product_id || quantity === undefined) {
@@ -54,7 +57,7 @@ router.post('/subtract', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:productId', authenticateToken, async (req, res) => {
+router.put('/:productId', async (req, res) => {
     try {
         const { quantity } = req.body;
         if (quantity === undefined) {

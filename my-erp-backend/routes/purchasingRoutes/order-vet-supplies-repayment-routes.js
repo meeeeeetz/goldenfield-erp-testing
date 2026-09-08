@@ -3,9 +3,12 @@ const router = express.Router();
 const OrderVetSuppliesRepaymentController = require('../../Controllers/main-purchasing-controller/order-vet-supplies-repayment-controller');
 const pool = require('../../config/database');
 const controller = new OrderVetSuppliesRepaymentController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextRepaymentId();
         res.json({ repayment_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const repayments = await controller.getAllRepayments();
         res.json(repayments);
@@ -23,7 +26,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { repayment_id, order_id, bank_source, check_number, total } = req.body;
 
@@ -44,7 +47,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/batch', authenticateToken, async (req, res) => {
+router.post('/batch', async (req, res) => {
     try {
         const { items, bank_source, check_number } = req.body;
 

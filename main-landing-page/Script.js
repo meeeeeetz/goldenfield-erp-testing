@@ -151,8 +151,12 @@ const rolePermissions = {
         'operations-shipping-permit',
         'sales-receipt-issuance',
         'sales-product-pricing',
+        'purchasing-feeds',
         'purchasing-electricity',
-        'purchasing-egg-tray'
+        'purchasing-egg-tray',
+        'purchasing-veterinary-supplies',
+        'purchasing-ready-to-lay',
+        'purchasing-other-expenses'
     ])
 };
 

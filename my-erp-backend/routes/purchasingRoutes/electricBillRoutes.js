@@ -5,12 +5,15 @@ const pool = require('../../config/database');
 const multer = require('multer');
 const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const controller = new ElectricBillController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-electricity'));
+
+router.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -36,7 +39,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     }
 });
 
-router.get('/chart-data', authenticateToken, async (req, res) => {
+router.get('/chart-data', async (req, res) => {
     try {
         const chartData = await controller.getChartData();
         res.json(chartData);
@@ -45,7 +48,7 @@ router.get('/chart-data', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/latest-comparison', authenticateToken, async (req, res) => {
+router.get('/latest-comparison', async (req, res) => {
     try {
         const comparison = await controller.getLatestMonthComparison();
         res.json(comparison);
@@ -54,7 +57,7 @@ router.get('/latest-comparison', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const bills = await controller.getAllElectricBills();
         res.json(bills);
@@ -63,7 +66,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextElectricBillId();
         res.json({ electric_bill_id: nextId });
@@ -72,7 +75,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const bill = await controller.getElectricBillById(req.params.id);
         if (bill) {
@@ -85,7 +88,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addElectricBill(req.body, req.user.id);
         res.status(201).json(result);
@@ -94,7 +97,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateElectricBill(req.params.id, req.body);
         if (result) {
@@ -107,7 +110,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteElectricBill(req.params.id);
         if (result) {

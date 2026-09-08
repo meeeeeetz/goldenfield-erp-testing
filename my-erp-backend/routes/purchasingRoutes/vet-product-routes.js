@@ -3,9 +3,12 @@ const router = express.Router();
 const VetProductController = require('../../Controllers/main-purchasing-controller/vet-product-controller');
 const pool = require('../../config/database');
 const controller = new VetProductController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const products = await controller.getAllProducts(search);
@@ -15,7 +18,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextProductId();
         res.json({ product_id: nextId });
@@ -24,7 +27,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:productId', authenticateToken, async (req, res) => {
+router.get('/code/:productId', async (req, res) => {
     try {
         const product = await controller.getProductByCode(req.params.productId);
         if (product) {
@@ -37,7 +40,7 @@ router.get('/code/:productId', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const product = await controller.getProductByCode(req.params.id);
         if (product) {
@@ -50,7 +53,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addProduct(req.body);
         res.status(201).json(result);
@@ -59,7 +62,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateProduct(req.params.id, req.body);
         if (result) {
@@ -72,7 +75,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteProduct(req.params.id);
         if (result) {

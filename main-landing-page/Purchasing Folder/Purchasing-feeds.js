@@ -7,31 +7,31 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     <h2>Feed Management</h2>
                 </div>
                 <div class="action-buttons-row">
-                    <button id="open-feed-modal" class="btn-icon-circle">
+                    <button id="open-feed-modal" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Order Feeds</span>
                     </button>
-                    <button id="open-rebate-modal" class="btn-icon-circle">
+                    <button id="open-rebate-modal" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Rebates</span>
                     </button>
-                    <button id="open-repayment-modal" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        <span class="btn-label">Pay Feeds</span>
-                    </button>
-                    <button id="record-feeds-use-btn" class="btn-icon-circle">
+                    <button id="record-feeds-use-btn" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Record Feeds Use</span>
                     </button>
-                    <button id="add-feeds-suppliers-btn" class="btn-icon-circle">
+                    <button id="open-repayment-modal" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span class="btn-label">Pay Feeds</span>
+                    </button>
+                    <button id="add-feeds-suppliers-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Feeds Suppliers</span>
                     </button>
-                    <button id="add-feed-type-btn" class="btn-icon-circle">
+                    <button id="add-feed-type-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Feed Type</span>
                     </button>
-                    <button id="open-bulk-upload-modal" class="btn-icon-circle success">
+                    <button id="open-bulk-upload-modal" class="btn-icon-circle success" style="background-color: #D8A309; color: #fff;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Upload Feeds Admin</span>
                     </button>

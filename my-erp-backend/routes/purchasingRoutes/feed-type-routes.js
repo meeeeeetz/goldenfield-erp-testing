@@ -3,7 +3,10 @@ const router = express.Router();
 const FeedTypeController = require('../../Controllers/main-purchasing-controller/feed-type-controller');
 const pool = require('../../config/database');
 const controller = new FeedTypeController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
+
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-feeds'));
 
 router.get('/active', async (req, res) => {
     try {
@@ -15,7 +18,7 @@ router.get('/active', async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const feedTypes = await controller.getAllFeedTypes(search);
@@ -25,7 +28,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextFeedTypeId();
         res.json({ feed_type_id: nextId });
@@ -34,7 +37,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/active-suppliers', authenticateToken, async (req, res) => {
+router.get('/active-suppliers', async (req, res) => {
     try {
         const suppliers = await controller.getActiveSuppliers();
         res.json(suppliers);
@@ -43,7 +46,7 @@ router.get('/active-suppliers', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:feedTypeId', authenticateToken, async (req, res) => {
+router.get('/code/:feedTypeId', async (req, res) => {
     try {
         const feedType = await controller.getFeedTypeByCode(req.params.feedTypeId);
         if (feedType) {
@@ -56,7 +59,7 @@ router.get('/code/:feedTypeId', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const feedType = await controller.getFeedTypeByCode(req.params.id);
         if (feedType) {
@@ -69,7 +72,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addFeedType(req.body);
         res.status(201).json(result);
@@ -78,7 +81,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateFeedType(req.params.id, req.body);
         if (result) {
@@ -91,7 +94,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteFeedType(req.params.id);
         if (result) {

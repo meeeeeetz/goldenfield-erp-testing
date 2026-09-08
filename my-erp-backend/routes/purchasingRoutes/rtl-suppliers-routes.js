@@ -3,9 +3,12 @@ const router = express.Router();
 const RtlSuppliersController = require('../../Controllers/main-purchasing-controller/rtl-suppliers-controller');
 const pool = require('../../config/database');
 const controller = new RtlSuppliersController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-ready-to-lay'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextSupplierId();
         res.json({ supplier_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { supplier_id, company_name, address, tin_number, contact_person, contact_number, status } = req.body;
         if (!supplier_id || !company_name) {
@@ -27,7 +30,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const suppliers = await controller.getAllSuppliers(search);
@@ -37,7 +40,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:supplierId', authenticateToken, async (req, res) => {
+router.get('/code/:supplierId', async (req, res) => {
     try {
         const supplier = await controller.getSupplierByCode(req.params.supplierId);
         if (supplier) {
@@ -50,7 +53,7 @@ router.get('/code/:supplierId', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:supplierId', authenticateToken, async (req, res) => {
+router.put('/:supplierId', async (req, res) => {
     try {
         const result = await controller.updateSupplier(req.params.supplierId, req.body);
         if (result) {

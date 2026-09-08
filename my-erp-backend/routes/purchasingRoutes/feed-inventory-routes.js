@@ -3,9 +3,12 @@ const router = express.Router();
 const FeedInventoryController = require('../../Controllers/main-purchasing-controller/feed-inventory-controller');
 const pool = require('../../config/database');
 const controller = new FeedInventoryController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-feeds'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextFeedUseId();
         res.json({ feed_use_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/bulk', authenticateToken, async (req, res) => {
+router.post('/bulk', async (req, res) => {
     try {
         const rows = req.body.rows || [];
         if (!Array.isArray(rows) || rows.length === 0) {
@@ -27,7 +30,7 @@ router.post('/bulk', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/summary', authenticateToken, async (req, res) => {
+router.get('/summary', async (req, res) => {
     try {
         const summary = await controller.getFeedInventorySummary();
         res.json(summary);

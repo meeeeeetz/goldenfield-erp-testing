@@ -3,9 +3,12 @@ const router = express.Router();
 const OrderRtlController = require('../../Controllers/main-purchasing-controller/order-rtl-controller');
 const pool = require('../../config/database');
 const controller = new OrderRtlController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-ready-to-lay'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextOrderId();
         res.json({ order_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { order_id, date, company, sales_invoice, items, status } = req.body;
         if (!order_id || !date || !company || !items || items.length === 0) {
@@ -27,7 +30,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const orders = await controller.getAllOrders(search);
@@ -37,7 +40,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:orderId', authenticateToken, async (req, res) => {
+router.get('/:orderId', async (req, res) => {
     try {
         const order = await controller.getOrderWithItems(req.params.orderId);
         if (order) {
@@ -50,7 +53,7 @@ router.get('/:orderId', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:orderId', authenticateToken, async (req, res) => {
+router.put('/:orderId', async (req, res) => {
     try {
         const result = await controller.updateOrder(req.params.orderId, req.body);
         if (result) {
@@ -63,7 +66,7 @@ router.put('/:orderId', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:orderId', authenticateToken, async (req, res) => {
+router.delete('/:orderId', async (req, res) => {
     try {
         const result = await controller.deleteOrder(req.params.orderId);
         if (result) {

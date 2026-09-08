@@ -5,14 +5,17 @@ const OrderVetSuppliesController = require('../../Controllers/main-purchasing-co
 const { uploadFile, getPublicUrl } = require('../../utils/supabaseStorage');
 const pool = require('../../config/database');
 const controller = new OrderVetSuppliesController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const orders = await controller.getAllOrders(search);
@@ -22,7 +25,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextOrderId();
         res.json({ order_id: nextId });
@@ -31,7 +34,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const order = await controller.getOrderByCode(req.params.id);
         if (order) {
@@ -44,7 +47,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const items = req.body.items || [req.body];
         const invoiceFileBase64 = req.body.invoice_file_base64 || null;
@@ -88,7 +91,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateOrder(req.params.id, req.body);
         if (result) {
@@ -101,7 +104,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, res) => {
+router.put('/:id/photo', upload.single('file'), async (req, res) => {
     try {
         const orderId = req.params.id;
         if (!req.file) {
@@ -125,7 +128,7 @@ router.put('/:id/photo', authenticateToken, upload.single('file'), async (req, r
     }
 });
 
-router.delete('/:id/photo', authenticateToken, async (req, res) => {
+router.delete('/:id/photo', async (req, res) => {
     try {
         const orderId = req.params.id;
         const result = await controller.removeOrderPhoto(orderId);
@@ -135,7 +138,7 @@ router.delete('/:id/photo', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteOrder(req.params.id);
         if (result) {

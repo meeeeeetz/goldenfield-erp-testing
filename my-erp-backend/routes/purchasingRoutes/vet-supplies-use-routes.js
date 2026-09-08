@@ -3,9 +3,12 @@ const router = express.Router();
 const VetSuppliesUseController = require('../../Controllers/main-purchasing-controller/vet-supplies-use-controller');
 const pool = require('../../config/database');
 const controller = new VetSuppliesUseController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextUseId();
         res.json({ use_id: nextId });
@@ -14,7 +17,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const records = req.body.records || [req.body];
         if (!Array.isArray(records) || records.length === 0) {
@@ -33,7 +36,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const records = await controller.getAllUseRecords(search);
@@ -43,7 +46,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const record = await controller.getUseRecordById(req.params.id);
         if (record) {

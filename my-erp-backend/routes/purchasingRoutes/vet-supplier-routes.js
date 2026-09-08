@@ -3,9 +3,12 @@ const router = express.Router();
 const VetSupplierController = require('../../Controllers/main-purchasing-controller/vet-supplier-controller');
 const pool = require('../../config/database');
 const controller = new VetSupplierController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-veterinary-supplies'));
+
+router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
         const suppliers = await controller.getAllSuppliers(search);
@@ -15,7 +18,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextSupplierId();
         res.json({ supplier_id: nextId });
@@ -24,7 +27,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/code/:supplierId', authenticateToken, async (req, res) => {
+router.get('/code/:supplierId', async (req, res) => {
     try {
         const supplier = await controller.getSupplierByCode(req.params.supplierId);
         if (supplier) {
@@ -37,7 +40,7 @@ router.get('/code/:supplierId', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const supplier = await controller.getSupplierByCode(req.params.id);
         if (supplier) {
@@ -50,7 +53,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const result = await controller.addSupplier(req.body);
         res.status(201).json(result);
@@ -59,7 +62,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const result = await controller.updateSupplier(req.params.id, req.body);
         if (result) {
@@ -72,7 +75,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const result = await controller.deleteSupplier(req.params.id);
         if (result) {

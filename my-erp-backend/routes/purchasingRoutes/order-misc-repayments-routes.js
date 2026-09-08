@@ -3,9 +3,12 @@ const router = express.Router();
 const OrderMiscRepaymentsController = require('../../Controllers/main-purchasing-controller/order-misc-repayments-controller');
 const pool = require('../../config/database');
 const controller = new OrderMiscRepaymentsController(pool);
-const { authenticateToken } = require('../../middleware/authMiddleware');
+const { authenticateToken, requireModulePermission } = require('../../middleware/authMiddleware');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.use(authenticateToken);
+router.use(requireModulePermission('purchasing-other-expenses'));
+
+router.get('/', async (req, res) => {
     try {
         const repayments = await controller.getAllRepayments();
         res.json(repayments);
@@ -14,7 +17,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/next-id', authenticateToken, async (req, res) => {
+router.get('/next-id', async (req, res) => {
     try {
         const nextId = await controller.getNextRepaymentId();
         res.json({ repayment_id: nextId });
@@ -23,7 +26,7 @@ router.get('/next-id', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { repayment_id, order_id, payment_type, payment_amount, date } = req.body;
         if (!repayment_id || !order_id || !payment_amount || !date) {
@@ -36,7 +39,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/order/:orderId', authenticateToken, async (req, res) => {
+router.get('/order/:orderId', async (req, res) => {
     try {
         const repayments = await controller.getRepaymentByOrderId(req.params.orderId);
         res.json(repayments);
@@ -45,7 +48,7 @@ router.get('/order/:orderId', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/repayment-id/:repaymentId', authenticateToken, async (req, res) => {
+router.delete('/repayment-id/:repaymentId', async (req, res) => {
     try {
         const result = await controller.deleteRepayment(req.params.repaymentId);
         if (result) {
