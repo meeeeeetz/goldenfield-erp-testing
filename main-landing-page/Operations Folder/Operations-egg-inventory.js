@@ -67,59 +67,59 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 <div class="card graph-placeholder chart-main">
                     <h3>Egg Type Distribution Chart</h3>
                     <div class="egg-distribution-chart">
-                        <div class="egg-chart-bars">
+                        <div class="egg-chart-bars" id="egg-chart-rows">
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">NW</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 75%;" title="4,500"></div>
+                                    <div class="egg-bar" id="egg-bar-nw" style="width: 75%;" title="4,500"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">PW</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 87%;" title="5,200"></div>
+                                    <div class="egg-bar" id="egg-bar-pw" style="width: 87%;" title="5,200"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">XS</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 63%;" title="3,800"></div>
+                                    <div class="egg-bar" id="egg-bar-xs" style="width: 63%;" title="3,800"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">S</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 97%;" title="5,800"></div>
+                                    <div class="egg-bar" id="egg-bar-s" style="width: 97%;" title="5,800"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">M</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 92%;" title="5,500"></div>
+                                    <div class="egg-bar" id="egg-bar-m" style="width: 92%;" title="5,500"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">L</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 70%;" title="4,200"></div>
+                                    <div class="egg-bar" id="egg-bar-l" style="width: 70%;" title="4,200"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">XL</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 47%;" title="2,800"></div>
+                                    <div class="egg-bar" id="egg-bar-xl" style="width: 47%;" title="2,800"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">J</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 25%;" title="1,500"></div>
+                                    <div class="egg-bar" id="egg-bar-j" style="width: 25%;" title="1,500"></div>
                                 </div>
                             </div>
                             <div class="egg-chart-row">
                                 <span class="egg-size-label">Broken</span>
                                 <div class="egg-bar-track">
-                                    <div class="egg-bar" style="width: 13%;" title="800"></div>
+                                    <div class="egg-bar" id="egg-bar-broken" style="width: 13%;" title="800"></div>
                                 </div>
                             </div>
                         </div>
@@ -189,31 +189,17 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Starting Inventory</th>
-                                    <th>Eggs Sold</th>
+                                    <th>Beginning Inventory</th>
+                                    <th>Egg Sold</th>
                                     <th>Egg Waste</th>
-                                    <th>Graded</th>
-                                    <th>Ungraded</th>
                                     <th>Ending Inventory</th>
                                     <th>Egg Production</th>
-                                    <th>Total</th>
+                                    <th>Created by</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr><td>2026-07-01</td><td>50,000</td><td>12,000</td><td>500</td><td>11,800</td><td>200</td><td>37,500</td><td>0</td><td>48,300</td></tr>
-                                <tr><td>2026-07-02</td><td>52,000</td><td>13,500</td><td>600</td><td>13,200</td><td>300</td><td>38,000</td><td>0</td><td>50,400</td></tr>
-                                <tr><td>2026-07-03</td><td>48,000</td><td>11,800</td><td>400</td><td>11,600</td><td>200</td><td>35,800</td><td>0</td><td>47,000</td></tr>
-                                <tr><td>2026-07-04</td><td>51,000</td><td>14,200</td><td>700</td><td>13,900</td><td>300</td><td>36,100</td><td>0</td><td>49,700</td></tr>
-                                <tr><td>2026-07-05</td><td>49,500</td><td>12,600</td><td>550</td><td>12,350</td><td>250</td><td>36,350</td><td>0</td><td>48,450</td></tr>
+                            <tbody id="egg-transactions-body">
                             </tbody>
                         </table>
-                    </div>
-                    <div class="pagination">
-                        <button class="page-btn">&laquo; Prev</button>
-                        <button class="page-btn active">1</button>
-                        <button class="page-btn">2</button>
-                        <button class="page-btn">3</button>
-                        <button class="page-btn">Next &raquo;</button>
                     </div>
                 </div>
             </div>
@@ -660,7 +646,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
             const dateInput = eggModal.querySelector('#egg-production-date');
             if (dateInput) {
                 const today = new Date();
-                dateInput.value = today.toISOString().split('T')[0];
+                dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             }
             const productionIdInput = eggModal.querySelector('#egg-production-id');
             if (productionIdInput) {
@@ -899,7 +885,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
             const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
             const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
             if (!res.ok) return;
             const checkData = await res.json();
@@ -1428,21 +1414,13 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         if (!valueEl || !trendEl) return;
 
         try {
-            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            const [latestRes, allRes] = await Promise.all([
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() })
+            ]);
+
             if (!latestRes.ok) throw new Error('Failed to fetch latest production');
             const latestRecord = await latestRes.json();
-
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
-            let yesterdayRecord = null;
-            if (yesterdayRes.ok) {
-                const checkData = await yesterdayRes.json();
-                if (checkData.exists) yesterdayRecord = checkData.record;
-            }
 
             const calcTotal = (record) => {
                 if (!record) return 0;
@@ -1453,14 +1431,22 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 );
             };
 
-            const latestTotal = calcTotal(latestRecord);
-            const yesterdayTotal = calcTotal(yesterdayRecord);
+            let previousTotal = null;
+            if (allRes.ok) {
+                const allRecords = await allRes.json();
+                const sorted = [...allRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentIndex = sorted.findIndex(r => r.id === latestRecord.id);
+                if (currentIndex >= 0 && currentIndex + 1 < sorted.length) {
+                    previousTotal = calcTotal(sorted[currentIndex + 1]);
+                }
+            }
 
+            const latestTotal = calcTotal(latestRecord);
             valueEl.textContent = latestTotal.toLocaleString('en-US') + ' pcs';
 
-            if (yesterdayRecord && yesterdayTotal > 0) {
-                const change = latestTotal - yesterdayTotal;
-                const percentChange = ((change / yesterdayTotal) * 100).toFixed(1);
+            if (previousTotal !== null && previousTotal > 0) {
+                const change = latestTotal - previousTotal;
+                const percentChange = ((change / previousTotal) * 100).toFixed(1);
                 if (change > 0) {
                     trendEl.className = 'trend-up';
                     trendEl.textContent = `▲ ${percentChange}%`;
@@ -1489,30 +1475,30 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         if (!valueEl || !trendEl) return;
 
         try {
-            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            const [latestRes, allRes] = await Promise.all([
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() })
+            ]);
+
             if (!latestRes.ok) throw new Error('Failed to fetch latest production');
             const latestRecord = await latestRes.json();
 
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
-            let yesterdayRecord = null;
-            if (yesterdayRes.ok) {
-                const checkData = await yesterdayRes.json();
-                if (checkData.exists) yesterdayRecord = checkData.record;
+            let previousProduction = null;
+            if (allRes.ok) {
+                const allRecords = await allRes.json();
+                const sorted = [...allRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentIndex = sorted.findIndex(r => r.id === latestRecord.id);
+                if (currentIndex >= 0 && currentIndex + 1 < sorted.length) {
+                    previousProduction = sorted[currentIndex + 1].egg_production || 0;
+                }
             }
 
             const latestProduction = latestRecord.egg_production || 0;
-            const yesterdayProduction = yesterdayRecord ? (yesterdayRecord.egg_production || 0) : null;
-
             valueEl.textContent = latestProduction.toLocaleString('en-US') + ' pcs';
 
-            if (yesterdayProduction !== null && yesterdayProduction > 0) {
-                const change = latestProduction - yesterdayProduction;
-                const percentChange = ((change / yesterdayProduction) * 100).toFixed(1);
+            if (previousProduction !== null && previousProduction > 0) {
+                const change = latestProduction - previousProduction;
+                const percentChange = ((change / previousProduction) * 100).toFixed(1);
                 if (change > 0) {
                     trendEl.className = 'trend-up';
                     trendEl.textContent = `▲ ${percentChange}%`;
@@ -1541,30 +1527,30 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         if (!valueEl || !trendEl) return;
 
         try {
-            const latestRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() });
+            const [latestRes, allRes] = await Promise.all([
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() })
+            ]);
+
             if (!latestRes.ok) throw new Error('Failed to fetch latest production');
             const latestRecord = await latestRes.json();
 
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            const yesterdayRes = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/check-date/${yesterdayStr}`, { headers: getAuthHeaders() });
-            let yesterdayRecord = null;
-            if (yesterdayRes.ok) {
-                const checkData = await yesterdayRes.json();
-                if (checkData.exists) yesterdayRecord = checkData.record;
+            let previousWaste = null;
+            if (allRes.ok) {
+                const allRecords = await allRes.json();
+                const sorted = [...allRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentIndex = sorted.findIndex(r => r.id === latestRecord.id);
+                if (currentIndex >= 0 && currentIndex + 1 < sorted.length) {
+                    previousWaste = sorted[currentIndex + 1].egg_waste || 0;
+                }
             }
 
             const latestWaste = latestRecord.egg_waste || 0;
-            const yesterdayWaste = yesterdayRecord ? (yesterdayRecord.egg_waste || 0) : null;
-
             valueEl.textContent = latestWaste.toLocaleString('en-US') + ' pcs';
 
-            if (yesterdayWaste !== null && yesterdayWaste > 0) {
-                const change = latestWaste - yesterdayWaste;
-                const percentChange = ((change / yesterdayWaste) * 100).toFixed(1);
+            if (previousWaste !== null && previousWaste > 0) {
+                const change = latestWaste - previousWaste;
+                const percentChange = ((change / previousWaste) * 100).toFixed(1);
                 if (change > 0) {
                     trendEl.className = '';
                     trendEl.style.color = '#e74c3c';
@@ -1618,6 +1604,164 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
         }
     };
 
+    const loadEggDistributionChart = async () => {
+        const sizeKeys = [
+            { todayKey: 'e_nw', soldKey: 's_nw' },
+            { todayKey: 'e_pw', soldKey: 's_pw' },
+            { todayKey: 'e_xs', soldKey: 's_xs' },
+            { todayKey: 'e_s', soldKey: 's_s' },
+            { todayKey: 'e_m', soldKey: 's_m' },
+            { todayKey: 'e_l', soldKey: 's_l' },
+            { todayKey: 'e_xl', soldKey: 's_xl' },
+            { todayKey: 'e_j', soldKey: 's_j' },
+            { todayKey: 'e_broken', soldKey: 's_broken' },
+            { todayKey: 'e_dirty', soldKey: 's_dirty' },
+            { todayKey: 'e_unweighed', soldKey: 's_unweighed' }
+        ];
+
+        try {
+            const productsRes = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
+            if (!productsRes.ok) throw new Error('Failed to fetch egg products');
+            const allProducts = await productsRes.json();
+            const activeProducts = allProducts.filter(p => p.status === 'Active');
+
+            const [latestRes, allRes] = await Promise.all([
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}/latest`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() })
+            ]);
+
+            if (!latestRes.ok) throw new Error('Failed to fetch latest production');
+            const latestRecord = await latestRes.json();
+
+            let previousRecord = null;
+            if (allRes.ok) {
+                const allRecords = await allRes.json();
+                const sorted = [...allRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentIndex = sorted.findIndex(r => r.id === latestRecord.id);
+                if (currentIndex >= 0 && currentIndex + 1 < sorted.length) {
+                    previousRecord = sorted[currentIndex + 1];
+                }
+            }
+
+            const rowsContainer = document.getElementById('egg-chart-rows');
+            if (!rowsContainer) return;
+
+            const displayProducts = activeProducts.length > 0 ? activeProducts : sizeKeys.map((_, i) => ({ product_name: ['NW', 'PW', 'XS', 'S', 'M', 'L', 'XL', 'J', 'Broken'][i] || `Item ${i + 1}` }));
+
+            let rowsHtml = '';
+            const productions = [];
+            displayProducts.forEach((product, index) => {
+                const sizeKey = sizeKeys[index] || sizeKeys[sizeKeys.length - 1];
+                const ending = latestRecord[sizeKey.todayKey] || 0;
+                const sold = latestRecord[sizeKey.soldKey] || 0;
+                const beginning = previousRecord ? (previousRecord[sizeKey.todayKey] || 0) : 0;
+                const production = ending + sold - beginning;
+                productions.push(production);
+
+                const barId = `egg-bar-${index}`;
+                rowsHtml += `
+                    <div class="egg-chart-row">
+                        <span class="egg-size-label">${product.product_name}</span>
+                        <div class="egg-bar-track">
+                            <div class="egg-bar" id="${barId}" style="width: 0%;" title="0 pcs produced"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            rowsContainer.innerHTML = rowsHtml;
+
+            const maxProduction = Math.max(...productions, 1);
+
+            productions.forEach((production, index) => {
+                const bar = document.getElementById(`egg-bar-${index}`);
+                if (!bar) return;
+                const widthPercent = (production / maxProduction) * 100;
+                bar.style.width = `${Math.max(widthPercent, 2)}%`;
+                bar.title = `${displayProducts[index].product_name}: ${production.toLocaleString('en-US')} pcs produced`;
+            });
+
+            const xAxis = document.querySelector('.egg-x-axis');
+            if (xAxis && maxProduction > 0) {
+                const steps = 6;
+                const rawStep = maxProduction / steps;
+                const stepValue = Math.ceil(rawStep / 500) * 500 || 500;
+                const axisMax = stepValue * steps;
+                let axisHtml = '';
+                for (let i = 0; i <= steps; i++) {
+                    const value = i * stepValue;
+                    axisHtml += `<span>${value >= 1000 ? (value / 1000) + 'k' : value}</span>`;
+                }
+                xAxis.innerHTML = axisHtml;
+            }
+        } catch (err) {
+            console.error('Failed to load egg distribution chart', err);
+        }
+    };
+
+    const loadDailyEggTransactions = async () => {
+        const tbody = document.getElementById('egg-transactions-body');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('Failed to fetch daily egg production');
+            const records = await res.json();
+
+            const sorted = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const toLocalDateKey = (dateStr) => {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const getEndingTotal = (record) => (
+                (record.e_nw || 0) + (record.e_pw || 0) + (record.e_xs || 0) + (record.e_s || 0) +
+                (record.e_m || 0) + (record.e_l || 0) + (record.e_xl || 0) + (record.e_j || 0) +
+                (record.e_broken || 0) + (record.e_dirty || 0) + (record.e_unweighed || 0)
+            );
+
+            const transactions = sorted.map((record, index) => {
+                const dateKey = toLocalDateKey(record.date);
+                const prevRecord = index > 0 ? sorted[index - 1] : null;
+
+                const beginningInventory = prevRecord ? getEndingTotal(prevRecord) : 0;
+                const endingInventory = getEndingTotal(record);
+
+                return {
+                    date: dateKey,
+                    beginningInventory,
+                    eggSold: record.total_eggs_sold || 0,
+                    eggWaste: record.egg_waste || 0,
+                    endingInventory,
+                    eggProduction: record.egg_production || 0,
+                    createdBy: record.created_by || '-'
+                };
+            });
+
+            const reversed = [...transactions].reverse();
+
+            tbody.innerHTML = reversed.map(t => `
+                <tr>
+                    <td>${t.date}</td>
+                    <td>${t.beginningInventory.toLocaleString('en-US')}</td>
+                    <td>${t.eggSold.toLocaleString('en-US')}</td>
+                    <td>${t.eggWaste.toLocaleString('en-US')}</td>
+                    <td>${t.endingInventory.toLocaleString('en-US')}</td>
+                    <td>${t.eggProduction.toLocaleString('en-US')}</td>
+                    <td>${t.createdBy}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to load daily egg transactions', err);
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+        }
+    };
+
     const loadEggProductsForChange = async () => {
         try {
             const res = await fetch(`${API_BASE_EGG_PRODUCTS}`, { headers: getAuthHeaders() });
@@ -1637,6 +1781,8 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     loadEggProductionCard();
     loadEggWasteCard();
     loadGoodBrokenCard();
+    loadEggDistributionChart();
+    loadDailyEggTransactions();
 };
 
 // Global Initialization Routine
