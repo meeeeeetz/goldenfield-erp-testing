@@ -145,10 +145,10 @@ class OrderMiscController {
             await client.query('BEGIN');
 
             await client.query('DELETE FROM order_misc_items WHERE order_id = $1', [orderId]);
-            const result = await client.query('DELETE FROM order_misc WHERE order_id = $1 RETURNING *', [orderId]);
+            await client.query('DELETE FROM order_misc WHERE order_id = $1 RETURNING *', [orderId]);
+            await client.query('DELETE FROM expenses WHERE tracking_id = $1', [orderId]);
 
             await client.query('COMMIT');
-            return result.rows[0];
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;

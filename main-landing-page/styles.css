@@ -3847,6 +3847,10 @@ table.spreadsheet tr.hl-row td {
     background: #f4f8ff;
 }
 
+table.spreadsheet tr.age-zero-row td {
+    background: #D8FFB1 !important;
+}
+
 table.spreadsheet td.selected-cell {
     background: #dbeafe !important;
 }

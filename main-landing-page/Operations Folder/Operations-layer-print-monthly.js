@@ -11,10 +11,6 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                 <div class="header-actions">
                     <h2>Print Monthly Layer Report</h2>
                     <div class="action-buttons-row">
-                        <button id="print-report-btn" class="btn-icon-circle">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            <span class="btn-label">Print Report</span>
-                        </button>
                         <button id="back-to-buildings-btn" class="btn-icon-circle">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             <span class="btn-label">Back to Layer Buildings</span>
@@ -128,6 +124,23 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                     }
                 } else {
                     ageCell.textContent = '';
+                }
+            }
+
+            highlightAgeZeroRows();
+        }
+
+        function highlightAgeZeroRows() {
+            const rows = sheet.tBodies[0].rows;
+            const ageColIndex = 1;
+            for (let r = 0; r < rows.length; r++) {
+                const ageCell = rows[r].cells[ageColIndex];
+                if (!ageCell) continue;
+                const ageVal = ageCell.textContent.trim();
+                if (ageVal && ageVal.endsWith('-0')) {
+                    rows[r].classList.add('age-zero-row');
+                } else {
+                    rows[r].classList.remove('age-zero-row');
                 }
             }
         }
@@ -428,9 +441,6 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
 
         document.getElementById('print-age-btn').onclick = handlePrint;
 
-        document.getElementById('print-report-btn').onclick = () => {
-            window.print();
-        };
         document.getElementById('back-to-buildings-btn').onclick = () => {
             switchTab('operations-layer-buildings');
         };

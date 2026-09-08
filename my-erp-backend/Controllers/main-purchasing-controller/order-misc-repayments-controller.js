@@ -99,9 +99,20 @@ class OrderMiscRepaymentsController {
     }
 
     async deleteRepayment(repaymentId) {
-        const query = 'DELETE FROM order_misc_repayments WHERE repayment_id = $1 RETURNING *';
-        const result = await this.db.query(query, [repaymentId]);
-        return result.rows[0];
+        const client = await this.db.connect();
+        try {
+            await client.query('BEGIN');
+
+            await client.query('DELETE FROM order_misc_repayments WHERE repayment_id = $1', [repaymentId]);
+            await client.query('DELETE FROM expenses WHERE tracking_id = $1', [repaymentId]);
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 }
 
