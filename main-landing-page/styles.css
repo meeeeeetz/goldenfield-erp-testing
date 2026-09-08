@@ -3866,6 +3866,93 @@ table.spreadsheet td.copied-cell {
     }
 }
 
+.scratch-table-card {
+    margin-top: 20px;
+    border: 2px solid #D8A309;
+    border-radius: 8px;
+    background: #fffef5;
+    padding: 15px;
+}
+
+.scratch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.scratch-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1a1f2e;
+}
+
+.scratch-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.scratch-select {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    min-width: 160px;
+}
+
+.scratch-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #e2e2e2;
+    border-radius: 6px;
+    background: #fff;
+}
+
+table.scratch-table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+table.scratch-table th,
+table.scratch-table td {
+    border: 1px solid #e2e2e2;
+    padding: 6px 10px;
+    min-width: 120px;
+    height: 30px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    outline: none;
+}
+
+table.scratch-table th {
+    background: #f4f6f9;
+    font-weight: 700;
+    color: #1a1f2e;
+    user-select: none;
+}
+
+table.scratch-table td[contenteditable="true"]:focus,
+table.scratch-table td[contenteditable="true"]:active {
+    user-select: text;
+    cursor: text;
+    background: #fffbeb;
+}
+
+table.scratch-table th:first-child,
+table.scratch-table td:first-child {
+    min-width: 90px;
+    max-width: 90px;
+    width: 90px;
+}
+
 .employee-loan-history-card {
     align-items: stretch !important;
 }
@@ -4434,5 +4521,15 @@ table.spreadsheet td.copied-cell {
         background: #dbeafe !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    table.spreadsheet tr.age-zero-row td {
+        background: #D8FFB1 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .scratch-table-card {
+        display: none !important;
     }
 }

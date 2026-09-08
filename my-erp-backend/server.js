@@ -64,6 +64,7 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const orderMiscRepaymentsRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
     const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
     const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
+    const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
     const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
@@ -114,6 +115,7 @@ app.use('/api/offenses', offensesRoutes);
 app.use('/api/schedules', schedulingRoutes);
 app.use('/api/petty-cash', pettyCashRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
+app.use('/api/scratch-layer', scratchLayerRoutes);
 app.use('/api/egg-products', eggProductsRoutes);
 app.use('/api/daily-egg-production', dailyEggProductionRoutes);
 app.use('/api/feeds-suppliers', feedsSupplierRoutes);

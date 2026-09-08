@@ -49,6 +49,7 @@ const pathToModuleMap = {
     '/api/price-changes': 'sales-product-pricing',
     '/api/customers': 'sales-product-pricing',
     '/api/layer-buildings-reports': 'operations-layer-buildings',
+    '/api/scratch-layer': 'operations-layer-buildings',
     '/api/electric-bills': 'purchasing-electricity',
     '/api/feeds-suppliers': 'purchasing-feeds',
     '/api/feed-types': 'purchasing-feeds',

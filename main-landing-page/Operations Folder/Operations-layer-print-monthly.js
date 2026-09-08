@@ -36,6 +36,46 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                     <div class="spreadsheet-wrap">
                         <table class="spreadsheet" id="spreadsheet"></table>
                     </div>
+                    <div class="scratch-table-card" id="scratch-section">
+                        <div class="scratch-header">
+                            <h3>Scratch Layer Data</h3>
+                            <div class="scratch-actions">
+                                <button id="scratch-load-btn" class="btn-secondary">Load Saved</button>
+                                <select id="scratch-save-select" class="scratch-select"><option value="">Save As...</option></select>
+                                <button id="scratch-save-btn" class="btn-primary">Save</button>
+                                <button id="scratch-new-btn" class="btn-secondary">New</button>
+                                <button id="scratch-delete-btn" class="btn-danger" disabled>Delete</button>
+                                <button id="scratch-copy-btn" class="btn-secondary">Copy to Primary</button>
+                                <button id="scratch-clear-btn" class="btn-secondary">Clear</button>
+                            </div>
+                        </div>
+                        <div class="scratch-table-wrap">
+                            <table class="scratch-table" id="scratch-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Age</th>
+                                        <th>No</th>
+                                        <th>Si</th>
+                                        <th>Pro</th>
+                                        <th>Oth</th>
+                                        <th>Total</th>
+                                        <th>Population</th>
+                                        <th>Feeds</th>
+                                        <th>Medicine</th>
+                                        <th>Qty/Unit</th>
+                                        <th>Water</th>
+                                        <th>Time</th>
+                                        <th>Electric</th>
+                                        <th>Water</th>
+                                        <th>Production</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scratch-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -444,6 +484,152 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
         document.getElementById('back-to-buildings-btn').onclick = () => {
             switchTab('operations-layer-buildings');
         };
+
+        const scratchSection = document.getElementById('scratch-section');
+        const scratchTableBody = document.getElementById('scratch-table-body');
+        const scratchSaveSelect = document.getElementById('scratch-save-select');
+        const scratchDeleteBtn = document.getElementById('scratch-delete-btn');
+        let scratchCurrentId = null;
+
+        function buildScratchTable(rows) {
+            clearScratchTable();
+            const count = Array.isArray(rows) ? rows.length : 0;
+            for (let r = 0; r < count; r++) {
+                addScratchRow();
+                const row = scratchTableBody.rows[r];
+                for (let c = 0; c < row.cells.length && c < rows[r].length; c++) {
+                    row.cells[c].textContent = rows[r][c] || '';
+                }
+            }
+            if (count === 0) addScratchRow();
+        }
+
+        function getScratchData() {
+            const rows = scratchTableBody.rows;
+            const data = [];
+            for (let r = 0; r < rows.length; r++) {
+                const rowData = [];
+                for (let c = 0; c < rows[r].cells.length; c++) {
+                    rowData.push(rows[r].cells[c].textContent.trim());
+                }
+                data.push(rowData);
+            }
+            return data;
+        }
+
+        function clearScratchTable() {
+            scratchTableBody.innerHTML = '';
+            scratchCurrentId = null;
+            if (scratchSaveSelect) {
+                scratchSaveSelect.innerHTML = '<option value="">Save As...</option>';
+            }
+            if (scratchDeleteBtn) scratchDeleteBtn.disabled = true;
+        }
+
+        function newScratchEntry() {
+            clearScratchTable();
+            addScratchRow();
+        }
+
+        function addScratchRow() {
+            const cols = ['Date', 'Age', 'No', 'Si', 'Pro', 'Oth', 'Total', 'Population', 'Feeds', 'Medicine', 'Qty/Unit', 'Water', 'Time', 'Electric', 'Water', 'Production', 'Remarks'];
+            const tr = document.createElement('tr');
+            for (let c = 0; c < cols.length; c++) {
+                const td = document.createElement('td');
+                td.contentEditable = 'true';
+                td.setAttribute('data-col', c);
+                td.textContent = '';
+                tr.appendChild(td);
+            }
+            scratchTableBody.appendChild(tr);
+            if (tr.cells.length > 0) tr.cells[0].focus();
+        }
+
+        async function loadScratchEntries() {
+            const res = await fetch('/api/scratch-layer', { headers: getAuthHeaders() });
+            if (!res.ok) return;
+            const entries = await res.json();
+            if (!Array.isArray(entries)) return;
+            scratchSaveSelect.innerHTML = '<option value="">Load Saved...</option>' + entries.map(e => `<option value="${e.id}" ${e.id === scratchCurrentId ? 'selected' : ''}>${e.name || 'Untitled'}</option>`).join('');
+        }
+
+        async function saveScratchEntry() {
+            const data = getScratchData();
+            const name = prompt('Enter a name for this scratch data:', scratchCurrentId ? (scratchSaveSelect.querySelector(`option[value="${scratchCurrentId}"]`)?.textContent || 'Untitled') : 'Untitled');
+            if (name === null) return;
+            const payload = { name: name || 'Untitled', row_data: data };
+            if (scratchCurrentId) {
+                payload.id = scratchCurrentId;
+            }
+            const method = scratchCurrentId ? 'PUT' : 'POST';
+            const url = scratchCurrentId ? `/api/scratch-layer/${scratchCurrentId}` : '/api/scratch-layer';
+            const res = await fetch(url, {
+                method: method,
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) { alert('Failed to save scratch data'); return; }
+            const saved = await res.json();
+            scratchCurrentId = saved.id;
+            await loadScratchEntries();
+            if (scratchDeleteBtn) scratchDeleteBtn.disabled = false;
+        }
+
+        async function deleteScratchEntry() {
+            if (!scratchCurrentId) return;
+            if (!confirm('Delete this saved scratch data?')) return;
+            const res = await fetch(`/api/scratch-layer/${scratchCurrentId}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (!res.ok) { alert('Failed to delete scratch data'); return; }
+            clearScratchTable();
+            await loadScratchEntries();
+        }
+
+        async function loadScratchEntry(id) {
+            const res = await fetch(`/api/scratch-layer/${id}`, { headers: getAuthHeaders() });
+            if (!res.ok) return;
+            const entry = await res.json();
+            scratchCurrentId = entry.id;
+            if (entry.row_data && Array.isArray(entry.row_data)) {
+                buildScratchTable(entry.row_data);
+            }
+            if (scratchDeleteBtn) scratchDeleteBtn.disabled = false;
+            if (scratchSaveSelect) {
+                const opts = scratchSaveSelect.querySelectorAll('option');
+                opts.forEach(o => o.selected = o.value == id);
+            }
+        }
+
+        function copyScratchToPrimary() {
+            const data = getScratchData();
+            if (data.length === 0) { alert('No data in scratch table to copy'); return; }
+            const rows = sheet.tBodies[0].rows;
+            for (let r = 0; r < data.length && r < rows.length; r++) {
+                for (let c = 0; c < data[r].length && c < rows[r].cells.length; c++) {
+                    rows[r].cells[c].textContent = data[r][c] || '';
+                }
+            }
+            alert('Scratch data copied to primary table');
+        }
+
+        document.getElementById('scratch-save-btn').onclick = saveScratchEntry;
+        document.getElementById('scratch-new-btn').onclick = newScratchEntry;
+        document.getElementById('scratch-delete-btn').onclick = deleteScratchEntry;
+        document.getElementById('scratch-clear-btn').onclick = () => { if (confirm('Clear scratch table?')) clearScratchTable(); };
+        document.getElementById('scratch-copy-btn').onclick = copyScratchToPrimary;
+        document.getElementById('scratch-load-btn').onclick = loadScratchEntries;
+
+        if (scratchSaveSelect) {
+            scratchSaveSelect.addEventListener('change', () => {
+                const id = scratchSaveSelect.value;
+                if (id) {
+                    loadScratchEntry(id);
+                } else {
+                    clearScratchTable();
+                }
+            });
+        }
+
+        buildScratchTable([]);
     };
 
 function initializeModule(contentArea) {
