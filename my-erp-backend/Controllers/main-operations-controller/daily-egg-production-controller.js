@@ -6,7 +6,15 @@ class DailyEggProductionController {
     }
 
     async getAllDailyEggProductions() {
-        const query = 'SELECT * FROM daily_egg_production ORDER BY date DESC, id DESC';
+        const query = `
+            SELECT 
+                d.*, 
+                COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as created_by_name,
+                u.role as created_by_role
+            FROM daily_egg_production d
+            LEFT JOIN users u ON d.created_by = u.id
+            ORDER BY d.date DESC, d.id DESC
+        `;
         const result = await this.db.query(query);
         return result.rows;
     }
@@ -24,13 +32,32 @@ class DailyEggProductionController {
     }
 
     async getDailyEggProductionByDate(date) {
-        const query = 'SELECT * FROM daily_egg_production WHERE date = $1 ORDER BY id DESC LIMIT 1';
+        const query = `
+            SELECT 
+                d.*, 
+                COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as created_by_name,
+                u.role as created_by_role
+            FROM daily_egg_production d
+            LEFT JOIN users u ON d.created_by = u.id
+            WHERE d.date = $1
+            ORDER BY d.id DESC 
+            LIMIT 1
+        `;
         const result = await this.db.query(query, [date]);
         return result.rows[0];
     }
 
     async getLatestDailyEggProduction() {
-        const query = 'SELECT * FROM daily_egg_production ORDER BY date DESC, id DESC LIMIT 1';
+        const query = `
+            SELECT 
+                d.*, 
+                COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as created_by_name,
+                u.role as created_by_role
+            FROM daily_egg_production d
+            LEFT JOIN users u ON d.created_by = u.id
+            ORDER BY d.date DESC, d.id DESC 
+            LIMIT 1
+        `;
         const result = await this.db.query(query);
         return result.rows[0];
     }

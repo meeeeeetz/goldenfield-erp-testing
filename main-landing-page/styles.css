@@ -4259,3 +4259,145 @@ table.spreadsheet tr.hl-row td {
     background: #fee2e2;
     color: #991b1b;
 }
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 5mm;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    #print-area,
+    #print-area * {
+        visibility: visible;
+    }
+
+    #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sheet-title-band {
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 6px 10px;
+        background: #e5e7eb;
+        border: 1px solid #d1d5db;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .sheet-building {
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .sheet-title-big {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .spreadsheet-wrap {
+        overflow: visible;
+        border: 1px solid #d1d5db;
+        border-radius: 0 0 6px 6px;
+        background: #fff;
+    }
+
+    table.spreadsheet {
+        border-collapse: collapse;
+        width: max-content;
+        font-size: 9px;
+        table-layout: fixed;
+        box-sizing: border-box;
+    }
+
+    table.spreadsheet th,
+    table.spreadsheet td {
+        border: 1px solid #d1d5db;
+        padding: 2px 4px;
+        height: 20px;
+        text-align: left;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    table.spreadsheet th:first-child,
+    table.spreadsheet td:first-child {
+        width: 90px;
+    }
+
+    table.spreadsheet th:nth-child(2),
+    table.spreadsheet td:nth-child(2) {
+        width: 80px;
+    }
+
+    table.spreadsheet th:nth-child(3),
+    table.spreadsheet td:nth-child(3),
+    table.spreadsheet th:nth-child(4),
+    table.spreadsheet td:nth-child(4),
+    table.spreadsheet th:nth-child(5),
+    table.spreadsheet td:nth-child(5),
+    table.spreadsheet th:nth-child(6),
+    table.spreadsheet td:nth-child(6) {
+        width: 35px;
+    }
+
+    table.spreadsheet th:nth-child(7),
+    table.spreadsheet td:nth-child(7),
+    table.spreadsheet th:nth-child(8),
+    table.spreadsheet td:nth-child(8),
+    table.spreadsheet th:nth-child(9),
+    table.spreadsheet td:nth-child(9) {
+        width: 80px;
+    }
+
+    table.spreadsheet th:nth-child(10),
+    table.spreadsheet td:nth-child(10) {
+        width: 90px;
+    }
+
+    table.spreadsheet th:nth-child(11),
+    table.spreadsheet td:nth-child(11),
+    table.spreadsheet th:nth-child(12),
+    table.spreadsheet td:nth-child(12),
+    table.spreadsheet th:nth-child(13),
+    table.spreadsheet td:nth-child(13) {
+        width: 90px;
+    }
+
+    table.spreadsheet th:nth-child(14),
+    table.spreadsheet td:nth-child(14),
+    table.spreadsheet th:nth-child(15),
+    table.spreadsheet td:nth-child(15),
+    table.spreadsheet th:nth-child(16),
+    table.spreadsheet td:nth-child(16) {
+        width: 95px;
+    }
+
+    table.spreadsheet th:nth-child(17),
+    table.spreadsheet td:nth-child(17) {
+        width: 80px;
+    }
+
+    table.spreadsheet thead th {
+        position: sticky;
+        top: 0;
+        background: #f4f6f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-weight: 700;
+        color: #1a1f2e;
+    }
+}

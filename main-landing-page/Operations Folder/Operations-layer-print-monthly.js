@@ -20,14 +20,17 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                     <label class="filter-field">Buidling: <input type="text" id="filter-buidling" placeholder="e.g. 701" /></label>
                     <label class="filter-field">Date: <input type="date" id="filter-date" /></label>
                     <label class="filter-field">Age: <input type="number" id="filter-age" placeholder="wks" /></label>
+                    <button id="print-age-btn" class="btn-secondary" style="background-color: #D8A309;">Print</button>
                     <button id="sheet-clear" class="btn-secondary">Clear Sheet</button>
                 </div>
-                <div class="sheet-title-band">
-                    <span class="sheet-building">Building 701</span>
-                    <span class="sheet-title-big">Monthly Layer Report</span>
-                </div>
-                <div class="spreadsheet-wrap">
-                    <table class="spreadsheet" id="spreadsheet"></table>
+                <div id="print-area">
+                    <div class="sheet-title-band">
+                        <span class="sheet-building">Building 701</span>
+                        <span class="sheet-title-big">Monthly Layer Report</span>
+                    </div>
+                    <div class="spreadsheet-wrap">
+                        <table class="spreadsheet" id="spreadsheet"></table>
+                    </div>
                 </div>
             </div>
         `;
@@ -88,6 +91,18 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
         document.getElementById('sheet-clear').onclick = () => {
             sheet.tBodies[0].querySelectorAll('td').forEach(td => td.textContent = '');
         };
+
+        const handlePrint = () => {
+            const buildingInput = document.getElementById('filter-buidling');
+            const buildingNameEl = document.querySelector('.sheet-building');
+            if (buildingInput && buildingNameEl) {
+                const buildingVal = buildingInput.value.trim();
+                buildingNameEl.textContent = buildingVal ? `Building ${buildingVal}` : 'Building 701';
+            }
+            window.print();
+        };
+
+        document.getElementById('print-age-btn').onclick = handlePrint;
 
         document.getElementById('print-report-btn').onclick = () => {
             window.print();

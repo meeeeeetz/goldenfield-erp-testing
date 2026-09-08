@@ -74,22 +74,6 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                     </div>
                 </div>
                 <div class="card graph-placeholder vet-tracking-card">
-                    <h3>Buildings</h3>
-                    <div class="table-wrap">
-                        <table class="data-table product-table">
-                            <thead>
-                                <tr>
-                                    <th>Building ID</th>
-                                    <th>Building Name</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="buildings-table-body">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card graph-placeholder vet-tracking-card">
                     <h3>Building View</h3>
                     <div id="building-view-tabs" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
                         <span style="color: #64748b; font-size: 14px;">Loading buildings...</span>
@@ -156,6 +140,22 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 <tr><td colspan="24">&nbsp;</td></tr>
                                 <tr><td colspan="24">&nbsp;</td></tr>
                                 <tr><td colspan="24">&nbsp;</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card graph-placeholder vet-tracking-card">
+                    <h3>Buildings</h3>
+                    <div class="table-wrap">
+                        <table class="data-table product-table">
+                            <thead>
+                                <tr>
+                                    <th>Building ID</th>
+                                    <th>Building Name</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="buildings-table-body">
                             </tbody>
                         </table>
                     </div>

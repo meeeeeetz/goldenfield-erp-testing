@@ -1781,9 +1781,9 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                     <td>${formatDate(order.date)}</td>
                     <td>${order.company_name || '-'}</td>
                     <td>${order.invoice || '-'}</td>
-                    <td>${order.quantity || '-'}</td>
-                    <td>P ${formatNumber(order.unit_price || 0)}</td>
-                    <td>P ${formatNumber(order.total_price || 0)}</td>
+                    <td>${Number(order.quantity || 0).toLocaleString('en-US')}</td>
+                    <td>P ${Number(order.unit_price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>P ${Number(order.total_price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td>
                         <button class="btn-payment" onclick="openEggTrayPaymentModal('${order.order_id}', '${formatDate(order.payment_date)}', '${order.payment_source || ''}', '${order.check_number || ''}')" title="Add Payment">
                             <svg viewBox="0 0 24 24" fill="none" stroke="#1ea672" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
@@ -1888,7 +1888,8 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    totalQuantityEl.textContent = (data.total_quantity || 0).toLocaleString('en-US') + ' pcs';
+                    const qty = Number(data.total_quantity || 0);
+                    totalQuantityEl.textContent = qty.toLocaleString('en-US') + ' pcs';
                 }
             } catch (err) {
                 console.error('Failed to load total quantity', err);
@@ -1905,7 +1906,7 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    const balance = data.outstanding_balance || 0;
+                    const balance = Number(data.outstanding_balance || 0);
                     outstandingBalanceEl.textContent = 'P ' + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
             } catch (err) {

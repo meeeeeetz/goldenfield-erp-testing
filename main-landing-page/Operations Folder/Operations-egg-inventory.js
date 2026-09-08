@@ -1014,6 +1014,13 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     }
                     alert('Daily egg production saved successfully');
                     eggModal.classList.add('hidden');
+
+                    loadEggAvailabilityCard();
+                    loadEggProductionCard();
+                    loadEggWasteCard();
+                    loadGoodBrokenCard();
+                    loadEggDistributionChart();
+                    loadDailyEggTransactions();
                 } catch (err) {
                     console.error('Failed to save daily egg production', err);
                     alert('Error saving daily egg production: ' + err.message);
@@ -1036,6 +1043,13 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     }
                     alert('Daily egg production updated successfully');
                     eggModal.classList.add('hidden');
+
+                    loadEggAvailabilityCard();
+                    loadEggProductionCard();
+                    loadEggWasteCard();
+                    loadGoodBrokenCard();
+                    loadEggDistributionChart();
+                    loadDailyEggTransactions();
                 } catch (err) {
                     console.error('Failed to update daily egg production', err);
                     alert('Error updating daily egg production: ' + err.message);
@@ -1732,6 +1746,10 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 const beginningInventory = prevRecord ? getEndingTotal(prevRecord) : 0;
                 const endingInventory = getEndingTotal(record);
 
+                const createdByName = record.created_by_name || '-';
+                const createdByRole = record.created_by_role || '';
+                const createdByDisplay = createdByName + (createdByRole ? ` (${createdByRole})` : '');
+
                 return {
                     date: dateKey,
                     beginningInventory,
@@ -1739,7 +1757,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                     eggWaste: record.egg_waste || 0,
                     endingInventory,
                     eggProduction: record.egg_production || 0,
-                    createdBy: record.created_by || '-'
+                    createdBy: createdByDisplay
                 };
             });
 
