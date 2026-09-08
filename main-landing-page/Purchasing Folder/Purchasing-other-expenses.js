@@ -45,8 +45,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         <table class="data-table product-table">
                             <thead>
                                 <tr>
-                                    <th>Order Misc ID</th>
-                                    <th>Date</th>
+                                    <th class="sortable" data-sort="order_id">Order Misc ID <span class="sort-arrow">&#8645;</span></th>
+                                    <th class="sortable" data-sort="date">Date <span class="sort-arrow">&#8645;</span></th>
                                     <th>Customer</th>
                                     <th>Expense Code</th>
                                     <th>Expense Type</th>
@@ -289,7 +289,6 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                                         <th style="padding: 6px 8px; border: none !important; width: 15%;">Price</th>
                                         <th style="padding: 6px 8px; border: none !important; width: 25%;">Remarks</th>
                                         <th style="padding: 6px 8px; border: none !important; width: 15%;">Amount</th>
-                                        <th style="padding: 6px 8px; width: 40px; border: none !important;">Photo</th>
                                         <th style="padding: 6px 8px; width: 40px; border: none !important;"></th>
                                     </tr>
                                 </thead>
@@ -511,14 +510,13 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             if (!tbody) return;
 
             if (orderMiscItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #94a3b8;">No items added</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #94a3b8;">No items added</td></tr>';
                 document.getElementById('order-misc-grand-total').value = '';
                 return;
             }
 
             tbody.innerHTML = orderMiscItems.map((item, index) => {
                 const amount = item.qty * item.price;
-                const hasPhoto = !!item.file_path;
                 return `
                     <tr>
                         <td><input type="number" class="modal-input" value="${item.qty}" min="0" onchange="updateOrderMiscItem(${index}, 'qty', this.value)" /></td>
@@ -527,15 +525,6 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         <td><input type="number" class="modal-input" value="${item.price}" min="0" step="0.01" onchange="updateOrderMiscItem(${index}, 'price', this.value)" /></td>
                         <td><input type="text" class="modal-input" value="${item.remarks}" onchange="updateOrderMiscItem(${index}, 'remarks', this.value)" /></td>
                         <td>P ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td style="text-align: center;">
-                            <span class="photo-icon-wrap" data-receipt-path="${item.file_url || ''}" data-item-index="${index}" onclick="window._miscPhotoClick && window._miscPhotoClick(this)" style="cursor: pointer;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${hasPhoto ? '#D4AF37' : '#800000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                    <path d="M21 15l-5-5L5 21"></path>
-                                </svg>
-                            </span>
-                        </td>
                         <td style="text-align: center;">
                             <button onclick="removeOrderMiscItemRow(${index})" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 18px; font-weight: bold; padding: 4px;" title="Remove">&times;</button>
                         </td>
@@ -1068,6 +1057,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         var miscTransactionsData = [];
         var currentMiscTransactionPage = 1;
         var miscTransactionsPerPage = 5;
+        var miscTransactionSortState = { col: null, dir: 1 };
 
         async function loadMiscTransactions() {
             const tbody = document.getElementById('misc-transactions-table-body');
@@ -1090,6 +1080,23 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         function renderMiscTransactionsPage() {
             const tbody = document.getElementById('misc-transactions-table-body');
             if (!tbody) return;
+
+            if (miscTransactionSortState.col) {
+                miscTransactionsData = [...miscTransactionsData].sort((a, b) => {
+                    let va = a[miscTransactionSortState.col];
+                    let vb = b[miscTransactionSortState.col];
+                    if (miscTransactionSortState.col === 'amount') {
+                        va = parseFloat(va) || 0;
+                        vb = parseFloat(vb) || 0;
+                    } else {
+                        va = (va || '').toString().toLowerCase();
+                        vb = (vb || '').toString().toLowerCase();
+                    }
+                    if (va < vb) return -1 * miscTransactionSortState.dir;
+                    if (va > vb) return 1 * miscTransactionSortState.dir;
+                    return 0;
+                });
+            }
 
             const start = (currentMiscTransactionPage - 1) * miscTransactionsPerPage;
             const end = start + miscTransactionsPerPage;
@@ -1132,6 +1139,21 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
 
             const totalPages = Math.max(1, Math.ceil(miscTransactionsData.length / miscTransactionsPerPage));
             renderMiscTransactionsPagination(totalPages);
+
+            const txTable = document.querySelector('#misc-transactions-table-body')?.closest('table');
+            if (txTable) {
+                txTable.querySelectorAll('th.sortable').forEach(th => {
+                    const arrow = th.querySelector('.sort-arrow');
+                    if (arrow) arrow.textContent = '↕';
+                });
+                if (miscTransactionSortState.col) {
+                    const activeHeader = txTable.querySelector(`th.sortable[data-sort="${miscTransactionSortState.col}"]`);
+                    if (activeHeader) {
+                        const arrow = activeHeader.querySelector('.sort-arrow');
+                        if (arrow) arrow.textContent = miscTransactionSortState.dir === 1 ? '▲' : '▼';
+                    }
+                }
+            }
         }
 
         function renderMiscTransactionsPagination(totalPages) {
@@ -1274,6 +1296,24 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 alert('Error: ' + err.message);
             }
         }
+
+        document.querySelectorAll('#misc-transactions-table-body').forEach(tbody => {
+            const table = tbody.closest('table');
+            if (!table) return;
+            table.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = th.dataset.sort;
+                    if (!col) return;
+                    if (miscTransactionSortState.col === col) {
+                        miscTransactionSortState.dir *= -1;
+                    } else {
+                        miscTransactionSortState.col = col;
+                        miscTransactionSortState.dir = 1;
+                    }
+                    renderMiscTransactionsPage();
+                });
+            });
+        });
 
         async function openMiscSuppliersModal() {
             const modal = document.getElementById('misc-suppliers-modal');
@@ -1915,28 +1955,56 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
         }
 
-        var miscPhotoTooltip = document.createElement('div');
-        miscPhotoTooltip.className = 'photo-preview-tooltip';
-        miscPhotoTooltip.style.cssText = 'display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); pointer-events:none;';
-        document.body.appendChild(miscPhotoTooltip);
+        var miscPhotoTooltipInitialized = false;
+        var miscPhotoTooltip = null;
 
-        document.addEventListener('mouseover', (e) => {
+        function ensureMiscPhotoTooltip() {
+            if (miscPhotoTooltipInitialized) return;
+            miscPhotoTooltipInitialized = true;
+
+            miscPhotoTooltip = document.querySelector('.photo-preview-tooltip');
+            if (!miscPhotoTooltip) {
+                miscPhotoTooltip = document.createElement('div');
+                miscPhotoTooltip.className = 'photo-preview-tooltip';
+                document.body.appendChild(miscPhotoTooltip);
+            }
+
+            document.addEventListener('mouseover', handleMiscPhotoMouseOver);
+            document.addEventListener('mouseout', handleMiscPhotoMouseOut);
+            document.addEventListener('mousemove', handleMiscPhotoMouseMove);
+        }
+
+        function handleMiscPhotoMouseOver(e) {
             const wrap = e.target.closest('.photo-icon-wrap');
             if (!wrap) return;
             const src = wrap.getAttribute('data-receipt-path');
             if (!src) return;
             miscPhotoTooltip.innerHTML = `<img src="${src}" alt="preview" style="max-width: min(90vw, 1200px); max-height: 90vh; object-fit: contain; display: block;">`;
             miscPhotoTooltip.style.display = 'block';
-            const rect = wrap.getBoundingClientRect();
-            miscPhotoTooltip.style.left = rect.left + 'px';
-            miscPhotoTooltip.style.top = (rect.bottom + 8) + 'px';
-        });
+            positionMiscPhotoTooltip();
+        }
 
-        document.addEventListener('mouseout', (e) => {
+        function handleMiscPhotoMouseOut(e) {
             const wrap = e.target.closest('.photo-icon-wrap');
             if (!wrap) return;
             miscPhotoTooltip.style.display = 'none';
-        });
+        }
+
+        function handleMiscPhotoMouseMove(e) {
+            if (miscPhotoTooltip.style.display === 'block') {
+                positionMiscPhotoTooltip();
+            }
+        }
+
+        function positionMiscPhotoTooltip() {
+            const rect = miscPhotoTooltip.getBoundingClientRect();
+            const left = Math.max(8, (window.innerWidth - rect.width) / 2);
+            const top = Math.max(8, (window.innerHeight - rect.height) / 2);
+            miscPhotoTooltip.style.left = left + 'px';
+            miscPhotoTooltip.style.top = top + 'px';
+        }
+
+        ensureMiscPhotoTooltip();
 
         window._miscPhotoClick = function(el) {
             const itemIndex = el.getAttribute('data-item-index');

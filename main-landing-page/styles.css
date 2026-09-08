@@ -3668,7 +3668,8 @@ body {
     color: #1a1f2e;
 }
 
-.filter-field input {
+.filter-field input,
+.filter-field select {
     padding: 8px 10px;
     border: 1px solid #d6d6d6;
     border-radius: 6px;
@@ -3745,6 +3746,7 @@ table.spreadsheet {
     min-width: 100%;
     font-size: 13px;
     table-layout: fixed;
+    user-select: none;
 }
 
 table.spreadsheet th,
@@ -3757,6 +3759,14 @@ table.spreadsheet td {
     vertical-align: middle;
     white-space: nowrap;
     outline: none;
+    user-select: none;
+    cursor: default;
+}
+
+table.spreadsheet td[contenteditable="true"]:focus,
+table.spreadsheet td[contenteditable="true"]:active {
+    user-select: text;
+    cursor: text;
 }
 
 table.spreadsheet th:first-child,
@@ -3835,6 +3845,21 @@ table.spreadsheet th.hl-col {
 
 table.spreadsheet tr.hl-row td {
     background: #f4f8ff;
+}
+
+table.spreadsheet td.selected-cell {
+    background: #dbeafe !important;
+}
+
+table.spreadsheet td.copied-cell {
+    outline: 2px dashed #2f80ed;
+    animation: marchingAnts 0.4s linear infinite;
+}
+
+@keyframes marchingAnts {
+    to {
+        outline-offset: 4px;
+    }
 }
 
 .employee-loan-history-card {
@@ -4399,5 +4424,11 @@ table.spreadsheet tr.hl-row td {
         print-color-adjust: exact;
         font-weight: 700;
         color: #1a1f2e;
+    }
+
+    table.spreadsheet .selected-cell {
+        background: #dbeafe !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
