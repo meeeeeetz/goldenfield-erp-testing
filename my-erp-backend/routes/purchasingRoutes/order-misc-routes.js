@@ -44,6 +44,24 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/stats/outstanding-balance', async (req, res) => {
+    try {
+        const outstandingBalance = await controller.getOutstandingBalance();
+        res.json({ outstanding_balance: outstandingBalance });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/stats/monthly-expenses', async (req, res) => {
+    try {
+        const stats = await controller.getMonthlyExpenseStats();
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:orderId', async (req, res) => {
     try {
         const order = await controller.getOrderWithItems(req.params.orderId);

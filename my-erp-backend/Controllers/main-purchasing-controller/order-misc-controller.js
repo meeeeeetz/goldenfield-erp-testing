@@ -169,6 +169,52 @@ class OrderMiscController {
         return result.rows[0];
     }
 
+    async getOutstandingBalance() {
+        const query = "SELECT COALESCE(SUM(grand_total), 0) as outstanding FROM order_misc WHERE status != 'Paid'";
+        const result = await this.db.query(query);
+        return parseFloat(result.rows[0]?.outstanding || 0);
+    }
+
+    async getMonthlyExpenseStats() {
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const currentMonthQuery = `
+            SELECT COALESCE(SUM(grand_total), 0) as total
+            FROM order_misc
+            WHERE date >= $1 AND date < $2
+        `;
+        const currentMonthResult = await this.db.query(currentMonthQuery, [
+            currentMonthStart.toISOString().split('T')[0],
+            now.toISOString().split('T')[0]
+        ]);
+        const currentMonthTotal = parseFloat(currentMonthResult.rows[0]?.total || 0);
+
+        const lastMonthQuery = `
+            SELECT COALESCE(SUM(grand_total), 0) as total
+            FROM order_misc
+            WHERE date >= $1 AND date <= $2
+        `;
+        const lastMonthResult = await this.db.query(lastMonthQuery, [
+            lastMonthStart.toISOString().split('T')[0],
+            lastMonthEnd.toISOString().split('T')[0]
+        ]);
+        const lastMonthTotal = parseFloat(lastMonthResult.rows[0]?.total || 0);
+
+        let percentChange = 0;
+        if (lastMonthTotal > 0) {
+            percentChange = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+        }
+
+        return {
+            current_month_total: currentMonthTotal,
+            last_month_total: lastMonthTotal,
+            percent_change: Math.round(percentChange * 100) / 100
+        };
+    }
+
     async deleteOrderItemPhoto(itemId) {
         const existing = await this.db.query('SELECT file_path FROM order_misc_items WHERE id = $1', [itemId]);
         const filePath = existing.rows[0]?.file_path;

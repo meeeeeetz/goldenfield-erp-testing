@@ -25,17 +25,17 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         <h3>Outstanding Balance</h3>
                         <p class="card-sub-label">Pending Payments to Suppliers</p>
                         <div class="card-value-row">
-                            <div class="card-value">P 150,000.00</div>
+                            <div class="card-value" id="misc-outstanding-balance">P 0.00</div>
                         </div>
                     </div>
                     <div class="card tracking-card">
                         <h3>Miscellaneous Expenses</h3>
                         <p class="card-sub-label">Monthly miscellaneous Expense</p>
                         <div class="card-value-row">
-                            <div class="card-value">P 30,000.00</div>
-                            <span class="trend-up">▲ 8%</span>
+                            <div class="card-value" id="misc-monthly-expense">P 0.00</div>
+                            <span id="misc-expense-trend"></span>
                         </div>
-                        <p class="vs-last-month">VS last month</p>
+                        <p class="vs-last-month" id="misc-expense-vs-text">VS last month</p>
                     </div>
                 </div>
                 <div class="vet-bottom-row-2" style="grid-template-columns: 1fr;">
@@ -631,6 +631,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 alert('Order saved successfully');
                 closeOrderMiscModal();
                 loadMiscTransactions();
+                loadMiscOutstandingBalance();
+                loadMiscMonthlyExpenseStats();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -816,6 +818,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 alert('Payment saved successfully');
                 closePayMiscModal();
                 loadMiscTransactions();
+                loadMiscOutstandingBalance();
+                loadMiscMonthlyExpenseStats();
                 loadMiscPayments();
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -1305,8 +1309,72 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 alert('Payment deleted successfully');
                 loadMiscPayments();
                 loadMiscTransactions();
+                loadMiscOutstandingBalance();
+                loadMiscMonthlyExpenseStats();
             } catch (err) {
                 alert('Error: ' + err.message);
+            }
+        }
+
+        async function loadMiscOutstandingBalance() {
+            try {
+                const res = await fetch(API_BASE_ORDER_MISC + '/stats/outstanding-balance', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const el = document.getElementById('misc-outstanding-balance');
+                    if (el) {
+                        const formatted = 'P ' + parseFloat(data.outstanding_balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        el.textContent = formatted;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load outstanding balance', err);
+            }
+        }
+
+        async function loadMiscMonthlyExpenseStats() {
+            try {
+                const res = await fetch(API_BASE_ORDER_MISC + '/stats/monthly-expenses', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const expenseEl = document.getElementById('misc-monthly-expense');
+                    const trendEl = document.getElementById('misc-expense-trend');
+                    const vsTextEl = document.getElementById('misc-expense-vs-text');
+
+                    if (expenseEl) {
+                        const formatted = 'P ' + parseFloat(data.current_month_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        expenseEl.textContent = formatted;
+                    }
+
+                    if (trendEl && data.last_month_total > 0) {
+                        const percentChange = data.percent_change || 0;
+                        const absPercent = Math.abs(percentChange).toFixed(2);
+
+                        if (percentChange > 0) {
+                            trendEl.className = 'trend-up';
+                            trendEl.textContent = `▲ ${absPercent}%`;
+                            trendEl.style.color = '#e74c3c';
+                        } else if (percentChange < 0) {
+                            trendEl.className = 'trend-down';
+                            trendEl.textContent = `▼ ${absPercent}%`;
+                            trendEl.style.color = '#27ae60';
+                        } else {
+                            trendEl.className = '';
+                            trendEl.textContent = `0%`;
+                            trendEl.style.color = '#666';
+                        }
+                    } else if (trendEl) {
+                        trendEl.className = '';
+                        trendEl.textContent = '';
+                        trendEl.style.color = '';
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load monthly expense stats', err);
             }
         }
 
@@ -1326,6 +1394,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
 
                 alert('Transaction deleted successfully');
                 loadMiscTransactions();
+                loadMiscOutstandingBalance();
+                loadMiscMonthlyExpenseStats();
                 loadMiscPayments();
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -2062,6 +2132,8 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         loadMiscSuppliers();
         loadMiscTransactions();
         loadMiscPayments();
+        loadMiscOutstandingBalance();
+        loadMiscMonthlyExpenseStats();
 
         const miscTransactionSearchInput = document.getElementById('misc-transaction-search');
         if (miscTransactionSearchInput) {

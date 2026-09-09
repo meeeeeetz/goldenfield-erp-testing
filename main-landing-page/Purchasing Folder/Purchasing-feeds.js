@@ -139,20 +139,20 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                                     <th class="sortable" data-sort="order_id">Order ID <span class="sort-arrow">&#8645;</span></th>
                                     <th class="sortable" data-sort="date">Date <span class="sort-arrow">&#8645;</span></th>
                                     <th class="sortable" data-sort="due_date">Due Date <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="company_name">Supplier <span class="sort-arrow">&#8645;</span></th>
+                                    <th>Supplier</th>
                                     <th class="sortable" data-sort="sales_invoice">Invoice <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="feed_type">Feed Type <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="quantity">Quantity <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="unit">Unit <span class="sort-arrow">&#8645;</span></th>
+                                    <th>Feed Type</th>
+                                    <th>Quantity</th>
+                                    <th>Unit</th>
                                     <th class="sortable" data-sort="price">Price <span class="sort-arrow">&#8645;</span></th>
                                     <th class="sortable" data-sort="total_price">Total Price <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="status">Status <span class="sort-arrow">&#8645;</span></th>
+                                    <th>Status</th>
                                     <th class="sortable" data-sort="rebate_status">Rebate Status <span class="sort-arrow">&#8645;</span></th>
                                     <th>Photo</th>
-                                    <th class="sortable" data-sort="payment_date">Payment Date <span class="sort-arrow">&#8645;</span></th>
-                                    <th class="sortable" data-sort="payment_source">Payment Source <span class="sort-arrow">&#8645;</span></th>
+                                    <th>Payment Date</th>
+                                    <th>Payment Source</th>
                                     <th>Bank Account</th>
-                                    <th class="sortable" data-sort="check_number">Check Number <span class="sort-arrow">&#8645;</span></th>
+                                    <th>Check Number</th>
                                 </tr>
                             </thead>
                             <tbody id="feeds-transaction-table-body">
@@ -2832,10 +2832,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     <td>${tx.company_name || '-'}</td>
                     <td>${tx.sales_invoice || '-'}</td>
                     <td>${tx.feed_type || 'Rebate'}</td>
-                    <td>${tx.quantity || '-'}</td>
+                    <td>${formatNumber(parseFloat(tx.quantity || 0))}</td>
                     <td>${tx.unit || '-'}</td>
-                    <td>P ${parseFloat(tx.price || 0).toFixed(2)}</td>
-                    <td>P ${parseFloat(tx.total_price || 0).toFixed(2)}</td>
+                    <td>P ${formatNumber(parseFloat(tx.price || 0))}</td>
+                    <td>P ${formatNumber(parseFloat(tx.total_price || 0))}</td>
                     <td>${tx.status || '-'}</td>
                     <td>${tx.rebate_status || '-'}</td>
                     <td>${!tx.feed_type ? '-' : (tx.receipt_path && String(tx.receipt_path).trim() ? `<span class="photo-icon-wrap" data-receipt-path="${tx.receipt_path}" data-order-id="${tx.order_id}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>` : `<span class="photo-icon-wrap" data-order-id="${tx.order_id}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#800000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>`)}</td>
