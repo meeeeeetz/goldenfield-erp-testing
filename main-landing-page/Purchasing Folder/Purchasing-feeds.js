@@ -2980,7 +2980,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             const fullSrc = src.startsWith('http') ? src : `${src}`;
             photoTooltip.innerHTML = `<img src="${fullSrc}" alt="receipt preview">`;
             photoTooltip.style.display = 'block';
-            positionTooltip(e);
+            positionTooltip();
         });
 
         document.addEventListener('mouseout', (e) => {
@@ -2991,21 +2991,14 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
         document.addEventListener('mousemove', (e) => {
             if (photoTooltip.style.display === 'block') {
-                positionTooltip(e);
+                positionTooltip();
             }
         });
 
-        function positionTooltip(e) {
-            const offset = 15;
-            let left = e.clientX + offset;
-            let top = e.clientY + offset;
+        function positionTooltip() {
             const rect = photoTooltip.getBoundingClientRect();
-            if (left + rect.width > window.innerWidth) {
-                left = e.clientX - rect.width - offset;
-            }
-            if (top + rect.height > window.innerHeight) {
-                top = e.clientY - rect.height - offset;
-            }
+            const left = Math.max(8, (window.innerWidth - rect.width) / 2);
+            const top = Math.max(8, (window.innerHeight - rect.height) / 2);
             photoTooltip.style.left = left + 'px';
             photoTooltip.style.top = top + 'px';
         }
@@ -3555,8 +3548,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     const category = row.querySelector('.feeds-type-select').value;
                     const quantity = parseFloat(row.querySelector('input[placeholder="Qty"]').value) || 0;
                     const driver = row.querySelector('input[placeholder="Driver"]')?.value || null;
-                    const feedTime = row.querySelector('input[placeholder="Time"]')?.value || null;
+                    const feedTime = row.querySelector('input[type="time"]')?.value || null;
                     const buildingId = row.dataset.buildingId || '';
+
+                    const createdByCandidate = localStorage.getItem('goldenfield_user_name') || localStorage.getItem('goldenfield_user_email') || 'System';
 
                     return {
                         source_type: 'consumption',
@@ -3566,7 +3561,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         quantity: quantity,
                         driver: driver,
                         feed_time: feedTime,
-                        status: 'Pending'
+                        status: 'Pending',
+                        created_by: createdByCandidate
                     };
                 });
 
