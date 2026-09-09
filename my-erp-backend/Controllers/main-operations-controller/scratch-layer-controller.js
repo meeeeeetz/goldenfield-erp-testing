@@ -1,5 +1,19 @@
 const pool = require('../../config/database');
 
+function parseRowData(raw) {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw !== 'string') return [];
+    try {
+        let parsed = JSON.parse(raw);
+        while (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed);
+        }
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
+    }
+}
+
 class ScratchLayerController {
     constructor(dbConnection) {
         this.db = dbConnection;
@@ -8,13 +22,21 @@ class ScratchLayerController {
     async getAll() {
         const query = 'SELECT * FROM scratch_layer_data ORDER BY updated_at DESC';
         const result = await this.db.query(query);
-        return result.rows;
+        return result.rows.map(row => ({
+            ...row,
+            row_data: parseRowData(row.row_data)
+        }));
     }
 
     async getById(id) {
         const query = 'SELECT * FROM scratch_layer_data WHERE id = $1';
         const result = await this.db.query(query, [id]);
-        return result.rows[0];
+        const row = result.rows[0];
+        if (!row) return null;
+        return {
+            ...row,
+            row_data: parseRowData(row.row_data)
+        };
     }
 
     async create(data) {

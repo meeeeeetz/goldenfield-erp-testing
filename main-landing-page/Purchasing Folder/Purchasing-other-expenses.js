@@ -64,9 +64,11 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                         </table>
                     </div>
                     <div class="pagination" id="misc-transactions-pagination">
+                        <button class="page-btn">&laquo; 1st</button>
                         <button class="page-btn">&laquo; Prev</button>
                         <button class="page-btn active">1</button>
                         <button class="page-btn">Next &raquo;</button>
+                        <button class="page-btn">Last &raquo;</button>
                     </div>
                 </div>
                 <div class="card shipping-box rtl-payments-box" style="width: 100%; margin-top: 15px;">
@@ -452,9 +454,11 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 const customerSelect = document.getElementById('order-misc-customer');
                 if (customerSelect) {
                     customerSelect.innerHTML = '<option value="">Select Customer</option>' +
-                        suppliers.filter(s => s.status === 'Active').map(s =>
-                            `<option value="${s.supplier_id}" data-company-name="${s.company_name || ''}">${s.company_name}</option>`
-                        ).join('');
+                        suppliers.filter(s => s.status === 'Active')
+                            .sort((a, b) => (a.company_name || '').localeCompare(b.company_name || ''))
+                            .map(s =>
+                                `<option value="${s.supplier_id}" data-company-name="${s.company_name || ''}">${s.company_name}</option>`
+                            ).join('');
                 }
 
                 const expenseSelect = document.getElementById('order-misc-expense-code');
@@ -1113,7 +1117,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                     <tr>
                         <td>${order.order_id || '-'}</td>
                         <td>${order.date ? new Date(order.date).toISOString().split('T')[0] : '-'}</td>
-                        <td>${order.customer || '-'}</td>
+                        <td>${order.customer_name || order.customer || '-'}</td>
                         <td>${order.expense_code || '-'}</td>
                         <td>${order.expense_type || '-'}</td>
                         <td>P ${parseFloat(order.grand_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -1166,7 +1170,18 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             }
             html += `<button class="page-btn" id="misc-transactions-prev-btn" ${currentMiscTransactionPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
-            for (let i = 1; i <= totalPages; i++) {
+            let startPage = 1;
+            let endPage = totalPages;
+            if (totalPages > 7) {
+                startPage = Math.max(1, currentMiscTransactionPage - 3);
+                endPage = startPage + 6;
+                if (endPage > totalPages) {
+                    endPage = totalPages;
+                    startPage = Math.max(1, endPage - 6);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
                 html += `<button class="page-btn ${i === currentMiscTransactionPage ? 'active' : ''}" id="misc-transactions-page-${i}">${i}</button>`;
             }
 
@@ -1205,7 +1220,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 }
             });
 
-            for (let i = 1; i <= totalPages; i++) {
+            for (let i = startPage; i <= endPage; i++) {
                 document.getElementById(`misc-transactions-page-${i}`)?.addEventListener('click', () => {
                     currentMiscTransactionPage = i;
                     renderMiscTransactionsPage();

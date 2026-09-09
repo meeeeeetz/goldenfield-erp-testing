@@ -2407,7 +2407,7 @@ body {
 
 .broken-fields .modal-field {
     flex: 1;
-    min-width: 160px;
+    min-width: 0;
 }
 
 .broken-total-field {
@@ -2421,10 +2421,12 @@ body {
 }
 
 .daily-layer-modal {
-    max-width: 540px;
+    max-width: 540px !important;
     width: 94%;
     gap: 14px;
     max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .daily-layer-modal .daily-layer-body {
@@ -2432,7 +2434,17 @@ body {
     flex-direction: column;
     gap: 16px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.daily-layer-modal .modal-tab-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #d6cfbf;
+    flex-shrink: 0;
 }
 
 .daily-layer-modal .modal-field {
@@ -3738,6 +3750,7 @@ body {
     background: #fff;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+    overflow-x: auto;
 }
 
 table.spreadsheet {
@@ -3944,6 +3957,15 @@ table.scratch-table td[contenteditable="true"]:active {
     user-select: text;
     cursor: text;
     background: #fffbeb;
+}
+
+table.scratch-table td.selected-cell {
+    background: #dbeafe !important;
+}
+
+table.scratch-table td.copied-cell {
+    outline: 2px dashed #2f80ed;
+    animation: marchingAnts 0.4s linear infinite;
 }
 
 table.scratch-table th:first-child,
@@ -4401,14 +4423,15 @@ table.scratch-table td:first-child {
     }
 
     .sheet-title-band {
-        margin-bottom: 4px;
+        margin-bottom: 2px;
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        padding: 6px 10px;
+        padding: 4px 8px;
         background: #e5e7eb;
         border: 1px solid #d1d5db;
-        border-radius: 6px 6px 0 0;
+        border-radius: 4px 4px 0 0;
+        flex-shrink: 0;
     }
 
     .sheet-building {
@@ -4423,40 +4446,48 @@ table.scratch-table td:first-child {
     }
 
     .spreadsheet-wrap {
-        overflow: visible;
+        overflow: hidden;
         border: 1px solid #d1d5db;
-        border-radius: 0 0 6px 6px;
+        border-radius: 0;
         background: #fff;
     }
 
     table.spreadsheet {
         border-collapse: collapse;
-        width: max-content;
-        font-size: 9px;
+        width: auto;
+        font-size: 8px;
+        font-weight: bold;
         table-layout: fixed;
         box-sizing: border-box;
     }
 
+    table.spreadsheet tbody tr {
+        height: 21.5px;
+    }
+
     table.spreadsheet th,
     table.spreadsheet td {
-        border: 1px solid #d1d5db;
-        padding: 1px 4px;
-        height: 22px;
+        border: 1px solid #000000;
+        padding: 0px 1px;
+        height: 21.5px;
         text-align: left;
         vertical-align: middle;
         white-space: nowrap;
         overflow: hidden;
         box-sizing: border-box;
+        min-width: unset !important;
+        max-width: unset !important;
+        font-weight: bold;
     }
 
     table.spreadsheet th:first-child,
     table.spreadsheet td:first-child {
-        width: 90px;
+        width: 40px !important;
     }
 
     table.spreadsheet th:nth-child(2),
     table.spreadsheet td:nth-child(2) {
-        width: 80px;
+        width: 40px !important;
     }
 
     table.spreadsheet th:nth-child(3),
@@ -4467,7 +4498,7 @@ table.scratch-table td:first-child {
     table.spreadsheet td:nth-child(5),
     table.spreadsheet th:nth-child(6),
     table.spreadsheet td:nth-child(6) {
-        width: 35px;
+        width: 25px !important;
     }
 
     table.spreadsheet th:nth-child(7),
@@ -4476,12 +4507,12 @@ table.scratch-table td:first-child {
     table.spreadsheet td:nth-child(8),
     table.spreadsheet th:nth-child(9),
     table.spreadsheet td:nth-child(9) {
-        width: 80px;
+        width: 58px !important;
     }
 
     table.spreadsheet th:nth-child(10),
     table.spreadsheet td:nth-child(10) {
-        width: 90px;
+        width: 88px !important;
     }
 
     table.spreadsheet th:nth-child(11),
@@ -4490,21 +4521,26 @@ table.scratch-table td:first-child {
     table.spreadsheet td:nth-child(12),
     table.spreadsheet th:nth-child(13),
     table.spreadsheet td:nth-child(13) {
-        width: 90px;
+        width: 50px !important;
     }
 
     table.spreadsheet th:nth-child(14),
     table.spreadsheet td:nth-child(14),
     table.spreadsheet th:nth-child(15),
-    table.spreadsheet td:nth-child(15),
-    table.spreadsheet th:nth-child(16),
-    table.spreadsheet td:nth-child(16) {
-        width: 95px;
+    table.spreadsheet td:nth-child(15) {
+        width: 50px !important;
     }
 
+    table.spreadsheet th:nth-child(16),
+    table.spreadsheet td:nth-child(16),
     table.spreadsheet th:nth-child(17),
     table.spreadsheet td:nth-child(17) {
-        width: 80px;
+        width: 69px !important;
+    }
+
+    table.spreadsheet th:nth-child(18),
+    table.spreadsheet td:nth-child(18) {
+        width: 88px !important;
     }
 
     table.spreadsheet thead th {

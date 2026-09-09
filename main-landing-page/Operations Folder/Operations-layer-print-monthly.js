@@ -40,12 +40,11 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                         <div class="scratch-header">
                             <h3>Scratch Layer Data</h3>
                             <div class="scratch-actions">
-                                <button id="scratch-load-btn" class="btn-secondary">Load Saved</button>
-                                <select id="scratch-save-select" class="scratch-select"><option value="">Save As...</option></select>
+                                <select id="scratch-save-select" class="scratch-select"><option value="">Load Saved...</option></select>
                                 <button id="scratch-save-btn" class="btn-primary">Save</button>
                                 <button id="scratch-new-btn" class="btn-secondary">New</button>
+                                <button id="scratch-add-row-btn" class="btn-secondary">+ Add Row</button>
                                 <button id="scratch-delete-btn" class="btn-danger" disabled>Delete</button>
-                                <button id="scratch-copy-btn" class="btn-secondary">Copy to Primary</button>
                                 <button id="scratch-clear-btn" class="btn-secondary">Clear</button>
                             </div>
                         </div>
@@ -253,6 +252,7 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                 }
                 copiedData.push(rowData);
             }
+            scratchCopiedData = copiedData;
         }
 
         function pasteSelection() {
@@ -390,13 +390,17 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
             }
 
             if (isDelete) {
-                const range = getSelectedRange();
-                if (range) {
-                    e.preventDefault();
-                    const rows = sheet.tBodies[0].rows;
-                    for (let r = range.minRow; r <= range.maxRow && r < rows.length; r++) {
-                        for (let c = range.minCol; c <= range.maxCol && c < rows[r].cells.length; c++) {
-                            if (rows[r].cells[c]) rows[r].cells[c].textContent = '';
+                const activeCell = document.activeElement;
+                const isEditing = activeCell && activeCell.isContentEditable && sheet.contains(activeCell);
+                if (!isEditing) {
+                    const range = getSelectedRange();
+                    if (range) {
+                        e.preventDefault();
+                        const rows = sheet.tBodies[0].rows;
+                        for (let r = range.minRow; r <= range.maxRow && r < rows.length; r++) {
+                            for (let c = range.minCol; c <= range.maxCol && c < rows[r].cells.length; c++) {
+                                if (rows[r].cells[c]) rows[r].cells[c].textContent = '';
+                            }
                         }
                     }
                 }
@@ -490,15 +494,109 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
         const scratchSaveSelect = document.getElementById('scratch-save-select');
         const scratchDeleteBtn = document.getElementById('scratch-delete-btn');
         let scratchCurrentId = null;
+        let scratchSelectionStart = null;
+        let scratchSelectionEnd = null;
+        let scratchIsSelecting = false;
+        let scratchCopiedData = null;
+
+        function getScratchCellPosition(cell) {
+            if (!cell || !scratchTableBody.contains(cell)) return null;
+            const row = parseInt(cell.getAttribute('data-row'), 10);
+            const col = parseInt(cell.getAttribute('data-col'), 10);
+            if (isNaN(row) || isNaN(col)) return null;
+            return { row, col };
+        }
+
+        function clearScratchSelection() {
+            scratchTableBody.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
+            scratchTableBody.querySelectorAll('.copied-cell').forEach(el => el.classList.remove('copied-cell'));
+        }
+
+        function setScratchSelection(startPos, endPos) {
+            clearScratchSelection();
+            if (!startPos || !endPos) return;
+            scratchSelectionStart = startPos;
+            scratchSelectionEnd = endPos;
+            const minRow = Math.min(startPos.row, endPos.row);
+            const maxRow = Math.max(startPos.row, endPos.row);
+            const minCol = Math.min(startPos.col, endPos.col);
+            const maxCol = Math.max(startPos.col, endPos.col);
+            const rows = scratchTableBody.rows;
+            for (let r = minRow; r <= maxRow && r < rows.length; r++) {
+                for (let c = minCol; c <= maxCol && c < rows[r].cells.length; c++) {
+                    if (rows[r].cells[c]) rows[r].cells[c].classList.add('selected-cell');
+                }
+            }
+        }
+
+        function getScratchSelectedRange() {
+            if (!scratchSelectionStart || !scratchSelectionEnd) return null;
+            const minRow = Math.min(scratchSelectionStart.row, scratchSelectionEnd.row);
+            const maxRow = Math.max(scratchSelectionStart.row, scratchSelectionEnd.row);
+            const minCol = Math.min(scratchSelectionStart.col, scratchSelectionEnd.col);
+            const maxCol = Math.max(scratchSelectionStart.col, scratchSelectionEnd.col);
+            return { minRow, maxRow, minCol, maxCol };
+        }
+
+        function copyScratchSelection() {
+            const range = getScratchSelectedRange();
+            if (!range) return;
+            const rows = scratchTableBody.rows;
+            scratchTableBody.querySelectorAll('.copied-cell').forEach(el => el.classList.remove('copied-cell'));
+            scratchCopiedData = [];
+            copiedData = [];
+            for (let r = range.minRow; r <= range.maxRow && r < rows.length; r++) {
+                const rowData = [];
+                for (let c = range.minCol; c <= range.maxCol && c < rows[r].cells.length; c++) {
+                    rowData.push(rows[r].cells[c].textContent);
+                    rows[r].cells[c].classList.add('copied-cell');
+                }
+                scratchCopiedData.push(rowData);
+                copiedData.push(rowData);
+            }
+        }
+
+        function pasteScratchSelection() {
+            if (!scratchCopiedData || scratchCopiedData.length === 0) return;
+            const activeCell = document.activeElement;
+            if (!activeCell || !scratchTableBody.contains(activeCell)) return;
+            const startPos = getScratchCellPosition(activeCell);
+            if (!startPos) return;
+            scratchTableBody.querySelectorAll('.copied-cell').forEach(el => el.classList.remove('copied-cell'));
+            const rows = scratchTableBody.rows;
+            for (let r = 0; r < scratchCopiedData.length; r++) {
+                for (let c = 0; c < scratchCopiedData[r].length; c++) {
+                    const targetRow = startPos.row + r;
+                    const targetCol = startPos.col + c;
+                    if (targetRow < rows.length && rows[targetRow].cells[targetCol]) {
+                        rows[targetRow].cells[targetCol].textContent = scratchCopiedData[r][c];
+                    }
+                }
+            }
+        }
 
         function buildScratchTable(rows) {
-            clearScratchTable();
-            const count = Array.isArray(rows) ? rows.length : 0;
+            clearScratchTable(false, false);
+            let data = rows;
+            if (typeof data === 'string') {
+                try {
+                    let parsed = JSON.parse(data);
+                    while (typeof parsed === 'string') {
+                        parsed = JSON.parse(parsed);
+                    }
+                    data = parsed;
+                } catch (e) {
+                    data = [];
+                }
+            }
+            if (!Array.isArray(data)) data = [];
+            const count = data.length;
             for (let r = 0; r < count; r++) {
                 addScratchRow();
                 const row = scratchTableBody.rows[r];
-                for (let c = 0; c < row.cells.length && c < rows[r].length; c++) {
-                    row.cells[c].textContent = rows[r][c] || '';
+                const rowData = Array.isArray(data[r]) ? data[r] : [];
+                for (let c = 0; c < row.cells.length && c < rowData.length; c++) {
+                    row.cells[c].textContent = rowData[c] || '';
                 }
             }
             if (count === 0) addScratchRow();
@@ -517,40 +615,205 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
             return data;
         }
 
-        function clearScratchTable() {
+        function clearScratchTable(clearSelect = false, resetId = false) {
             scratchTableBody.innerHTML = '';
-            scratchCurrentId = null;
-            if (scratchSaveSelect) {
-                scratchSaveSelect.innerHTML = '<option value="">Save As...</option>';
+            if (resetId) scratchCurrentId = null;
+            if (clearSelect && scratchSaveSelect) {
+                scratchSaveSelect.innerHTML = '<option value="">Load Saved...</option>';
             }
             if (scratchDeleteBtn) scratchDeleteBtn.disabled = true;
         }
 
         function newScratchEntry() {
-            clearScratchTable();
+            clearScratchTable(false, true);
             addScratchRow();
         }
 
         function addScratchRow() {
             const cols = ['Date', 'Age', 'No', 'Si', 'Pro', 'Oth', 'Total', 'Population', 'Feeds', 'Medicine', 'Qty/Unit', 'Water', 'Time', 'Electric', 'Water', 'Production', 'Remarks'];
             const tr = document.createElement('tr');
+            const rowIndex = scratchTableBody.rows.length;
             for (let c = 0; c < cols.length; c++) {
                 const td = document.createElement('td');
-                td.contentEditable = 'true';
+                td.setAttribute('tabindex', '0');
+                td.setAttribute('data-row', rowIndex);
                 td.setAttribute('data-col', c);
                 td.textContent = '';
                 tr.appendChild(td);
             }
             scratchTableBody.appendChild(tr);
-            if (tr.cells.length > 0) tr.cells[0].focus();
         }
 
+        scratchTableBody.addEventListener('mousedown', (e) => {
+            const td = e.target.closest('td');
+            if (!td || !scratchTableBody.contains(td)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (document.activeElement && scratchTableBody.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+            const pos = getScratchCellPosition(td);
+            if (!pos) return;
+            scratchIsSelecting = true;
+            scratchSelectionStart = pos;
+            scratchSelectionEnd = pos;
+            setScratchSelection(pos, pos);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!scratchIsSelecting) return;
+            const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+            if (!targetEl) return;
+            const td = targetEl.closest('td');
+            if (!td || !scratchTableBody.contains(td)) return;
+            const pos = getScratchCellPosition(td);
+            if (pos && (pos.row !== scratchSelectionEnd.row || pos.col !== scratchSelectionEnd.col)) {
+                scratchSelectionEnd = pos;
+                setScratchSelection(scratchSelectionStart, scratchSelectionEnd);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (scratchIsSelecting) {
+                scratchIsSelecting = false;
+                if (scratchSelectionStart && scratchSelectionEnd &&
+                    scratchSelectionStart.row === scratchSelectionEnd.row &&
+                    scratchSelectionStart.col === scratchSelectionEnd.col) {
+                    const rows = scratchTableBody.rows;
+                    if (rows[scratchSelectionStart.row] && rows[scratchSelectionStart.row].cells[scratchSelectionStart.col]) {
+                        const td = rows[scratchSelectionStart.row].cells[scratchSelectionStart.col];
+                        td.contentEditable = 'true';
+                        td.focus();
+                    }
+                } else if (scratchSelectionStart && scratchSelectionEnd) {
+                    const rows = scratchTableBody.rows;
+                    const r = Math.min(scratchSelectionStart.row, scratchSelectionEnd.row);
+                    const c = Math.min(scratchSelectionStart.col, scratchSelectionEnd.col);
+                    if (rows[r] && rows[r].cells[c]) {
+                        rows[r].cells[c].focus();
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const hasScratchFocus = scratchTableBody.contains(document.activeElement);
+            if (!hasScratchFocus) return;
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                e.preventDefault();
+                copyScratchSelection();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                e.preventDefault();
+                pasteScratchSelection();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                const rows = scratchTableBody.rows;
+                const lastRow = rows.length - 1;
+                const lastCol = rows[0] ? rows[0].cells.length - 1 : 16;
+                scratchSelectionStart = { row: 0, col: 0 };
+                scratchSelectionEnd = { row: lastRow, col: lastCol };
+                setScratchSelection(scratchSelectionStart, scratchSelectionEnd);
+            }
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const activeCell = document.activeElement;
+                const isEditing = activeCell && activeCell.isContentEditable && scratchTableBody.contains(activeCell);
+                if (!isEditing) {
+                    const range = getScratchSelectedRange();
+                    if (range) {
+                        e.preventDefault();
+                        const rows = scratchTableBody.rows;
+                        for (let r = range.minRow; r <= range.maxRow && r < rows.length; r++) {
+                            for (let c = range.minCol; c <= range.maxCol && c < rows[r].cells.length; c++) {
+                                if (rows[r].cells[c]) rows[r].cells[c].textContent = '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        scratchTableBody.addEventListener('dblclick', (e) => {
+            const td = e.target.closest('td');
+            if (!td || !scratchTableBody.contains(td)) return;
+            td.contentEditable = 'true';
+            td.focus();
+        });
+
+        scratchTableBody.addEventListener('keydown', (e) => {
+            const td = e.target.closest('td');
+            if (!td || !scratchTableBody.contains(td)) return;
+            const cell = td.cellIndex;
+            const row = td.parentElement;
+            const rows = scratchTableBody.rows;
+            let currentRowIndex = -1;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i] === row) { currentRowIndex = i; break; }
+            }
+            if (currentRowIndex < 0) return;
+
+            const isNavigation = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab','Enter'].includes(e.key);
+            const isShortcut = (e.ctrlKey || e.metaKey) && ['c','v','a'].includes(e.key.toLowerCase());
+            const isDelete = e.key === 'Delete' || e.key === 'Backspace';
+
+            if (!td.isContentEditable && !isNavigation && !isShortcut && !isDelete) {
+                td.contentEditable = 'true';
+                td.focus();
+            }
+
+            if (isNavigation) {
+                e.preventDefault();
+                let target = null;
+                if (e.key === 'ArrowUp' && currentRowIndex > 0) target = rows[currentRowIndex - 1].cells[cell];
+                else if (e.key === 'ArrowDown' && currentRowIndex < rows.length - 1) target = rows[currentRowIndex + 1].cells[cell];
+                else if (e.key === 'ArrowLeft' && cell > 0) target = row.cells[cell - 1];
+                else if ((e.key === 'ArrowRight' || e.key === 'Tab') && cell < row.cells.length - 1) target = row.cells[cell + 1];
+                else if (e.key === 'Enter' && currentRowIndex < rows.length - 1) target = rows[currentRowIndex + 1].cells[cell];
+                if (target) { target.contentEditable = 'true'; target.focus(); }
+            }
+
+            if (isShortcut) {
+                e.preventDefault();
+                if (e.key.toLowerCase() === 'c') copyScratchSelection();
+                if (e.key.toLowerCase() === 'v') pasteScratchSelection();
+            }
+
+            if (isDelete) {
+                const activeCell = document.activeElement;
+                const isEditing = activeCell && activeCell.isContentEditable && scratchTableBody.contains(activeCell);
+                if (!isEditing) {
+                    const range = getScratchSelectedRange();
+                    if (range) {
+                        e.preventDefault();
+                        for (let r = range.minRow; r <= range.maxRow && r < rows.length; r++) {
+                            for (let c = range.minCol; c <= range.maxCol && c < rows[r].cells.length; c++) {
+                                if (rows[r].cells[c]) rows[r].cells[c].textContent = '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         async function loadScratchEntries() {
-            const res = await fetch('/api/scratch-layer', { headers: getAuthHeaders() });
-            if (!res.ok) return;
-            const entries = await res.json();
-            if (!Array.isArray(entries)) return;
-            scratchSaveSelect.innerHTML = '<option value="">Load Saved...</option>' + entries.map(e => `<option value="${e.id}" ${e.id === scratchCurrentId ? 'selected' : ''}>${e.name || 'Untitled'}</option>`).join('');
+            try {
+                const res = await fetch('/api/scratch-layer', { headers: getAuthHeaders() });
+                if (!res.ok) return;
+                const entries = await res.json();
+                if (!Array.isArray(entries)) return;
+                scratchSaveSelect.innerHTML = '<option value="">Load Saved...</option>' + entries.map(e => `<option value="${e.id}" ${e.id === scratchCurrentId ? 'selected' : ''}>${e.name || 'Untitled'}</option>`).join('');
+                if (entries.length > 0 && !scratchCurrentId) {
+                    scratchCurrentId = entries[0].id;
+                    if (scratchSaveSelect) {
+                        const opts = scratchSaveSelect.querySelectorAll('option');
+                        opts.forEach(o => o.selected = o.value == entries[0].id);
+                    }
+                    loadScratchEntry(entries[0].id);
+                }
+            } catch (err) {
+                console.error('loadScratchEntries error:', err);
+            }
         }
 
         async function saveScratchEntry() {
@@ -568,7 +831,13 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                 headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok) { alert('Failed to save scratch data'); return; }
+            if (!res.ok) {
+                const text = await res.text();
+                let msg = 'Failed to save scratch data';
+                try { const err = JSON.parse(text); msg = err.error || msg; } catch (e) {}
+                alert(msg + ' (status: ' + res.status + ')');
+                return;
+            }
             const saved = await res.json();
             scratchCurrentId = saved.id;
             await loadScratchEntries();
@@ -578,10 +847,20 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
         async function deleteScratchEntry() {
             if (!scratchCurrentId) return;
             if (!confirm('Delete this saved scratch data?')) return;
-            const res = await fetch(`/api/scratch-layer/${scratchCurrentId}`, { method: 'DELETE', headers: getAuthHeaders() });
-            if (!res.ok) { alert('Failed to delete scratch data'); return; }
-            clearScratchTable();
-            await loadScratchEntries();
+            try {
+                const res = await fetch(`/api/scratch-layer/${scratchCurrentId}`, { method: 'DELETE', headers: getAuthHeaders() });
+                if (!res.ok) {
+                    const text = await res.text();
+                    let msg = 'Failed to delete scratch data';
+                    try { const err = JSON.parse(text); msg = err.error || msg; } catch (e) {}
+                    alert(msg + ' (status: ' + res.status + ')');
+                    return;
+                }
+                clearScratchTable(false, true);
+                await loadScratchEntries();
+            } catch (err) {
+                alert('Error deleting: ' + err.message);
+            }
         }
 
         async function loadScratchEntry(id) {
@@ -589,7 +868,7 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
             if (!res.ok) return;
             const entry = await res.json();
             scratchCurrentId = entry.id;
-            if (entry.row_data && Array.isArray(entry.row_data)) {
+            if (entry.row_data) {
                 buildScratchTable(entry.row_data);
             }
             if (scratchDeleteBtn) scratchDeleteBtn.disabled = false;
@@ -613,10 +892,9 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
 
         document.getElementById('scratch-save-btn').onclick = saveScratchEntry;
         document.getElementById('scratch-new-btn').onclick = newScratchEntry;
+        document.getElementById('scratch-add-row-btn').onclick = addScratchRow;
         document.getElementById('scratch-delete-btn').onclick = deleteScratchEntry;
-        document.getElementById('scratch-clear-btn').onclick = () => { if (confirm('Clear scratch table?')) clearScratchTable(); };
-        document.getElementById('scratch-copy-btn').onclick = copyScratchToPrimary;
-        document.getElementById('scratch-load-btn').onclick = loadScratchEntries;
+        document.getElementById('scratch-clear-btn').onclick = () => { if (confirm('Clear scratch table?')) clearScratchTable(true, true); };
 
         if (scratchSaveSelect) {
             scratchSaveSelect.addEventListener('change', () => {
@@ -624,12 +902,13 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                 if (id) {
                     loadScratchEntry(id);
                 } else {
-                    clearScratchTable();
+                    clearScratchTable(false, true);
                 }
             });
         }
 
         buildScratchTable([]);
+        loadScratchEntries();
     };
 
 function initializeModule(contentArea) {

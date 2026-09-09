@@ -39,6 +39,7 @@ router.post('/', async (req, res) => {
         const entry = await controller.create({ name, row_data });
         res.status(201).json(entry);
     } catch (error) {
+        console.error('Scratch layer POST error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -64,6 +65,7 @@ router.delete('/:id', async (req, res) => {
         }
         res.json({ message: 'Scratch entry deleted successfully' });
     } catch (error) {
+        console.error('Scratch layer DELETE error:', error);
         res.status(500).json({ error: error.message });
     }
 });

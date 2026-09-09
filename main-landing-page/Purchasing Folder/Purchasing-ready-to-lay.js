@@ -843,6 +843,9 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             };
         }
 
+        setupContactNumber(document.getElementById('create-rtl-contact-number'));
+        setupContactNumber(document.getElementById('edit-rtl-contact-number'));
+
         window.switchRtlSupplierTab = switchRtlSupplierTab;
         window.openRtlSuppliersModal = openRtlSuppliersModal;
         window.closeRtlSuppliersModal = closeRtlSuppliersModal;

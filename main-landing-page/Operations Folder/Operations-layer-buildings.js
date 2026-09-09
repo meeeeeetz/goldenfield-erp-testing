@@ -333,42 +333,13 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="modal-section">
-                                <h4>Feeds</h4>
-                                <hr class="modal-divider" />
-                                <div class="modal-field feeds-field">
-                                    <div class="dual-input">
-                                        <select class="modal-select" id="feeds-delivered">
-                                            <option value="No">No</option>
-                                            <option value="Yes">Yes</option>
-                                        </select>
-                                    </div>
-                                    <div id="feeds-details" class="hidden" style="margin-top: 12px;">
-                                        <div class="broken-fields">
-                                            <div class="modal-field">
-                                                <label for="feeds-type">Type</label>
-                                                <select class="modal-select" id="feeds-type">
-                                                    <option value="">Select type</option>
-                                                    <option value="Type 1">Type 1</option>
-                                                    <option value="Type 2">Type 2</option>
-                                                    <option value="Type 3">Type 3</option>
-                                                </select>
-                                            </div>
-                                            <div class="modal-field">
-                                                <label for="feeds-weight">Weight (Kgs)</label>
-                                                <input type="text" id="feeds-weight" placeholder="Weight (Kgs)" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div class="modal-tab-actions">
                             <button id="save-building-btn" class="btn-primary">Save</button>
                         </div>
                     </div>
+                </div>
                 </div>
                 <div id="add-remove-building-modal" class="modal hidden">
                     <div class="modal-content daily-layer-modal">
@@ -576,14 +547,6 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
         };
         document.getElementById('close-building-modal-btn').onclick = closeLayerModal;
         document.getElementById('report-building-select').onchange = populatePrevDay;
-        const feedsSelect = document.getElementById('feeds-delivered');
-        const toggleFeedsDetails = () => {
-            const details = document.getElementById('feeds-details');
-            if (details) {
-                details.classList.toggle('hidden', feedsSelect.value !== 'Yes');
-            }
-        };
-        feedsSelect.onchange = toggleFeedsDetails;
         const medOptionsList = ['Vitamins', 'Antibiotics', 'Probiotics', 'Electrolytes', 'Coccidiostat', 'Vaccine'];
         const renderMedicationBlocks = (count) => {
             const container = document.getElementById('medication-entries');
@@ -630,14 +593,11 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
         const medCountSelect = document.getElementById('med-count');
         medCountSelect.onchange = () => renderMedicationBlocks(parseInt(medCountSelect.value, 10));
         document.getElementById('save-building-btn').onclick = async () => {
-            const building = document.getElementById('report-building-select').value;
-            const reportDate = document.getElementById('report-date').value;
-            const feeds = document.getElementById('feeds-delivered').value;
-            const feedsType = document.getElementById('feeds-type')?.value || '';
-            const feedsWeight = document.getElementById('feeds-weight')?.value || '';
-            const electricToday = document.getElementById('electric-today').value;
-            const waterToday = document.getElementById('water-today').value;
-            const productionToday = document.getElementById('production-today').value;
+            const building_id = document.getElementById('report-building-select').value;
+            const date = document.getElementById('report-date').value;
+            const electricReading = document.getElementById('electric-today').value;
+            const waterReading = document.getElementById('water-today').value;
+            const productionReading = document.getElementById('production-today').value;
             const medCount = parseInt(document.getElementById('med-count').value, 10);
             const medications = [];
             for (let i = 0; i < medCount; i++) {
@@ -661,18 +621,13 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             ];
 
             const payload = {
-                building,
-                report_date: reportDate,
+                building_id,
+                date,
                 mortalities: { normal, sipon, prolapse, others, culled },
-                electricity_prev: document.getElementById('prev-electric').value,
-                electricity_today: electricToday,
-                water_prev: document.getElementById('prev-water').value,
-                water_today: waterToday,
-                production_prev: document.getElementById('prev-production').value,
-                production_today: productionToday,
-                feeds_delivered: feeds,
-                feed_type: feedsType,
-                feed_weight: feedsWeight,
+                electricity_reading: electricReading,
+                water_reading: waterReading,
+                production_reading: productionReading,
+                created_by: 'admin',
                 medications
             };
 
@@ -717,9 +672,6 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                     'Mortality Prolapse',
                     'Mortality Others',
                     'Mortality Culled',
-                    'Feeds Delivered',
-                    'Feed Type',
-                    'Feed Weight',
                     'Medication 1 Type',
                     'Medication 1 Quantity',
                     'Medication 1 Unit',
@@ -754,9 +706,6 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                     0,
                     0,
                     1,
-                    'Yes',
-                    'Layer Mash',
-                    1500,
                     'antibiotics',
                     50,
                     'g',
