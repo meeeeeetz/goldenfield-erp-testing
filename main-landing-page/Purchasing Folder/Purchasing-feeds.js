@@ -1721,7 +1721,6 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 }
 
                 const selectedFeedType = feedTypesData.find(ft => ft.feed_type_id === feedType);
-                const feedRemarks = selectedFeedType ? (selectedFeedType.remarks || '') : '';
 
                 try {
                     const expenseNextRes = await fetch('/api/expenses/next-id', {
@@ -1742,8 +1741,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                                 date: date || (function() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })(),
                                 accounting_code: '5110',
                                 expense_type: 'Direct Raw Materials & Feed',
-                                description: `Sales Invoice: ${salesInvoice} from ${supplier} at the price of ${feedType}`,
-                                remarks: feedRemarks,
+                                description: `SI# ${salesInvoice} from ${supplierName}`,
+                                remarks: `${quantity} ${unit} bought at ${feedPrice.replace('P ', '')}`,
                                 total_amount: parseFloat(totalPrice.replace('P ', '') || 0),
                                 account_source: null,
                                 cleared_date: null,
