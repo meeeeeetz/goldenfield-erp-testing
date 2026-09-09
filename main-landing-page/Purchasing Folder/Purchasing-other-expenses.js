@@ -40,7 +40,10 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 </div>
                 <div class="vet-bottom-row-2" style="grid-template-columns: 1fr;">
                 <div class="card graph-placeholder vet-tracking-card">
-                    <h3>Miscellaneous Expense Transaction</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;">
+                        <h3 style="margin: 0;">Miscellaneous Expense Transaction</h3>
+                        <input type="text" id="misc-transaction-search" placeholder="Search Customer, Expense Code, Type, Amount..." style="margin-left: auto; padding: 8px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 280px; box-sizing: border-box;" />
+                    </div>
                     <div class="table-wrap">
                         <table class="data-table product-table">
                             <thead>
@@ -1062,6 +1065,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         var currentMiscTransactionPage = 1;
         var miscTransactionsPerPage = 5;
         var miscTransactionSortState = { col: null, dir: 1 };
+        var miscTransactionSearchQuery = '';
 
         async function loadMiscTransactions() {
             const tbody = document.getElementById('misc-transactions-table-body');
@@ -1085,8 +1089,23 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
             const tbody = document.getElementById('misc-transactions-table-body');
             if (!tbody) return;
 
+            const searchInput = document.getElementById('misc-transaction-search');
+            const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            let filteredData = miscTransactionsData;
+            if (searchTerm) {
+                filteredData = miscTransactionsData.filter(order => {
+                    return (
+                        (order.customer_name || order.customer || '').toLowerCase().includes(searchTerm) ||
+                        (order.expense_code || '').toLowerCase().includes(searchTerm) ||
+                        (order.expense_type || '').toLowerCase().includes(searchTerm) ||
+                        (parseFloat(order.grand_total || 0).toFixed(2)).includes(searchTerm)
+                    );
+                });
+            }
+
             if (miscTransactionSortState.col) {
-                miscTransactionsData = [...miscTransactionsData].sort((a, b) => {
+                filteredData = [...filteredData].sort((a, b) => {
                     let va = a[miscTransactionSortState.col];
                     let vb = b[miscTransactionSortState.col];
                     if (miscTransactionSortState.col === 'amount') {
@@ -1104,10 +1123,11 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
 
             const start = (currentMiscTransactionPage - 1) * miscTransactionsPerPage;
             const end = start + miscTransactionsPerPage;
-            const pageData = miscTransactionsData.slice(start, end);
+            const pageData = filteredData.slice(start, end);
 
             if (pageData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No transactions found</td></tr>';
+                renderMiscTransactionsPagination(1);
                 return;
             }
 
@@ -1141,7 +1161,7 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
                 `;
             }).join('');
 
-            const totalPages = Math.max(1, Math.ceil(miscTransactionsData.length / miscTransactionsPerPage));
+            const totalPages = Math.max(1, Math.ceil(filteredData.length / miscTransactionsPerPage));
             renderMiscTransactionsPagination(totalPages);
 
             const txTable = document.querySelector('#misc-transactions-table-body')?.closest('table');
@@ -2042,6 +2062,18 @@ ModuleComponents['purchasing-other-expenses'] = (container) => {
         loadMiscSuppliers();
         loadMiscTransactions();
         loadMiscPayments();
+
+        const miscTransactionSearchInput = document.getElementById('misc-transaction-search');
+        if (miscTransactionSearchInput) {
+            let searchDebounce;
+            miscTransactionSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(() => {
+                    currentMiscTransactionPage = 1;
+                    renderMiscTransactionsPage();
+                }, 200);
+            });
+        }
     };
 
 function initializeModule(contentArea) {
