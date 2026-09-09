@@ -342,15 +342,14 @@ class OrderFeedController {
                 if (supplierId) {
                     const supplierResult = await client.query('SELECT company_name FROM feeds_suppliers WHERE supplier_id = $1', [supplierId]);
                     const companyName = supplierResult.rows[0]?.company_name || supplierId;
-                    description = `Sales Invoice: ${salesInvoice || 'N/A'} from ${companyName}`;
+                    description = `SI# ${salesInvoice || 'N/A'} from ${companyName}`;
                 }
 
                 if (feedTypeId) {
                     const feedTypeResult = await client.query('SELECT feed_type, remarks FROM feed_types WHERE feed_type_id = $1', [feedTypeId]);
                     const feedType = feedTypeResult.rows[0];
                     if (feedType) {
-                        description += ` at the price of ${feedType.feed_type}`;
-                        remarks = feedType.remarks || '';
+                        remarks = `${quantity} ${unit || 'unit'} bought at ${parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     }
                 }
 
