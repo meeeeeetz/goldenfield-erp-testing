@@ -1175,8 +1175,9 @@ ModuleComponents['hr-onboarding'] = (container) => {
               reader.onload = (e) => {
                   const img = new Image();
                   img.onload = () => {
-                       cropImage.src = e.target.result;
-                       cropModal.classList.remove('hidden');
+                        cropImage.src = e.target.result;
+                        cropModal.classList.remove('hidden');
+                        cropModal.style.setProperty('display', 'flex', 'important');
 
                        const cropSize = 320;
                        const container = cropImage.parentElement;
@@ -1372,6 +1373,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 console.error('Failed to fetch next employee ID:', err);
             }
             newApplicationModal.classList.remove('hidden');
+            newApplicationModal.style.setProperty('display', 'flex', 'important');
         });
     }
 
@@ -1473,21 +1475,8 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 }
                 if (step2Modal) {
                     step2Modal.classList.remove('hidden');
+                    step2Modal.style.setProperty('display', 'flex', 'important');
                 }
-
-                requestAnimationFrame(() => {
-                    const step2Content = step2Modal ? step2Modal.querySelector('.modal-content') : null;
-                    if (step2Content) {
-                        step2Content.style.visibility = 'visible';
-                        step2Content.style.opacity = '1';
-                        step2Content.style.height = 'auto';
-                        step2Content.style.minHeight = '200px';
-                    }
-                    console.log('Step2 content forced visible:', step2Content ? getComputedStyle(step2Content).visibility : 'N/A');
-                });
-
-                console.log('Step1 display after:', step1Modal?.style.display);
-                console.log('Step2 display after:', step2Modal?.style.display);
 
             } catch (err) {
                 console.error('Save employee profile error:', err);
@@ -1579,7 +1568,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 }
 
                 if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
-                if (uploadDocumentsModal) uploadDocumentsModal.classList.remove('hidden');
+                if (uploadDocumentsModal) {
+                    uploadDocumentsModal.classList.remove('hidden');
+                    uploadDocumentsModal.style.setProperty('display', 'flex', 'important');
+                }
 
             } catch (err) {
                 console.error('Step 2 Failed:', err);
@@ -1784,6 +1776,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             await populateCompensationRoleDropdown();
             await populateShiftPolicyDropdown();
             compensationConfigModal.classList.remove('hidden');
+            compensationConfigModal.style.setProperty('display', 'flex', 'important');
         }
     };
 
@@ -1857,7 +1850,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
                 if (uploadDocumentsModal) uploadDocumentsModal.classList.add('hidden');
                 if (compensationConfigModal) compensationConfigModal.classList.add('hidden');
-                if (congratulationsModal) congratulationsModal.classList.remove('hidden');
+                if (congratulationsModal) {
+                    congratulationsModal.classList.remove('hidden');
+                    congratulationsModal.style.setProperty('display', 'flex', 'important');
+                }
             } catch (err) {
                 console.error('Save compensation error:', err);
                 alert('Save failed: ' + err.message);
