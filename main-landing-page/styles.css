@@ -1424,6 +1424,12 @@ body {
     z-index: 1000;
 }
 
+.modal-visible {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .modal-content {
     background: #EADECB;
     border-radius: 10px;

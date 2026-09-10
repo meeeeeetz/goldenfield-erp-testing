@@ -300,7 +300,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 <span class="btn-label">New Application</span>
             </button>
         </div>
-        <div id="new-application-modal" class="modal" style="display:none;">
+        <div id="new-application-modal" class="modal hidden">
             <div class="modal-content" style="max-width: 780px; width: 95%;">
                 <div class="modal-header-row">
                     <h3>New Application</h3>
@@ -375,7 +375,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             </div>
         </div>
 
-        <div id="employment-info-modal" class="modal" style="display:none;">
+        <div id="employment-info-modal" class="modal hidden">
             <div class="modal-content" style="max-width: 780px; width: 95%;">
                 <div class="modal-header-row">
                     <h3>2nd Step - Employment Information</h3>
@@ -412,7 +412,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 </div>
             </div>
         </div>
-        <div id="upload-documents-modal" class="modal" style="display:none; align-items: flex-start; padding-top: 20px; overflow-y: auto;">
+        <div id="upload-documents-modal" class="modal hidden" style="align-items: flex-start; padding-top: 20px; overflow-y: auto;">
             <div class="modal-content" style="max-width: 780px; width: 95%; max-height: 85vh; overflow-y: auto;">
                 <div class="modal-header-row">
                     <h3>3rd Step - Upload Documents</h3>
@@ -616,7 +616,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 </div>
             </div>
         </div>
-        <div id="crop-2x2-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+        <div id="crop-2x2-modal" class="modal hidden">
             <div class="modal-content" style="max-width: 520px; width: 95%; text-align: center;">
                 <div class="modal-header-row">
                     <h3>Crop 2x2 Picture</h3>
@@ -634,7 +634,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 </div>
             </div>
         </div>
-        <div id="compensation-config-modal" class="modal" style="display:none;">
+        <div id="compensation-config-modal" class="modal hidden">
             <div class="modal-content" style="max-width: 780px; width: 95%; max-height: 95vh; overflow-y: auto; padding: 20px;">
                 <div class="modal-header-row">
                     <h3>4th Step - Compensation Configuration</h3>
@@ -793,7 +793,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 </div>
             </div>
         </div>
-        <div id="congratulations-modal" class="modal" style="display:none;">
+        <div id="congratulations-modal" class="modal hidden">
             <div class="modal-content" style="max-width: 520px; width: 95%; text-align: center;">
                 <div class="modal-header-row">
                     <h3>Congratulations!</h3>
@@ -1175,16 +1175,16 @@ ModuleComponents['hr-onboarding'] = (container) => {
               reader.onload = (e) => {
                   const img = new Image();
                   img.onload = () => {
-                      cropImage.src = e.target.result;
-                      cropModal.style.display = 'flex';
+                       cropImage.src = e.target.result;
+                       cropModal.classList.remove('hidden');
 
-                      const cropSize = 320;
-                      const container = cropImage.parentElement;
-                      if (!container) {
-                          cropModal.style.display = 'none';
-                          reject(new Error('Crop container not found'));
-                          return;
-                      }
+                       const cropSize = 320;
+                       const container = cropImage.parentElement;
+                       if (!container) {
+                           cropModal.classList.add('hidden');
+                           reject(new Error('Crop container not found'));
+                           return;
+                       }
 
                       let scale = Math.max(cropSize / img.naturalWidth, cropSize / img.naturalHeight);
                       let offsetX = (cropSize - img.naturalWidth * scale) / 2;
@@ -1232,14 +1232,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
                       window.addEventListener('pointermove', onPointerMove);
                       window.addEventListener('pointerup', onPointerUp);
 
-                      const cleanup = () => {
-                          cropModal.style.display = 'none';
-                          container.removeEventListener('pointerdown', onPointerDown);
-                          window.removeEventListener('pointermove', onPointerMove);
-                          window.removeEventListener('pointerup', onPointerUp);
-                          confirmBtn.onclick = null;
-                          cancelBtn.onclick = null;
-                      };
+                       const cleanup = () => {
+                           cropModal.classList.add('hidden');
+                           container.removeEventListener('pointerdown', onPointerDown);
+                           window.removeEventListener('pointermove', onPointerMove);
+                           window.removeEventListener('pointerup', onPointerUp);
+                           confirmBtn.onclick = null;
+                           cancelBtn.onclick = null;
+                       };
 
                       cancelBtn.onclick = () => {
                           cleanup();
@@ -1357,7 +1357,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             e.stopPropagation();
 
             const step2Modal = document.getElementById('employment-info-modal');
-            if (step2Modal) step2Modal.style.display = 'none';
+            if (step2Modal) step2Modal.classList.add('hidden');
 
             try {
                 const res = await fetch(`${API_BASE}/employee-profiles/next-id`);
@@ -1371,20 +1371,20 @@ ModuleComponents['hr-onboarding'] = (container) => {
             } catch (err) {
                 console.error('Failed to fetch next employee ID:', err);
             }
-            newApplicationModal.style.display = 'flex';
+            newApplicationModal.classList.remove('hidden');
         });
     }
 
     if (closeNewApplicationModal && newApplicationModal) {
         closeNewApplicationModal.addEventListener('click', () => {
-            newApplicationModal.style.display = 'none';
+            newApplicationModal.classList.add('hidden');
         });
     }
 
     if (newApplicationModal) {
         newApplicationModal.addEventListener('click', (e) => {
             if (e.target === newApplicationModal) {
-                newApplicationModal.style.display = 'none';
+                newApplicationModal.classList.add('hidden');
             }
         });
     }
@@ -1415,6 +1415,15 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 emergency_contact_number: document.getElementById('app-emergency-number')?.value?.trim() || ''
             };
 
+            if (profileData.birthdate) {
+                const d = new Date(profileData.birthdate);
+                if (isNaN(d.getTime())) {
+                    alert('Please enter a valid birthdate.');
+                    return;
+                }
+                profileData.birthdate = d.toISOString().split('T')[0];
+            }
+
             if (!profileData.employee_id || !profileData.first_name || !profileData.last_name) {
                 alert('Please fill in required fields: Employee ID, First Name, and Last Name.');
                 return;
@@ -1432,18 +1441,22 @@ ModuleComponents['hr-onboarding'] = (container) => {
             saveContinueBtn.innerText = 'Saving Profile...';
 
             try {
+                console.log('Submitting profile data:', profileData);
                 const res = await fetch(`${API_BASE}/employee-profiles`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(profileData)
                 });
 
+                console.log('Save response status:', res.status);
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
+                    console.error('Save failed:', errData);
                     throw new Error(errData.message || 'Failed to save employee profile');
                 }
 
                 const savedProfile = await res.json();
+                console.log('Saved profile:', savedProfile);
 
                 window.currentSession.employee_id = savedProfile.employee_id || profileData.employee_id;
                 window.currentSession.first_name = savedProfile.first_name || profileData.first_name;
@@ -1455,8 +1468,26 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 const step1Modal = document.getElementById('new-application-modal');
                 const step2Modal = document.getElementById('employment-info-modal');
 
-                if (step1Modal) step1Modal.style.display = 'none';
-                if (step2Modal) step2Modal.style.display = 'flex';
+                if (step1Modal) {
+                    step1Modal.classList.add('hidden');
+                }
+                if (step2Modal) {
+                    step2Modal.classList.remove('hidden');
+                }
+
+                requestAnimationFrame(() => {
+                    const step2Content = step2Modal ? step2Modal.querySelector('.modal-content') : null;
+                    if (step2Content) {
+                        step2Content.style.visibility = 'visible';
+                        step2Content.style.opacity = '1';
+                        step2Content.style.height = 'auto';
+                        step2Content.style.minHeight = '200px';
+                    }
+                    console.log('Step2 content forced visible:', step2Content ? getComputedStyle(step2Content).visibility : 'N/A');
+                });
+
+                console.log('Step1 display after:', step1Modal?.style.display);
+                console.log('Step2 display after:', step2Modal?.style.display);
 
             } catch (err) {
                 console.error('Save employee profile error:', err);
@@ -1470,14 +1501,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
 
     if (closeEmploymentInfoModal && employmentInfoModal) {
         closeEmploymentInfoModal.addEventListener('click', () => {
-            employmentInfoModal.style.display = 'none';
+            employmentInfoModal.classList.add('hidden');
         });
     }
 
     if (employmentInfoModal) {
         employmentInfoModal.addEventListener('click', (e) => {
             if (e.target === employmentInfoModal) {
-                employmentInfoModal.style.display = 'none';
+                employmentInfoModal.classList.add('hidden');
             }
         });
     }
@@ -1547,8 +1578,8 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     throw new Error(folderErr.message || 'Backend failed to create storage folder');
                 }
 
-                if (employmentInfoModal) employmentInfoModal.style.display = 'none';
-                if (uploadDocumentsModal) uploadDocumentsModal.style.display = 'flex';
+                if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
+                if (uploadDocumentsModal) uploadDocumentsModal.classList.remove('hidden');
 
             } catch (err) {
                 console.error('Step 2 Failed:', err);
@@ -1564,7 +1595,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const closeUploadDocumentsModal = document.getElementById('close-upload-documents-modal');
     if (closeUploadDocumentsModal && uploadDocumentsModal) {
         closeUploadDocumentsModal.addEventListener('click', () => {
-            uploadDocumentsModal.style.display = 'none';
+            uploadDocumentsModal.classList.add('hidden');
         });
     }
 
@@ -1572,14 +1603,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const crop2x2Modal = document.getElementById('crop-2x2-modal');
     if (closeCrop2x2Modal && crop2x2Modal) {
         closeCrop2x2Modal.addEventListener('click', () => {
-            crop2x2Modal.style.display = 'none';
+            crop2x2Modal.classList.add('hidden');
         });
     }
 
     if (uploadDocumentsModal) {
         uploadDocumentsModal.addEventListener('click', (e) => {
             if (e.target === uploadDocumentsModal) {
-                uploadDocumentsModal.style.display = 'none';
+                uploadDocumentsModal.classList.add('hidden');
             }
         });
     }
@@ -1656,14 +1687,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const compensationConfigModal = document.getElementById('compensation-config-modal');
     if (closeCompensationConfigModal && compensationConfigModal) {
         closeCompensationConfigModal.addEventListener('click', () => {
-            compensationConfigModal.style.display = 'none';
+            compensationConfigModal.classList.add('hidden');
         });
     }
 
     if (compensationConfigModal) {
         compensationConfigModal.addEventListener('click', (e) => {
             if (e.target === compensationConfigModal) {
-                compensationConfigModal.style.display = 'none';
+                compensationConfigModal.classList.add('hidden');
             }
         });
     }
@@ -1673,18 +1704,18 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const closeCongratulationsBtn = document.getElementById('close-congratulations-btn');
     if (closeCongratulationsModal && congratulationsModal) {
         closeCongratulationsModal.addEventListener('click', () => {
-            congratulationsModal.style.display = 'none';
+            congratulationsModal.classList.add('hidden');
         });
     }
     if (closeCongratulationsBtn && congratulationsModal) {
         closeCongratulationsBtn.addEventListener('click', () => {
-            congratulationsModal.style.display = 'none';
+            congratulationsModal.classList.add('hidden');
         });
     }
     if (congratulationsModal) {
         congratulationsModal.addEventListener('click', (e) => {
             if (e.target === congratulationsModal) {
-                congratulationsModal.style.display = 'none';
+                congratulationsModal.classList.add('hidden');
             }
         });
     }
@@ -1742,7 +1773,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     };
 
     const openCompensationModal = async () => {
-        if (uploadDocumentsModal) uploadDocumentsModal.style.display = 'none';
+        if (uploadDocumentsModal) uploadDocumentsModal.classList.add('hidden');
         if (compensationConfigModal) {
             const empIdEl = document.getElementById('compensation-employee-id');
             const sourceEmpId = document.getElementById('app-employee-id-2') || document.getElementById('app-employee-id');
@@ -1752,7 +1783,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             await populateCompensationDepartmentDropdown();
             await populateCompensationRoleDropdown();
             await populateShiftPolicyDropdown();
-            compensationConfigModal.style.display = 'flex';
+            compensationConfigModal.classList.remove('hidden');
         }
     };
 
@@ -1822,11 +1853,11 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 }
 
                 alert('Compensation saved successfully!');
-                if (newApplicationModal) newApplicationModal.style.display = 'none';
-                if (employmentInfoModal) employmentInfoModal.style.display = 'none';
-                if (uploadDocumentsModal) uploadDocumentsModal.style.display = 'none';
-                if (compensationConfigModal) compensationConfigModal.style.display = 'none';
-                if (congratulationsModal) congratulationsModal.style.display = 'flex';
+                if (newApplicationModal) newApplicationModal.classList.add('hidden');
+                if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
+                if (uploadDocumentsModal) uploadDocumentsModal.classList.add('hidden');
+                if (compensationConfigModal) compensationConfigModal.classList.add('hidden');
+                if (congratulationsModal) congratulationsModal.classList.remove('hidden');
             } catch (err) {
                 console.error('Save compensation error:', err);
                 alert('Save failed: ' + err.message);
