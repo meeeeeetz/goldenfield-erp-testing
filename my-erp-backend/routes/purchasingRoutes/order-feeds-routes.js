@@ -153,14 +153,14 @@ router.delete('/:id/photo', async (req, res) => {
 
 router.post('/claim-rebates', async (req, res) => {
     try {
-        const { order_ids, rebate_total, rebate_price } = req.body;
+        const { order_ids, rebate_total, rebate_price, rebate_date } = req.body;
         if (!order_ids || !Array.isArray(order_ids) || order_ids.length === 0) {
             return res.status(400).json({ error: 'order_ids array is required' });
         }
         if (typeof rebate_total !== 'number') {
             return res.status(400).json({ error: 'rebate_total must be a number' });
         }
-        const result = await controller.claimRebates(order_ids, rebate_total, rebate_price);
+        const result = await controller.claimRebates(order_ids, rebate_total, rebate_price, rebate_date);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
