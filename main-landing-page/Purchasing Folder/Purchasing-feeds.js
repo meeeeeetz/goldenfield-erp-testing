@@ -19,6 +19,12 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Record Feeds Use</span>
                     </button>
+
+                    <button id="open-delivery-recording-btn" class="btn-icon-circle" style="background-color: #F7F18B; color: #1a1f2e;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                        <span class="btn-label">Delivery Recording</span>
+                    </button>
+
                     <button id="open-repayment-modal" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Pay Feeds</span>
@@ -2085,6 +2091,11 @@ ModuleComponents['purchasing-feeds'] = (container) => {
         const addBtn = document.getElementById('add-feeds-suppliers-btn');
         if (addBtn) {
             addBtn.onclick = openFeedsSuppliersModal;
+        }
+
+        const deliveryBtn = document.getElementById('open-delivery-recording-btn');
+        if (deliveryBtn) {
+            deliveryBtn.onclick = () => switchTab('purchasing-feeds-delivery');
         }
 
         const closeBtn = document.getElementById('close-feeds-suppliers-modal');

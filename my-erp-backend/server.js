@@ -62,6 +62,7 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const miscSuppliersRoutes = require('./routes/purchasingRoutes/misc-suppliers-routes');
     const orderMiscRoutes = require('./routes/purchasingRoutes/order-misc-routes');
     const orderMiscRepaymentsRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
+    const gasOperatorRoutes = require('./routes/purchasingRoutes/gas-operator-routes');
     const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
     const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
     const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
@@ -142,6 +143,7 @@ app.use('/api/order-rtl-repayments', orderRtlRepaymentsRoutes);
 app.use('/api/miscellaneous-suppliers', miscSuppliersRoutes);
 app.use('/api/order-misc', orderMiscRoutes);
 app.use('/api/order-misc-repayments', orderMiscRepaymentsRoutes);
+app.use('/api/gas-operators', gasOperatorRoutes);
 app.use('/api/loan-accounts', loanAccountRoutes);
 app.use('/api/loan-transactions', loanTransactionRoutes);
 app.use('/api/expenses', expenseRoutes);

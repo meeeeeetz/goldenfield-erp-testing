@@ -534,6 +534,10 @@ body {
     grid-column: span 2;
 }
 
+.tracking-cards-row.delivery-cards-row {
+    grid-template-columns: repeat(3, 1fr);
+}
+
 .layer-cards-row {
     grid-template-columns: repeat(5, 1fr);
 }
@@ -1569,6 +1573,14 @@ body {
     background: #fff;
     color: #1a1f2e;
     width: 100%;
+    box-sizing: border-box;
+    height: 40px;
+    line-height: 1.2;
+}
+
+input[type="date"].modal-select {
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .modal-field input[readonly] {

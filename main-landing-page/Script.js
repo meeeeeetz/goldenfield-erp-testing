@@ -8,6 +8,7 @@ const tabModules = {
     'purchasing': 'Purchasing Folder/Purchasing.js',
     'operations-egg-inventory': 'Operations Folder/Operations-egg-inventory.js',
     'purchasing-feeds': 'Purchasing Folder/Purchasing-feeds.js',
+    'purchasing-feeds-delivery': 'Purchasing Folder/Purchasing-feeds-delivery.js',
     'purchasing-electricity': 'Purchasing Folder/Purchasing-electricity.js',
     'purchasing-egg-tray': 'Purchasing Folder/Purchasing-egg-tray.js',
     'purchasing-veterinary-supplies': 'Purchasing Folder/Purchasing-veterinary-supplies.js',
@@ -75,6 +76,7 @@ const tabTitles = {
     'purchasing': 'Purchasing',
     'operations-egg-inventory': 'Egg Inventory',
     'purchasing-feeds': 'Feeds',
+    'purchasing-feeds-delivery': 'Delivery Recording',
     'purchasing-electricity': 'Electricity',
     'purchasing-egg-tray': 'Egg Tray',
     'purchasing-veterinary-supplies': 'Veterinary Supplies',
@@ -139,7 +141,8 @@ const subParentMap = {
     'finance-bank-statement': 'finance-bank-management',
     'hr-employees-manage-org-structure': 'hr-employees',
     'hr-salary-attendance': 'hr-salary',
-    'hr-salary-overtime': 'hr-salary'
+    'hr-salary-overtime': 'hr-salary',
+    'purchasing-feeds-delivery': 'purchasing-feeds'
 };
 
 const rolePermissions = {
@@ -152,6 +155,7 @@ const rolePermissions = {
         'sales-receipt-issuance',
         'sales-product-pricing',
         'purchasing-feeds',
+        'purchasing-feeds-delivery',
         'purchasing-electricity',
         'purchasing-egg-tray',
         'purchasing-veterinary-supplies',

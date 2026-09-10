@@ -72,7 +72,8 @@ const pathToModuleMap = {
     '/api/order-rtl-repayments': 'purchasing-ready-to-lay',
     '/api/misc-suppliers': 'purchasing-other-expenses',
     '/api/order-misc': 'purchasing-other-expenses',
-    '/api/order-misc-repayments': 'purchasing-other-expenses'
+    '/api/order-misc-repayments': 'purchasing-other-expenses',
+    '/api/gas-operators': 'purchasing-feeds-delivery'
 };
 
 const getModuleFromPath = (reqPath) => {

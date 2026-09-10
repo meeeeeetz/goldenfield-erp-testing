@@ -16,7 +16,8 @@ async function runMigration() {
     const sqlFiles = [
         path.join(__dirname, '..', '..', 'my-erp-database', 'purchasing-database', 'feeds-suppliers.sql'),
         path.join(__dirname, '..', '..', 'my-erp-database', 'purchasing-database', 'feed-types.sql'),
-        path.join(__dirname, '..', '..', 'my-erp-database', 'purchasing-database', 'order-feeds.sql')
+        path.join(__dirname, '..', '..', 'my-erp-database', 'purchasing-database', 'order-feeds.sql'),
+        path.join(__dirname, '..', '..', 'my-erp-database', 'purchasing-database', 'gas-operators.sql')
     ];
 
     for (const sqlFile of sqlFiles) {
