@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS petty_cash (
-    petty_cash_id SERIAL PRIMARY KEY,
+    petty_cash_code VARCHAR(20) PRIMARY KEY,
     date DATE NOT NULL,
     pettycashcategory VARCHAR(100) NOT NULL,
     item VARCHAR(255) NOT NULL,
@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS petty_cash (
     store VARCHAR(255),
     amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'Pending',
-    petty_cash_code VARCHAR(20) UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     replenish_amount DECIMAL(10, 2),

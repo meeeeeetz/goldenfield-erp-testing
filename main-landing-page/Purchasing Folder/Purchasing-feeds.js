@@ -469,9 +469,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                             </div>
                             <div class="modal-field">
                                 <label>Select Order Feed</label>
-                                <select id="rebate-search" class="modal-select">
-                                    <option value="">-- Select Order Feed --</option>
-                                </select>
+                            <select id="rebate-search" class="modal-select">
+                                <option value="">-- Select Order Feed --</option>
+                                <option value="__SELECT_ALL__">SELECT ALL</option>
+                            </select>
                             </div>
                         </div>
                         <div class="table-wrap" style="max-height: 250px; overflow-y: auto; border: 1px solid #D6D6D6; border-radius: 6px;">
@@ -1177,6 +1178,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             return `${year}-${month}-${day}`;
         }
 
+        let unclaimedOrderFeeds = [];
+
         document.getElementById('open-rebate-modal').onclick = async () => {
             const modal = document.getElementById('rebate-modal');
             if (!modal) return;
@@ -1189,7 +1192,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             updateRebateGrandTotal();
 
             const select = document.getElementById('rebate-search');
-            select.innerHTML = '<option value="">-- Select Order Feed --</option>';
+            select.innerHTML = '<option value="">-- Select Order Feed --</option><option value="__SELECT_ALL__">SELECT ALL</option>';
 
             const dateInput = document.getElementById('rebate-date-input');
             if (dateInput) {
@@ -1206,8 +1209,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 });
                 if (res.ok) {
                     const orders = await res.json();
-                    const unclaimedOrders = orders.filter(o => o.rebate_status === 'Unclaimed');
-                    unclaimedOrders.forEach(order => {
+                    unclaimedOrderFeeds = orders.filter(o => o.rebate_status === 'Unclaimed');
+                    unclaimedOrderFeeds.forEach(order => {
                         const option = document.createElement('option');
                         option.value = order.order_id;
                         option.dataset.orderId = order.order_id || '';
@@ -1230,6 +1233,35 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             const selected = e.target.selectedOptions[0];
             const tbody = document.getElementById('rebate-search-results');
             if (!tbody || !selected || !selected.value) return;
+
+            if (selected.value === '__SELECT_ALL__') {
+                const rebatePrice = parseFloat(document.getElementById('rebate-price-input').value) || 0;
+                const existingRows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+                const existingOrderIds = new Set(existingRows.map(row => row.querySelector('td')?.textContent.trim()).filter(Boolean));
+
+                tbody.innerHTML = '';
+
+                unclaimedOrderFeeds.forEach(order => {
+                    if (existingOrderIds.has(order.order_id)) return;
+
+                    const quantity = parseFloat(order.quantity || 0);
+                    const rebateTotal = -(rebatePrice * quantity);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${order.order_id || '-'}</td>
+                        <td>${order.company_name || '-'}</td>
+                        <td>${order.sales_invoice || '-'}</td>
+                        <td>${formatNumber(quantity)}</td>
+                        <td>P ${formatNumber(rebateTotal)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                updateRebateGrandTotal();
+                e.target.value = '';
+                return;
+            }
 
             const existingRows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
             const alreadyAdded = existingRows.some(row => {

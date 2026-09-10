@@ -3,8 +3,12 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 ModuleComponents['finance-check-management'] = (container) => {
     container.innerHTML = `
         <div class="module-dashboard">
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;">
                 <h2>Check Management</h2>
+                <button id="back-to-bank-management-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span class="btn-label">Back</span>
+                </button>
             </div>
             <style>
                 .btn-reconcile-check:hover {
@@ -578,4 +582,9 @@ function initializeModule(contentArea) {
 
     loadBankAccountFilter();
     loadChecksHistory();
+
+    const backBtn = document.getElementById('back-to-bank-management-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => switchTab('finance-bank-management'));
+    }
 }

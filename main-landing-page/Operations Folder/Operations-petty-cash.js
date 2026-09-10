@@ -120,6 +120,10 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         </div>
                         <div class="daily-layer-body">
                             <div class="modal-field">
+                                <label for="petty-transaction-id">Petty Cash Transaction ID</label>
+                                <input type="text" id="petty-transaction-id" value="PeCID-1" readonly style="background: #f1f5f9;" />
+                            </div>
+                            <div class="modal-field">
                                 <label for="petty-date">Date</label>
                                 <input type="date" id="petty-date" />
                             </div>
@@ -232,9 +236,41 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
         const pettyModal = document.getElementById('petty-modal');
         const closePettyModal = () => pettyModal.classList.add('hidden');
-        document.getElementById('open-petty-modal').onclick = () => {
+        document.getElementById('open-petty-modal').onclick = async () => {
+            console.log('open-petty-modal clicked');
             pettyModal.classList.remove('hidden');
             loadExpenseCategories();
+
+            const nextIdInput = document.getElementById('petty-transaction-id');
+            if (nextIdInput) {
+                try {
+                    console.log('Fetching next petty cash ID...');
+                    const res = await fetch('/api/petty-cash/next-id', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    console.log('Next ID response status:', res.status);
+                    const text = await res.text();
+                    console.log('Next ID raw response:', text);
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        console.error('Failed to parse JSON:', e);
+                        nextIdInput.value = 'PeCID-1';
+                        return;
+                    }
+                    if (res.ok) {
+                        console.log('Next ID data:', data);
+                        nextIdInput.value = data.petty_cash_code || 'PeCID-1';
+                    } else {
+                        console.error('Failed response:', data);
+                        nextIdInput.value = 'PeCID-1';
+                    }
+                } catch (err) {
+                    console.error('Failed to load next petty cash ID', err);
+                    nextIdInput.value = 'PeCID-1';
+                }
+            }
         };
 
         const loadExpenseCategories = async () => {
@@ -244,7 +280,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 const res = await fetch('/api/expense-categories');
                 if (!res.ok) throw new Error('Failed to load expense categories');
                 const categories = await res.json();
-                categorySelect.innerHTML = '<option value="">Select category</option>' + categories.map(c => '<option value="' + c.expense_type + '">' + c.accounting_code + ' - ' + c.expense_type + '</option>').join('');
+                categorySelect.innerHTML = '<option value="">Select category</option>' + categories.map(c => '<option value="' + c.expense_type + '" data-accounting-code="' + c.accounting_code + '">' + c.accounting_code + ' - ' + c.expense_type + '</option>').join('');
             } catch (err) {
                 console.error('Failed to load expense categories:', err);
             }
@@ -271,6 +307,75 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 }
             } catch (err) {
                 console.error('Failed to load petty cash stats:', err);
+            }
+        };
+
+        const createExpenseFromPettyCash = async (pettyCashData) => {
+            try {
+                console.log('Creating expense from petty cash:', pettyCashData);
+                const [expenseNextRes, categoriesRes] = await Promise.all([
+                    fetch('/api/expenses/next-id', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    }),
+                    fetch('/api/expense-categories')
+                ]);
+
+                console.log('Expense next-id response:', expenseNextRes.status, expenseNextRes.ok);
+                console.log('Categories response:', categoriesRes.status, categoriesRes.ok);
+
+                if (!expenseNextRes.ok) {
+                    console.error('Failed to get next expense ID');
+                    return;
+                }
+
+                const expenseNextData = await expenseNextRes.json();
+                console.log('Expense next-id data:', expenseNextData);
+                const expenseListId = expenseNextData.expense_list_id;
+                if (!expenseListId) {
+                    console.error('No expense_list_id in response');
+                    return;
+                }
+
+                const categories = categoriesRes.ok ? await categoriesRes.json() : [];
+                console.log('Categories:', categories);
+                const category = categories.find(c => c.expense_type === pettyCashData.pettycashcategory);
+                const accountingCode = category ? category.accounting_code : '';
+                const expenseType = category ? category.expense_type : pettyCashData.pettycashcategory;
+                console.log('Matched category:', category);
+
+                const description = pettyCashData.item + ' bought at ' + (pettyCashData.store || 'Unknown Store');
+
+                const expensePayload = {
+                    expense_list_id: expenseListId,
+                    tracking_id: pettyCashData.petty_cash_code,
+                    date: pettyCashData.date,
+                    accounting_code: accountingCode,
+                    expense_type: expenseType,
+                    description: description,
+                    remarks: pettyCashData.remarks || '',
+                    total_amount: parseFloat(pettyCashData.amount || 0),
+                    account_source: null,
+                    cleared_date: null,
+                    status: 'Pending'
+                };
+                console.log('Posting expense:', expensePayload);
+
+                const expenseRes = await fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                    },
+                    body: JSON.stringify(expensePayload)
+                });
+
+                console.log('Expense creation response:', expenseRes.status, expenseRes.ok);
+                if (!expenseRes.ok) {
+                    const errorData = await expenseRes.json().catch(() => ({}));
+                    console.error('Failed to create expense:', errorData);
+                }
+            } catch (err) {
+                console.error('Failed to create expense from petty cash:', err);
             }
         };
 
@@ -421,49 +526,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             } catch (err) {
                 console.error('Failed to load petty cash transactions:', err);
                 tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px; color: #999;">Failed to load transactions</td></tr>';
-            }
-        };
-
-        document.getElementById('save-petty-btn').onclick = async () => {
-            const date = document.getElementById('petty-date').value;
-            const category = document.getElementById('petty-category').value;
-            const item = document.getElementById('petty-item').value;
-            const remarks = document.getElementById('petty-remarks').value;
-            const store = document.getElementById('petty-store').value;
-            const amount = document.getElementById('petty-amount').value;
-            const status = document.getElementById('petty-status').value;
-
-            if (!date || !category || !item || !amount) {
-                alert('Please fill in Date, Category, Item, and Amount');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/petty-cash', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Failed to save petty cash transaction');
-                }
-
-                alert('Petty Cash Transaction saved successfully');
-                closePettyModal();
-                document.getElementById('petty-date').value = '';
-                document.getElementById('petty-category').value = '';
-                document.getElementById('petty-item').value = '';
-                document.getElementById('petty-remarks').value = '';
-                document.getElementById('petty-store').value = '';
-                document.getElementById('petty-amount').value = '';
-                document.getElementById('petty-status').value = 'Pending';
-                loadPettyCashTransactions();
-                loadPettyCashStats();
-            } catch (err) {
-                console.error('Save petty cash error:', err);
-                alert(err.message || 'Failed to save petty cash transaction');
             }
         };
 
@@ -672,6 +734,19 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                     const errorData = await res.json().catch(() => ({}));
                                     throw new Error(errorData.error || 'Failed to save row');
                                 }
+
+                                const pettyCashResult = await res.json();
+                                if (pettyCashResult && pettyCashResult.petty_cash_code) {
+                                    createExpenseFromPettyCash({
+                                        petty_cash_code: pettyCashResult.petty_cash_code,
+                                        date: date,
+                                        pettycashcategory: category,
+                                        item: item,
+                                        remarks: remarks,
+                                        store: store,
+                                        amount: amount
+                                    });
+                                }
                             }
                             savedCount++;
                         } catch (err) {
@@ -857,6 +932,8 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     throw new Error(errorData.error || 'Failed to save petty cash transaction');
                 }
 
+                const pettyCashResult = await res.json();
+
                 alert('Petty Cash Transaction saved successfully');
                 closePettyModal();
                 document.getElementById('petty-date').value = '';
@@ -867,7 +944,23 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 document.getElementById('petty-amount').value = '';
                 document.getElementById('petty-status').value = 'Pending';
                 loadPettyCashTransactions();
+                loadPendingPettyCashTransactions();
                 loadPettyCashStats();
+
+                if (pettyCashResult && pettyCashResult.petty_cash_code) {
+                    console.log('Creating expense for petty cash:', pettyCashResult.petty_cash_code);
+                    createExpenseFromPettyCash({
+                        petty_cash_code: pettyCashResult.petty_cash_code,
+                        date: date,
+                        pettycashcategory: category,
+                        item: item,
+                        remarks: remarks,
+                        store: store,
+                        amount: amount
+                    });
+                } else {
+                    console.warn('No petty_cash_code in result:', pettyCashResult);
+                }
             } catch (err) {
                 console.error('Save petty cash error:', err);
                 alert(err.message || 'Failed to save petty cash transaction');

@@ -4256,27 +4256,47 @@ table.scratch-table td:first-child {
 }
 
 .ql-container.ql-snow {
-    border: 1px solid #D6D6D6 !important;
-    border-top: none !important;
+    border: none !important;
+    background: transparent !important;
     border-radius: 0 0 6px 6px !important;
-    background: #fff !important;
-    font-family: inherit !important;
-    font-size: 14px !important;
 }
 
 .ql-editor {
     min-height: 400px !important;
     padding: 40px !important;
-    max-width: 800px !important;
     margin: 0 auto !important;
+    background: transparent !important;
+    border-radius: 0 0 6px 6px !important;
+    border: none !important;
+}
+
+#print-quill-inner {
     background: #fff !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    border: 1px solid #D6D6D6 !important;
+    border-top: none !important;
     border-radius: 0 0 6px 6px !important;
+    min-height: 500px !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+}
+
+#print-quill-inner .ql-editor {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 500px !important;
+    box-sizing: border-box !important;
+}
+
+#onboarding-quill-inner .ql-editor {
+    max-width: 800px !important;
 }
 
 .ql-editor.ql-blank::before {
     color: #9ca3af !important;
     font-style: normal !important;
+    left: 40px !important;
+    right: 40px !important;
 }
 
 .ql-snow .ql-stroke {
@@ -4285,6 +4305,27 @@ table.scratch-table td:first-child {
 
 .ql-snow .ql-fill {
     fill: #4b5563 !important;
+}
+
+.print-orientation-btn {
+    color: #4b5563 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 4px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.print-orientation-btn:hover {
+    background: #f3f4f6 !important;
+}
+
+.print-orientation-btn.active {
+    background: #e8f0fe !important;
+    color: #1a73e8 !important;
 }
 
 .ql-snow .ql-picker {

@@ -11,16 +11,16 @@ class PettyCashController {
         return result.rows;
     }
 
-    async getPettyCashTransactionById(pettyCashId) {
-        const query = 'SELECT * FROM petty_cash WHERE petty_cash_id = $1';
-        const result = await this.db.query(query, [pettyCashId]);
+    async getPettyCashTransactionById(pettyCashCode) {
+        const query = 'SELECT * FROM petty_cash WHERE petty_cash_code = $1';
+        const result = await this.db.query(query, [pettyCashCode]);
         return result.rows[0];
     }
 
     async addReplenishTransaction(replenishData) {
         const { date, source, replenish_amount, check_number, status } = replenishData;
         const nextId = await this.getNextPettyCashId();
-        const petty_cash_code = `PeCID-${String(nextId).padStart(9, '0')}`;
+        const petty_cash_code = `PeCID-${nextId}`;
         const query = `
             INSERT INTO petty_cash 
             (date, pettycashcategory, item, source, replenish_amount, check_number, status, petty_cash_code) 
@@ -43,7 +43,7 @@ class PettyCashController {
     async addPettyCashTransaction(transactionData) {
         const { date, pettycashcategory, item, remarks, store, amount, status, replenish_amount } = transactionData;
         const nextId = await this.getNextPettyCashId();
-        const petty_cash_code = `PeCID-${String(nextId).padStart(9, '0')}`;
+        const petty_cash_code = `PeCID-${nextId}`;
         const query = `
             INSERT INTO petty_cash 
             (date, pettycashcategory, item, remarks, store, amount, status, petty_cash_code, replenish_amount) 
@@ -64,12 +64,12 @@ class PettyCashController {
         return result.rows[0];
     }
 
-    async updatePettyCashTransaction(pettyCashId, transactionData) {
+    async updatePettyCashTransaction(pettyCashCode, transactionData) {
         const { date, pettycashcategory, item, remarks, store, amount, status } = transactionData;
         const query = `
             UPDATE petty_cash 
             SET date = $1, pettycashcategory = $2, item = $3, remarks = $4, store = $5, amount = $6, status = $7, updated_at = CURRENT_TIMESTAMP
-            WHERE petty_cash_id = $8
+            WHERE petty_cash_code = $8
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -80,22 +80,27 @@ class PettyCashController {
             store,
             amount,
             status,
-            pettyCashId
+            pettyCashCode
         ]);
         return result.rows[0];
     }
 
-    async deletePettyCashTransaction(pettyCashId) {
-        const query = 'DELETE FROM petty_cash WHERE petty_cash_id = $1';
-        const result = await this.db.query(query, [pettyCashId]);
+    async deletePettyCashTransaction(pettyCashCode) {
+        const query = 'DELETE FROM petty_cash WHERE petty_cash_code = $1';
+        const result = await this.db.query(query, [pettyCashCode]);
         return result.rowCount > 0;
     }
 
     async getNextPettyCashId() {
-        const query = "SELECT MAX(petty_cash_id) as max_id FROM petty_cash";
-        const result = await this.db.query(query);
-        const maxId = result.rows[0]?.max_id || 0;
-        return maxId + 1;
+        try {
+            const query = "SELECT MAX(CAST(SUBSTRING(petty_cash_code FROM '\\d+') AS INTEGER)) as max_num FROM petty_cash";
+            const result = await this.db.query(query);
+            const maxNum = result.rows[0]?.max_num || 0;
+            return maxNum + 1;
+        } catch (error) {
+            console.error('Error getting next petty cash ID:', error);
+            return 1;
+        }
     }
 
     async getPettyCashTransactionsByStatus(status) {

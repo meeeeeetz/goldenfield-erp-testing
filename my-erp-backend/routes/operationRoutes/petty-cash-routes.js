@@ -32,6 +32,16 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+router.get('/next-id', async (req, res) => {
+    try {
+        const nextId = await controller.getNextPettyCashId();
+        const petty_cash_code = `PeCID-${nextId}`;
+        res.json({ petty_cash_id: nextId, petty_cash_code });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:pettyCashId', async (req, res) => {
     try {
         const transaction = await controller.getPettyCashTransactionById(req.params.pettyCashId);
