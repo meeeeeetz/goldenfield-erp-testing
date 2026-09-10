@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS order_feeds (
     due_date DATE NOT NULL,
     supplier_id VARCHAR(50) NOT NULL REFERENCES feeds_suppliers(supplier_id),
     sales_invoice VARCHAR(255),
-    feed_type_id VARCHAR(50) NOT NULL REFERENCES feed_types(feed_type_id),
+    feed_type_id VARCHAR(50) REFERENCES feed_types(feed_type_id),
     quantity DECIMAL(12,2) NOT NULL,
     unit VARCHAR(50) NOT NULL,
     price DECIMAL(12,2) NOT NULL,

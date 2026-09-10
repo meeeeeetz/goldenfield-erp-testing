@@ -1355,6 +1355,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
         newApplicationBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
+
+            const step2Modal = document.getElementById('employment-info-modal');
+            if (step2Modal) step2Modal.style.display = 'none';
+
             try {
                 const res = await fetch(`${API_BASE}/employee-profiles/next-id`);
                 if (res.ok) {
@@ -1448,11 +1452,11 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 const employeeId2 = document.getElementById('app-employee-id-2');
                 if (employeeId2) employeeId2.value = window.currentSession.employee_id;
 
-                if (typeof newApplicationModal !== 'undefined' && newApplicationModal) {
-                    newApplicationModal.style.display = 'none';
-                }
+                const step1Modal = document.getElementById('new-application-modal');
+                const step2Modal = document.getElementById('employment-info-modal');
 
-                employmentInfoModal.style.display = 'flex';
+                if (step1Modal) step1Modal.style.display = 'none';
+                if (step2Modal) step2Modal.style.display = 'flex';
 
             } catch (err) {
                 console.error('Save employee profile error:', err);

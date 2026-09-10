@@ -197,7 +197,7 @@ class OrderFeedController {
         return 'OrFeID-' + (maxNum + 1);
     }
 
-    async claimRebates(orderIds, rebateTotal, rebatePrice = 0) {
+    async claimRebates(orderIds, rebateTotal, rebatePrice = 0, rebateDate = null) {
         const client = await this.db.connect();
         try {
             await client.query('BEGIN');
@@ -224,6 +224,8 @@ class OrderFeedController {
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 7);
 
+            const orderDate = rebateDate || new Date().toISOString().split('T')[0];
+
             const insertQuery = `
                 INSERT INTO order_feeds 
                 (order_id, date, due_date, supplier_id, sales_invoice, feed_type_id, quantity, unit, price, total_price, receipt_path, status, rebate_status) 
@@ -232,7 +234,7 @@ class OrderFeedController {
             `;
             const result = await client.query(insertQuery, [
                 newOrderId,
-                new Date().toISOString(),
+                orderDate,
                 dueDate.toISOString().split('T')[0],
                 supplierId,
                 null,

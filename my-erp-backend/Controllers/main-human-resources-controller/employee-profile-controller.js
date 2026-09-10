@@ -537,6 +537,10 @@ class EmployeeProfileController {
         }
     }
 
+    async getEmployeePhoto(employee_id) {
+        return this.findEmployeePhoto(employee_id);
+    }
+
     async createEmployeeFolder({ employee_id, last_name, first_name }) {
         if (!employee_id) {
             throw new Error('employee_id is required');

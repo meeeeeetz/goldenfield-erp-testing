@@ -1181,6 +1181,28 @@ function initializeModule(contentArea) {
         } else if (pagination) {
             pagination.innerHTML = '';
         }
+
+        const visibleCards = container.querySelectorAll('.employee-card');
+        const photoPromises = [];
+        visibleCards.forEach(card => {
+            const empId = card.querySelector('.emp-more-btn')?.getAttribute('data-employee-id');
+            const photoDiv = card.querySelector('.emp-photo');
+            if (!empId || !photoDiv) return;
+            const existingImg = photoDiv.querySelector('img');
+            if (existingImg && existingImg.src && !existingImg.src.includes('placeholder')) return;
+            const promise = fetch(`/api/employee-profiles/${encodeURIComponent(empId)}/photo`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+            })
+                .then(res => res.ok ? res.json() : null)
+                .then(photo => {
+                    if (photo && photo.photo_url) {
+                        photoDiv.innerHTML = `<img src="${photo.photo_url}" alt="photo" loading="lazy">`;
+                    }
+                })
+                .catch(() => {});
+            photoPromises.push(promise);
+        });
+        Promise.allSettled(photoPromises).catch(() => {});
     }
 
     async function loadEmployeeCards(filterStatus) {

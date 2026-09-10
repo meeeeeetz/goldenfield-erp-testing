@@ -179,6 +179,15 @@ router.get('/:id/13th-month', async (req, res) => {
     }
 });
 
+router.get('/:id/photo', async (req, res) => {
+    try {
+        const photo = await controller.getEmployeePhoto(req.params.id);
+        res.json(photo);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/13th-month-batch', async (req, res) => {
     try {
         const { employee_ids, year } = req.query;

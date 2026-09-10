@@ -1368,13 +1368,14 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
             try {
                 const rebatePriceValue = parseFloat(document.getElementById('rebate-price-input').value) || 0;
+                const rebateDate = document.getElementById('rebate-date-input').value || '';
                 const res = await fetch(API_BASE_ORDER_FEEDS + '/claim-rebates', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                     },
-                    body: JSON.stringify({ order_ids: orderIds, rebate_total: rebateTotal, rebate_price: rebatePriceValue })
+                    body: JSON.stringify({ order_ids: orderIds, rebate_total: rebateTotal, rebate_price: rebatePriceValue, rebate_date: rebateDate })
                 });
 
                 if (!res.ok) {
@@ -1384,8 +1385,6 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
                 const claimResult = await res.json();
                 const newOrderId = claimResult.order_id || orderIds[0];
-
-                const rebateDate = document.getElementById('rebate-date-input').value || '';
 
                 const invoiceList = Array.from(rows).map(row => {
                     const cells = row.querySelectorAll('td');
