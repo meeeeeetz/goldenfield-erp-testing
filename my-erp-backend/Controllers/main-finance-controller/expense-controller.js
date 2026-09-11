@@ -101,24 +101,32 @@ class ExpenseController {
 
     async updateExpenseByTrackingId(trackingId, expenseData) {
         const { date, accounting_code, expense_type, description, remarks, total_amount, account_source, cleared_date, status } = expenseData;
+        
+        const updates = [];
+        const values = [];
+        let counter = 1;
+
+        if (date !== undefined) { updates.push(`date = $${counter++}`); values.push(date); }
+        if (accounting_code !== undefined) { updates.push(`accounting_code = $${counter++}`); values.push(accounting_code); }
+        if (expense_type !== undefined) { updates.push(`expense_type = $${counter++}`); values.push(expense_type); }
+        if (description !== undefined) { updates.push(`description = $${counter++}`); values.push(description); }
+        if (remarks !== undefined) { updates.push(`remarks = $${counter++}`); values.push(remarks); }
+        if (total_amount !== undefined) { updates.push(`total_amount = $${counter++}`); values.push(total_amount); }
+        if (account_source !== undefined) { updates.push(`account_source = $${counter++}`); values.push(account_source || null); }
+        if (cleared_date !== undefined) { updates.push(`cleared_date = $${counter++}`); values.push(cleared_date || null); }
+        if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
+
+        updates.push(`updated_at = CURRENT_TIMESTAMP`);
+        values.push(trackingId);
+
         const query = `
             UPDATE expenses 
-            SET date = $1, accounting_code = $2, expense_type = $3, description = $4, remarks = $5, total_amount = $6, account_source = $7, cleared_date = $8, status = $9, updated_at = CURRENT_TIMESTAMP
-            WHERE tracking_id = $10
+            SET ${updates.join(', ')}
+            WHERE tracking_id = $${counter}
             RETURNING *
         `;
-        const result = await this.db.query(query, [
-            date,
-            accounting_code,
-            expense_type,
-            description,
-            remarks,
-            total_amount,
-            account_source || null,
-            cleared_date || null,
-            status || 'Pending',
-            trackingId
-        ]);
+        
+        const result = await this.db.query(query, values);
         return result.rows[0];
     }
 }

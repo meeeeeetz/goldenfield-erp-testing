@@ -81,6 +81,26 @@ ModuleComponents['purchasing-egg-tray'] = (container) => {
                     <div class="pagination" id="egg-tray-transactions-page-pagination">
                     </div>
                 </div>
+                <div class="card graph-placeholder">
+                    <h3>Egg Tray Sold</h3>
+                    <div class="table-wrap">
+                        <table class="data-table product-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice Number</th>
+                                    <th>Customer</th>
+                                    <th>Pcs</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th>Created by</th>
+                                </tr>
+                            </thead>
+                            <tbody id="egg-tray-sold-page-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="bottom-cards-row">
                     <div class="card graph-placeholder tray-suppliers-card">
                         <h3>Egg Tray Suppliers</h3>

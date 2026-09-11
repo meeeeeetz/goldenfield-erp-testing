@@ -1,8 +1,10 @@
 const pool = require('../../config/database');
+const ExpenseController = require('../../Controllers/main-finance-controller/expense-controller');
 
 class PettyCashController {
     constructor(dbConnection) {
         this.db = dbConnection;
+        this.expenseController = new ExpenseController(dbConnection);
     }
 
     async getAllPettyCashTransactions() {
@@ -37,7 +39,25 @@ class PettyCashController {
             status || 'Pending',
             petty_cash_code
         ]);
-        return result.rows[0];
+
+        const savedTransaction = result.rows[0];
+
+        const expenseListId = await this.expenseController.getNextExpenseId();
+        await this.expenseController.addExpense({
+            expense_list_id: expenseListId,
+            tracking_id: petty_cash_code,
+            date: date,
+            accounting_code: null,
+            expense_type: null,
+            description: `Withdraw petty cash form ${source || 'Unknown Source'}`,
+            remarks: null,
+            total_amount: parseFloat(replenish_amount || 0),
+            account_source: source || null,
+            cleared_date: date,
+            status: 'Pending'
+        });
+
+        return savedTransaction;
     }
 
     async addPettyCashTransaction(transactionData) {
@@ -66,23 +86,66 @@ class PettyCashController {
 
     async updatePettyCashTransaction(pettyCashCode, transactionData) {
         const { date, pettycashcategory, item, remarks, store, amount, status } = transactionData;
+
+        const updates = [];
+        const values = [];
+        let counter = 1;
+
+        if (date !== undefined) { updates.push(`date = $${counter++}`); values.push(date); }
+        if (pettycashcategory !== undefined) { updates.push(`pettycashcategory = $${counter++}`); values.push(pettycashcategory); }
+        if (item !== undefined) { updates.push(`item = $${counter++}`); values.push(item); }
+        if (remarks !== undefined) { updates.push(`remarks = $${counter++}`); values.push(remarks); }
+        if (store !== undefined) { updates.push(`store = $${counter++}`); values.push(store); }
+        if (amount !== undefined) { updates.push(`amount = $${counter++}`); values.push(amount); }
+        if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
+
+        updates.push(`updated_at = CURRENT_TIMESTAMP`);
+        values.push(pettyCashCode);
+
         const query = `
             UPDATE petty_cash 
-            SET date = $1, pettycashcategory = $2, item = $3, remarks = $4, store = $5, amount = $6, status = $7, updated_at = CURRENT_TIMESTAMP
-            WHERE petty_cash_code = $8
+            SET ${updates.join(', ')}
+            WHERE petty_cash_code = $${counter}
             RETURNING *
         `;
-        const result = await this.db.query(query, [
-            date,
-            pettycashcategory,
-            item,
-            remarks,
-            store,
-            amount,
-            status,
-            pettyCashCode
-        ]);
-        return result.rows[0];
+        
+        const result = await this.db.query(query, values);
+        const updated = result.rows[0];
+
+        if (updated && status === 'Rejected') {
+            try {
+                const existingExpenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
+                if (existingExpenses.length > 0) {
+                    const expense = existingExpenses[0];
+                    await this.expenseController.updateExpense(expense.id, {
+                        remarks: `Rejected by system`,
+                        total_amount: 0,
+                        account_source: null,
+                        cleared_date: null,
+                        status: 'Rejected'
+                    });
+                }
+            } catch (expenseError) {
+                console.error('Failed to update rejection expense:', expenseError);
+            }
+        }
+
+        if (updated && status === 'Approved') {
+            try {
+                const existingExpenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
+                if (existingExpenses.length > 0) {
+                    const expense = existingExpenses[0];
+                    const expenseStatus = updated.petcashcategory === 'Replenishment' ? 'Cleared' : 'Cleared on Petty Cash';
+                    await this.expenseController.updateExpense(expense.id, {
+                        status: expenseStatus
+                    });
+                }
+            } catch (expenseError) {
+                console.error('Failed to update approval expense:', expenseError);
+            }
+        }
+
+        return updated;
     }
 
     async deletePettyCashTransaction(pettyCashCode) {
@@ -114,6 +177,7 @@ class PettyCashController {
             SELECT 
                 COALESCE(SUM(replenish_amount), 0) - COALESCE(SUM(amount), 0) as available
             FROM petty_cash
+            WHERE status != 'Rejected'
         `);
         const available = Number(availableResult.rows[0]?.available || 0);
 
@@ -125,14 +189,14 @@ class PettyCashController {
         const monthlyExpenseResult = await this.db.query(`
             SELECT COALESCE(SUM(amount), 0) as monthly_expense
             FROM petty_cash
-            WHERE date >= $1 AND pettycashcategory != 'Replenishment'
+            WHERE date >= $1 AND pettycashcategory != 'Replenishment' AND status != 'Rejected'
         `, [monthStartStr]);
         const monthlyExpense = Number(monthlyExpenseResult.rows[0]?.monthly_expense || 0);
 
         const monthlyReplenishResult = await this.db.query(`
             SELECT COUNT(*) as monthly_replenish
             FROM petty_cash
-            WHERE date >= $1 AND pettycashcategory = 'Replenishment'
+            WHERE date >= $1 AND pettycashcategory = 'Replenishment' AND status != 'Rejected'
         `, [monthStartStr]);
         const monthlyReplenish = Number(monthlyReplenishResult.rows[0]?.monthly_replenish || 0);
 

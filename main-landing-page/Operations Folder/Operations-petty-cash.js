@@ -149,14 +149,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                 <label for="petty-amount">Amount</label>
                                 <input type="number" id="petty-amount" placeholder="Amount (PHP)" />
                             </div>
-                            <div class="modal-field">
-                                <label for="petty-status">Status</label>
-                                <select class="modal-select" id="petty-status">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Paid">Paid</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="modal-tab-actions">
                             <button id="save-petty-btn" class="btn-primary">Save Entry</button>
@@ -215,14 +207,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             <div class="modal-field">
                                 <label for="replenish-check">Check No.</label>
                                 <input type="text" id="replenish-check" placeholder="If applicable" />
-                            </div>
-                            <div class="modal-field">
-                                <label for="replenish-status">Status</label>
-                                <select class="modal-select" id="replenish-status">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Withdrawn">Withdrawn</option>
-                                </select>
                             </div>
                         </div>
                         <div class="modal-tab-actions">
@@ -398,6 +382,24 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             }
         };
 
+        const filterPendingPettyCash = () => {
+            const searchInput = document.getElementById("pending-petty-search");
+            const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            if (!searchTerm) {
+                renderPendingPettyCashTransactions(allPendingPettyCash);
+                return;
+            }
+            const filtered = allPendingPettyCash.filter(txn => {
+                const code = (txn.petty_cash_code || txn.petty_cash_id || '').toLowerCase();
+                const category = (txn.pettycashcategory || '').toLowerCase();
+                const item = (txn.item || '').toLowerCase();
+                return code.includes(searchTerm) || category.includes(searchTerm) || item.includes(searchTerm);
+            });
+            renderPendingPettyCashTransactions(filtered);
+        };
+
+        document.getElementById('pending-petty-search')?.addEventListener('input', filterPendingPettyCash);
+
         const renderPendingPettyCashTransactions = (transactions) => {
             const tbody = document.getElementById("pending-petty-tbody");
             if (!tbody) return;
@@ -447,8 +449,55 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: "Approved" })
                         });
-                        if (!res.ok) throw new Error("Failed to approve transaction");
-                        alert("Transaction " + pettyId + " approved successfully");
+                        if (!res.ok) {
+                            const errorData = await res.json().catch(() => ({}));
+                            console.error('Approve petty cash error:', errorData);
+                            throw new Error(errorData.error || 'Failed to approve transaction');
+                        }
+
+                        const txn = allPendingPettyCash.find(t => (t.petty_cash_code || t.petty_cash_id) === pettyId);
+                        const category = txn ? (txn.pettycashcategory || '').toLowerCase() : '';
+
+                        if (category === 'replenishment') {
+                            const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(pettyId)}`, {
+                                method: "PUT",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                },
+                                body: JSON.stringify({
+                                    status: "Cleared"
+                                })
+                            });
+
+                            if (!expenseRes.ok) {
+                                const expenseError = await expenseRes.json().catch(() => ({}));
+                                console.error('Update expense error:', expenseError);
+                                alert('Transaction approved, but failed to update expense record: ' + (expenseError.error || 'Unknown error'));
+                            } else {
+                                alert("Transaction " + pettyId + " approved successfully");
+                            }
+                        } else {
+                            const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(pettyId)}`, {
+                                method: "PUT",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                },
+                                body: JSON.stringify({
+                                    status: "Cleared on Petty Cash"
+                                })
+                            });
+
+                            if (!expenseRes.ok) {
+                                const expenseError = await expenseRes.json().catch(() => ({}));
+                                console.error('Update expense error:', expenseError);
+                                alert('Transaction approved, but failed to update expense record: ' + (expenseError.error || 'Unknown error'));
+                            } else {
+                                alert("Transaction " + pettyId + " approved successfully");
+                            }
+                        }
+
                         loadPendingPettyCashTransactions();
                         loadPettyCashTransactions();
                         loadPettyCashStats();
@@ -471,6 +520,25 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             body: JSON.stringify({ status: "Rejected" })
                         });
                         if (!res.ok) throw new Error("Failed to reject transaction");
+
+                        const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+                        const rejectedBy = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+
+                        await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(pettyId)}`, {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                            },
+                            body: JSON.stringify({
+                                remarks: `Rejected by ${rejectedBy}`,
+                                total_amount: 0,
+                                account_source: null,
+                                cleared_date: null,
+                                status: "Rejected"
+                            })
+                        });
+
                         alert("Transaction " + pettyId + " rejected successfully");
                         loadPendingPettyCashTransactions();
                         loadPettyCashTransactions();
@@ -481,6 +549,124 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     }
                 });
             });
+
+            const approveFilteredBtn = document.getElementById('approve-filtered-petty-btn');
+            if (approveFilteredBtn && !approveFilteredBtn.dataset.listenerAttached) {
+                approveFilteredBtn.dataset.listenerAttached = 'true';
+                approveFilteredBtn.addEventListener('click', async () => {
+                    if (!confirm('Approve all visible pending transactions?')) return;
+                    const searchInput = document.getElementById('pending-petty-search');
+                    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+                    const filtered = allPendingPettyCash.filter(txn => {
+                        if (!searchTerm) return true;
+                        const code = (txn.petty_cash_code || txn.petty_cash_id || '').toLowerCase();
+                        const category = (txn.pettycashcategory || '').toLowerCase();
+                        const item = (txn.item || '').toLowerCase();
+                        return code.includes(searchTerm) || category.includes(searchTerm) || item.includes(searchTerm);
+                    });
+                    let successCount = 0;
+                    for (const txn of filtered) {
+                        const code = txn.petty_cash_code || txn.petty_cash_id;
+                        if (!code) continue;
+                        try {
+                            const res = await fetch("/api/petty-cash/" + code, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: "Approved" })
+                            });
+                            if (res.ok) {
+                                successCount++;
+                                const category = (txn.pettycashcategory || '').toLowerCase();
+                                if (category === 'replenishment') {
+                                    await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
+                                        method: "PUT",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                        },
+                                        body: JSON.stringify({
+                                            status: "Cleared"
+                                        })
+                                    });
+                                } else {
+                                    await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
+                                        method: "PUT",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                        },
+                                        body: JSON.stringify({
+                                            status: "Cleared on Petty Cash"
+                                        })
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Approve filtered error:', err);
+                        }
+                    }
+                    alert(`Approved ${successCount} of ${filtered.length} transactions`);
+                    loadPendingPettyCashTransactions();
+                    loadPettyCashTransactions();
+                    loadPettyCashStats();
+                });
+            }
+
+            const rejectFilteredBtn = document.getElementById('reject-filtered-petty-btn');
+            if (rejectFilteredBtn && !rejectFilteredBtn.dataset.listenerAttached) {
+                rejectFilteredBtn.dataset.listenerAttached = 'true';
+                rejectFilteredBtn.addEventListener('click', async () => {
+                    if (!confirm('Reject all visible pending transactions?')) return;
+                    const searchInput = document.getElementById('pending-petty-search');
+                    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+                    const filtered = allPendingPettyCash.filter(txn => {
+                        if (!searchTerm) return true;
+                        const code = (txn.petty_cash_code || txn.petty_cash_id || '').toLowerCase();
+                        const category = (txn.pettycashcategory || '').toLowerCase();
+                        const item = (txn.item || '').toLowerCase();
+                        return code.includes(searchTerm) || category.includes(searchTerm) || item.includes(searchTerm);
+                    });
+
+                    const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+                    const rejectedBy = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+
+                    let successCount = 0;
+                    for (const txn of filtered) {
+                        const code = txn.petty_cash_code || txn.petty_cash_id;
+                        if (!code) continue;
+                        try {
+                            const res = await fetch("/api/petty-cash/" + code, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: "Rejected" })
+                            });
+                            if (res.ok) {
+                                successCount++;
+                                await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
+                                    method: "PUT",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                    },
+                                    body: JSON.stringify({
+                                        remarks: `Rejected by ${rejectedBy}`,
+                                        total_amount: 0,
+                                        account_source: null,
+                                        cleared_date: null,
+                                        status: "Rejected"
+                                    })
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Reject filtered error:', err);
+                        }
+                    }
+                    alert(`Rejected ${successCount} of ${filtered.length} transactions`);
+                    loadPendingPettyCashTransactions();
+                    loadPettyCashTransactions();
+                    loadPettyCashStats();
+                });
+            }
         };
 
 
@@ -872,7 +1058,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const amount = document.getElementById('replenish-amount').value;
             const source = document.getElementById('replenish-source').value;
             const check = document.getElementById('replenish-check').value;
-            const status = document.getElementById('replenish-status').value;
 
             if (!date || !amount || !source) {
                 alert('Please fill in Date, Replenish Amount, and Source');
@@ -888,7 +1073,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         source,
                         replenish_amount: amount,
                         check_number: check,
-                        status: status || 'Pending'
+                        status: 'Pending'
                     })
                 });
 
@@ -900,6 +1085,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 closeReplenishModal();
                 loadPettyCashTransactions();
                 loadPettyCashStats();
+                loadPendingPettyCashTransactions();
             } catch (err) {
                 console.error('Save replenishment error:', err);
                 alert(err.message || 'Failed to save replenishment');
@@ -913,7 +1099,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const remarks = document.getElementById('petty-remarks').value;
             const store = document.getElementById('petty-store').value;
             const amount = document.getElementById('petty-amount').value;
-            const status = document.getElementById('petty-status').value;
 
             if (!date || !category || !item || !amount) {
                 alert('Please fill in Date, Category, Item, and Amount');
@@ -924,7 +1109,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 const res = await fetch('/api/petty-cash', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
+                    body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status: 'Pending' })
                 });
 
                 if (!res.ok) {
@@ -942,7 +1127,6 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 document.getElementById('petty-remarks').value = '';
                 document.getElementById('petty-store').value = '';
                 document.getElementById('petty-amount').value = '';
-                document.getElementById('petty-status').value = 'Pending';
                 loadPettyCashTransactions();
                 loadPendingPettyCashTransactions();
                 loadPettyCashStats();

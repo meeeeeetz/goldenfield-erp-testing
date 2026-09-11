@@ -1194,17 +1194,32 @@ async function loadPriceChangesTable(page = 1) {
         }
         
         let paginationHTML = '';
-        if (totalPages > 10) {
+        if (totalPages > 1) {
             paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadPriceChangesTable(1)">&laquo; 1st</button>`;
         }
         paginationHTML += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadPriceChangesTable(${page - 1})">&laquo; Prev</button>`;
 
-        for (let i = 1; i <= totalPages; i++) {
-            paginationHTML += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadPriceChangesTable(${i})">${i}</button>`;
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadPriceChangesTable(${i})">${i}</button>`;
+            }
+        } else {
+            let startPage = Math.max(1, page - 3);
+            let endPage = Math.min(totalPages, page + 3);
+            if (page <= 4) {
+                startPage = 1;
+                endPage = 7;
+            } else if (page >= totalPages - 3) {
+                startPage = totalPages - 6;
+                endPage = totalPages;
+            }
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadPriceChangesTable(${i})">${i}</button>`;
+            }
         }
 
-        paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${page + 1})">Next &raquo;</button>`;
-        if (totalPages > 10) {
+        if (totalPages > 1) {
+            paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${page + 1})">Next &raquo;</button>`;
             paginationHTML += `<button class="page-btn" ${page === totalPages ? 'disabled' : ''} onclick="loadPriceChangesTable(${totalPages})">Last &raquo;</button>`;
         }
 

@@ -5,6 +5,47 @@ class ReceiptIssueController {
         this.db = dbConnection;
     }
 
+    isTrayProduct(productName) {
+        const name = (productName || '').toLowerCase();
+        return name.includes('tray (new)') || name.includes('tray (old)') || name.includes('tray (free)');
+    }
+
+    async saveEggTraySoldFromReceipts(receipts) {
+        if (!receipts || receipts.length === 0) return;
+
+        const trayItems = receipts.filter(r => this.isTrayProduct(r.product));
+        if (trayItems.length === 0) return;
+
+        const grouped = new Map();
+        trayItems.forEach(item => {
+            const key = item.si_number;
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    si_number: item.si_number,
+                    date: item.date,
+                    customer: item.customer,
+                    pcs: 0,
+                    amount: 0
+                });
+            }
+            const group = grouped.get(key);
+            group.pcs += parseFloat(item.qty) || 0;
+            group.amount += parseFloat(item.total) || 0;
+        });
+
+        for (const [si_number, data] of grouped) {
+            const price = data.pcs > 0 ? data.amount / data.pcs : 0;
+            const seqResult = await this.db.query("SELECT nextval('egg_tray_sold_seq') as num");
+            const num = seqResult.rows[0].num;
+            const sold_id = 'EgTrSoID-' + num;
+
+            await this.db.query(`
+                INSERT INTO egg_tray_sold (sold_id, date, invoice_number, customer, pcs, price, amount)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `, [sold_id, data.date, data.si_number, data.customer, data.pcs, price, data.amount]);
+        }
+    }
+
     async createReceiptIssue(receiptData) {
         const { si_number, date, customer, qty, product, total, created_by } = receiptData;
         const query = `
@@ -23,6 +64,7 @@ class ReceiptIssueController {
         ]);
         
         await this.upsertSummary(si_number, date, customer, total, 'Pending', true, created_by);
+        await this.saveEggTraySoldFromReceipts([{ si_number, date, customer, qty, product, total }]);
         
         return result.rows[0];
     }
@@ -74,6 +116,8 @@ class ReceiptIssueController {
         for (const [si_number, data] of summaryUpdates) {
             await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted, created_by);
         }
+
+        await this.saveEggTraySoldFromReceipts(receipts);
         
         return result.rows;
     }
@@ -395,6 +439,15 @@ class ReceiptIssueController {
         for (const [si_number, data] of summaryUpdates) {
             await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted, created_by);
         }
+
+        await this.saveEggTraySoldFromReceipts(receipts.map(r => ({
+            si_number: r.si_number,
+            date: r.date,
+            customer: r.customer,
+            qty: r.qty,
+            product: r.product,
+            total: r.total
+        })));
         
         return { inserted: result.rows.length, rows: result.rows };
     }
