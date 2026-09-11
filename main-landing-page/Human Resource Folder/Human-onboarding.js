@@ -306,7 +306,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     <h3>New Application</h3>
                     <button class="modal-close-btn" id="close-new-application-modal">&times;</button>
                 </div>
-                <form id="new-application-form" style="display: flex; flex-direction: column; gap: 10px;">
+                <form id="new-application-form" novalidate style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="font-weight: 600; color: #1a1f2e;">1st Step - Personal Profile</div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="margin: 0; white-space: nowrap;">Employee ID :</label>
@@ -370,7 +370,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
                             <input type="text" id="app-emergency-number" placeholder="+63 000-000-0000" style="width: 100%; box-sizing: border-box;">
                         </div>
                     </div>
-                    <button id="save-continue-btn" class="btn-primary" style="margin-top: 8px;" type="submit">Save and Continue</button>
+                    <button id="save-continue-btn" class="btn-primary" style="margin-top: 8px;" type="button">Save and Continue</button>
                 </form>
             </div>
         </div>
@@ -1179,13 +1179,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
                         cropModal.classList.remove('hidden');
                         cropModal.style.setProperty('display', 'flex', 'important');
 
-                       const cropSize = 320;
-                       const container = cropImage.parentElement;
-                       if (!container) {
-                           cropModal.classList.add('hidden');
-                           reject(new Error('Crop container not found'));
-                           return;
-                       }
+                        const cropSize = 320;
+                        const container = cropImage.parentElement;
+                        if (!container) {
+                            cropModal.classList.add('hidden');
+                            cropModal.style.setProperty('display', 'none', 'important');
+                            reject(new Error('Crop container not found'));
+                            return;
+                        }
 
                       let scale = Math.max(cropSize / img.naturalWidth, cropSize / img.naturalHeight);
                       let offsetX = (cropSize - img.naturalWidth * scale) / 2;
@@ -1233,14 +1234,15 @@ ModuleComponents['hr-onboarding'] = (container) => {
                       window.addEventListener('pointermove', onPointerMove);
                       window.addEventListener('pointerup', onPointerUp);
 
-                       const cleanup = () => {
-                           cropModal.classList.add('hidden');
-                           container.removeEventListener('pointerdown', onPointerDown);
-                           window.removeEventListener('pointermove', onPointerMove);
-                           window.removeEventListener('pointerup', onPointerUp);
-                           confirmBtn.onclick = null;
-                           cancelBtn.onclick = null;
-                       };
+                        const cleanup = () => {
+                            cropModal.classList.add('hidden');
+                            cropModal.style.setProperty('display', 'none', 'important');
+                            container.removeEventListener('pointerdown', onPointerDown);
+                            window.removeEventListener('pointermove', onPointerMove);
+                            window.removeEventListener('pointerup', onPointerUp);
+                            confirmBtn.onclick = null;
+                            cancelBtn.onclick = null;
+                        };
 
                       cancelBtn.onclick = () => {
                           cleanup();
@@ -1358,7 +1360,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
             e.stopPropagation();
 
             const step2Modal = document.getElementById('employment-info-modal');
-            if (step2Modal) step2Modal.classList.add('hidden');
+            if (step2Modal) {
+                step2Modal.classList.add('hidden');
+                step2Modal.style.setProperty('display', 'none', 'important');
+            }
 
             try {
                 const res = await fetch(`${API_BASE}/employee-profiles/next-id`);
@@ -1380,6 +1385,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeNewApplicationModal && newApplicationModal) {
         closeNewApplicationModal.addEventListener('click', () => {
             newApplicationModal.classList.add('hidden');
+            newApplicationModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1387,6 +1393,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         newApplicationModal.addEventListener('click', (e) => {
             if (e.target === newApplicationModal) {
                 newApplicationModal.classList.add('hidden');
+                newApplicationModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1396,9 +1403,16 @@ ModuleComponents['hr-onboarding'] = (container) => {
     const employmentInfoModal = document.getElementById('employment-info-modal');
     const closeEmploymentInfoModal = document.getElementById('close-employment-info-modal');
 
-    if (newApplicationForm && saveContinueBtn && employmentInfoModal) {
-        newApplicationForm.addEventListener('submit', async (e) => {
+    const step1Modal = document.getElementById('new-application-modal');
+    const step2Modal = document.getElementById('employment-info-modal');
+
+    if (saveContinueBtn && step1Modal && step2Modal) {
+        saveContinueBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            console.log('--- SAVE CONTINUE CLICKED ---');
 
             if (saveContinueBtn.disabled) return;
 
@@ -1407,15 +1421,34 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 last_name: document.getElementById('app-last-name')?.value?.trim() || '',
                 first_name: document.getElementById('app-first-name')?.value?.trim() || '',
                 middle_name: document.getElementById('app-middle-name')?.value?.trim() || '',
-                address: document.getElementById('app-address')?.value?.trim() || '',
-                contact_details: document.getElementById('app-contact')?.value?.trim() || '',
+                address: document.getElementById('app-address')?.value?.trim() || 'N/A',
+                contact_details: document.getElementById('app-contact')?.value?.trim() || 'N/A',
                 email_address: document.getElementById('app-email')?.value?.trim() || '',
                 birthdate: document.getElementById('app-birthdate')?.value || '',
                 gender: document.getElementById('app-gender')?.value || '',
                 civil_status: document.getElementById('app-civil-status')?.value || '',
-                emergency_contact: document.getElementById('app-emergency-contact')?.value?.trim() || '',
-                emergency_contact_number: document.getElementById('app-emergency-number')?.value?.trim() || ''
+                emergency_contact: document.getElementById('app-emergency-contact')?.value?.trim() || 'N/A',
+                emergency_contact_number: document.getElementById('app-emergency-number')?.value?.trim() || 'N/A'
             };
+
+            console.log('Profile data:', profileData);
+
+            const missingRequired = [];
+            if (!profileData.employee_id) missingRequired.push('Employee ID');
+            if (!profileData.first_name) missingRequired.push('First Name');
+            if (!profileData.last_name) missingRequired.push('Last Name');
+            if (!profileData.address) missingRequired.push('Address');
+            if (!profileData.contact_details) missingRequired.push('Contact Details');
+            if (!profileData.birthdate) missingRequired.push('Birth Date');
+            if (!profileData.gender) missingRequired.push('Gender');
+            if (!profileData.civil_status) missingRequired.push('Civil Status');
+            if (!profileData.emergency_contact) missingRequired.push('Emergency Contact');
+            if (!profileData.emergency_contact_number) missingRequired.push('Emergency Contact Number');
+
+            if (missingRequired.length > 0) {
+                alert('Please fill in required fields: ' + missingRequired.join(', '));
+                return;
+            }
 
             if (profileData.birthdate) {
                 const d = new Date(profileData.birthdate);
@@ -1424,11 +1457,6 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     return;
                 }
                 profileData.birthdate = d.toISOString().split('T')[0];
-            }
-
-            if (!profileData.employee_id || !profileData.first_name || !profileData.last_name) {
-                alert('Please fill in required fields: Employee ID, First Name, and Last Name.');
-                return;
             }
 
             const emailInput = document.getElementById('app-email');
@@ -1443,23 +1471,25 @@ ModuleComponents['hr-onboarding'] = (container) => {
             saveContinueBtn.innerText = 'Saving Profile...';
 
             try {
-                console.log('Submitting profile data:', profileData);
+                console.log('Sending API Request...');
                 const res = await fetch(`${API_BASE}/employee-profiles`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(profileData)
                 });
 
-                console.log('Save response status:', res.status);
+                console.log('API Response status:', res.status);
+
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
-                    console.error('Save failed:', errData);
-                    throw new Error(errData.message || 'Failed to save employee profile');
+                    console.error('API Error Response:', errData);
+                    throw new Error(errData.message || errData.error || `HTTP error ${res.status}`);
                 }
 
                 const savedProfile = await res.json();
                 console.log('Saved profile:', savedProfile);
 
+                window.currentSession = window.currentSession || {};
                 window.currentSession.employee_id = savedProfile.employee_id || profileData.employee_id;
                 window.currentSession.first_name = savedProfile.first_name || profileData.first_name;
                 window.currentSession.last_name = savedProfile.last_name || profileData.last_name;
@@ -1467,19 +1497,83 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 const employeeId2 = document.getElementById('app-employee-id-2');
                 if (employeeId2) employeeId2.value = window.currentSession.employee_id;
 
-                const step1Modal = document.getElementById('new-application-modal');
-                const step2Modal = document.getElementById('employment-info-modal');
-
+                console.log('Attempting Modal Transition...');
                 if (step1Modal) {
                     step1Modal.classList.add('hidden');
+                    step1Modal.style.setProperty('display', 'none', 'important');
+                    step1Modal.style.setProperty('visibility', 'hidden', 'important');
+                    step1Modal.style.setProperty('opacity', '0', 'important');
+                    step1Modal.style.setProperty('pointer-events', 'none', 'important');
+                    step1Modal.style.setProperty('z-index', '-1', 'important');
+                    step1Modal.style.setProperty('position', 'absolute', 'important');
+                    step1Modal.style.setProperty('left', '-9999px', 'important');
+                    step1Modal.style.setProperty('top', '-9999px', 'important');
+                    
+                    const step1Content = step1Modal.querySelector('.modal-content');
+                    if (step1Content) {
+                        step1Content.style.setProperty('display', 'none', 'important');
+                        step1Content.style.setProperty('visibility', 'hidden', 'important');
+                        step1Content.style.setProperty('opacity', '0', 'important');
+                        step1Content.style.setProperty('z-index', '-1', 'important');
+                    }
                 }
                 if (step2Modal) {
                     step2Modal.classList.remove('hidden');
                     step2Modal.style.setProperty('display', 'flex', 'important');
+                    step2Modal.style.setProperty('visibility', 'visible', 'important');
+                    step2Modal.style.setProperty('opacity', '1', 'important');
+                    step2Modal.style.setProperty('z-index', '2147483647', 'important');
+                    step2Modal.style.setProperty('pointer-events', 'auto', 'important');
+                    step2Modal.style.setProperty('position', 'fixed', 'important');
+                    step2Modal.style.setProperty('inset', '0', 'important');
+                    step2Modal.style.setProperty('background', 'rgba(26, 31, 46, 0.5)', 'important');
+                    
+                    const parent = step2Modal.parentElement;
+                    if (parent) {
+                        parent.classList.remove('hidden');
+                        parent.style.setProperty('display', 'block', 'important');
+                        parent.style.setProperty('visibility', 'visible', 'important');
+                        parent.style.setProperty('opacity', '1', 'important');
+                        parent.style.setProperty('position', 'relative', 'important');
+                        parent.style.setProperty('overflow', 'visible', 'important');
+                        parent.style.setProperty('z-index', '2147483646', 'important');
+                    }
+                    
+                    const step2Content = step2Modal.querySelector('.modal-content');
+                    if (step2Content) {
+                        step2Content.style.setProperty('display', 'flex', 'important');
+                        step2Content.style.setProperty('visibility', 'visible', 'important');
+                        step2Content.style.setProperty('opacity', '1', 'important');
+                        step2Content.style.setProperty('position', 'relative', 'important');
+                        step2Content.style.setProperty('z-index', '2147483648', 'important');
+                    }
+                    
+                    console.log('Step 2 computed display:', getComputedStyle(step2Modal).display);
+                    console.log('Step 2 computed visibility:', getComputedStyle(step2Modal).visibility);
+                    console.log('Step 2 computed opacity:', getComputedStyle(step2Modal).opacity);
+                    console.log('Step 2 computed position:', getComputedStyle(step2Modal).position);
+                    console.log('Step 2 computed z-index:', getComputedStyle(step2Modal).zIndex);
+                    console.log('Step 2 modal content found:', !!step2Content);
+                    console.log('Step 2 bounding rect:', step2Modal.getBoundingClientRect());
+                    
+                    const allElements = document.querySelectorAll('*');
+                    let maxZ = 0;
+                    let maxZElement = null;
+                    allElements.forEach(el => {
+                        const z = parseInt(getComputedStyle(el).zIndex) || 0;
+                        if (z > maxZ && z < 2147483647) {
+                            maxZ = z;
+                            maxZElement = el;
+                        }
+                    });
+                    console.log('Highest other z-index on page:', maxZ, maxZElement?.id || maxZElement?.className || maxZElement?.tagName);
+                    
+                    step2Modal.offsetHeight;
                 }
+                console.log('--- TRANSITION SUCCESSFUL ---');
 
             } catch (err) {
-                console.error('Save employee profile error:', err);
+                console.error('FAILED AT STEP:', err);
                 alert('Step 1 Failed: ' + err.message);
             } finally {
                 saveContinueBtn.disabled = false;
@@ -1491,6 +1585,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeEmploymentInfoModal && employmentInfoModal) {
         closeEmploymentInfoModal.addEventListener('click', () => {
             employmentInfoModal.classList.add('hidden');
+            employmentInfoModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1498,6 +1593,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         employmentInfoModal.addEventListener('click', (e) => {
             if (e.target === employmentInfoModal) {
                 employmentInfoModal.classList.add('hidden');
+                employmentInfoModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1567,7 +1663,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
                     throw new Error(folderErr.message || 'Backend failed to create storage folder');
                 }
 
-                if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
+                if (employmentInfoModal) {
+                    employmentInfoModal.classList.add('hidden');
+                    employmentInfoModal.style.setProperty('display', 'none', 'important');
+                }
                 if (uploadDocumentsModal) {
                     uploadDocumentsModal.classList.remove('hidden');
                     uploadDocumentsModal.style.setProperty('display', 'flex', 'important');
@@ -1588,6 +1687,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeUploadDocumentsModal && uploadDocumentsModal) {
         closeUploadDocumentsModal.addEventListener('click', () => {
             uploadDocumentsModal.classList.add('hidden');
+            uploadDocumentsModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1596,6 +1696,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeCrop2x2Modal && crop2x2Modal) {
         closeCrop2x2Modal.addEventListener('click', () => {
             crop2x2Modal.classList.add('hidden');
+            crop2x2Modal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1603,6 +1704,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         uploadDocumentsModal.addEventListener('click', (e) => {
             if (e.target === uploadDocumentsModal) {
                 uploadDocumentsModal.classList.add('hidden');
+                uploadDocumentsModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1680,6 +1782,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeCompensationConfigModal && compensationConfigModal) {
         closeCompensationConfigModal.addEventListener('click', () => {
             compensationConfigModal.classList.add('hidden');
+            compensationConfigModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1687,6 +1790,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
         compensationConfigModal.addEventListener('click', (e) => {
             if (e.target === compensationConfigModal) {
                 compensationConfigModal.classList.add('hidden');
+                compensationConfigModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1697,17 +1801,20 @@ ModuleComponents['hr-onboarding'] = (container) => {
     if (closeCongratulationsModal && congratulationsModal) {
         closeCongratulationsModal.addEventListener('click', () => {
             congratulationsModal.classList.add('hidden');
+            congratulationsModal.style.setProperty('display', 'none', 'important');
         });
     }
     if (closeCongratulationsBtn && congratulationsModal) {
         closeCongratulationsBtn.addEventListener('click', () => {
             congratulationsModal.classList.add('hidden');
+            congratulationsModal.style.setProperty('display', 'none', 'important');
         });
     }
     if (congratulationsModal) {
         congratulationsModal.addEventListener('click', (e) => {
             if (e.target === congratulationsModal) {
                 congratulationsModal.classList.add('hidden');
+                congratulationsModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1765,7 +1872,10 @@ ModuleComponents['hr-onboarding'] = (container) => {
     };
 
     const openCompensationModal = async () => {
-        if (uploadDocumentsModal) uploadDocumentsModal.classList.add('hidden');
+        if (uploadDocumentsModal) {
+            uploadDocumentsModal.classList.add('hidden');
+            uploadDocumentsModal.style.setProperty('display', 'none', 'important');
+        }
         if (compensationConfigModal) {
             const empIdEl = document.getElementById('compensation-employee-id');
             const sourceEmpId = document.getElementById('app-employee-id-2') || document.getElementById('app-employee-id');
@@ -1846,10 +1956,22 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 }
 
                 alert('Compensation saved successfully!');
-                if (newApplicationModal) newApplicationModal.classList.add('hidden');
-                if (employmentInfoModal) employmentInfoModal.classList.add('hidden');
-                if (uploadDocumentsModal) uploadDocumentsModal.classList.add('hidden');
-                if (compensationConfigModal) compensationConfigModal.classList.add('hidden');
+                if (newApplicationModal) {
+                    newApplicationModal.classList.add('hidden');
+                    newApplicationModal.style.setProperty('display', 'none', 'important');
+                }
+                if (employmentInfoModal) {
+                    employmentInfoModal.classList.add('hidden');
+                    employmentInfoModal.style.setProperty('display', 'none', 'important');
+                }
+                if (uploadDocumentsModal) {
+                    uploadDocumentsModal.classList.add('hidden');
+                    uploadDocumentsModal.style.setProperty('display', 'none', 'important');
+                }
+                if (compensationConfigModal) {
+                    compensationConfigModal.classList.add('hidden');
+                    compensationConfigModal.style.setProperty('display', 'none', 'important');
+                }
                 if (congratulationsModal) {
                     congratulationsModal.classList.remove('hidden');
                     congratulationsModal.style.setProperty('display', 'flex', 'important');
