@@ -31,7 +31,7 @@ async function fixOvertimeLogSequence() {
             console.log('overtime_log_seq sequence already exists');
         }
 
-        const maxQuery = `SELECT MAX(CAST(SUBSTRING(overtime_id FROM 7) AS INTEGER)) AS max_num FROM overtime_log`;
+        const maxQuery = `SELECT MAX(CAST(REPLACE(overtime_id, 'OTLog-', '') AS INTEGER)) AS max_num FROM overtime_log`;
         const maxResult = await pool.query(maxQuery);
         const maxNum = maxResult.rows[0].max_num || 0;
         console.log('Max overtime_id numeric:', maxNum);
@@ -57,7 +57,7 @@ async function fixOvertimeLogSequence() {
                     new_id TEXT;
                 BEGIN
                     SELECT nextval('overtime_log_seq') INTO next_num;
-                    new_id := 'OTLog-' || LPAD(next_num::TEXT, 9, '0');
+                     new_id := 'OTLog-' || next_num::TEXT;
                     RETURN new_id;
                 END;
                 $$ LANGUAGE plpgsql;

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS payroll (
 -- Sequence for generating payroll IDs
 CREATE SEQUENCE IF NOT EXISTS payroll_seq START 1;
 
-SELECT setval('payroll_seq', COALESCE(MAX(CAST(SUBSTRING(payroll_id FROM 9) AS INTEGER)), 0), true) FROM payroll;
+SELECT setval('payroll_seq', COALESCE(MAX(CAST(REPLACE(payroll_id, 'Payroll-', '') AS INTEGER)), 0), true) FROM payroll;
 
 -- Function to generate payroll ID in Payroll-000000001 format
 CREATE OR REPLACE FUNCTION generate_payroll_id()
@@ -37,7 +37,7 @@ DECLARE
     new_id TEXT;
 BEGIN
     SELECT nextval('payroll_seq') INTO next_num;
-    new_id := 'Payroll-' || LPAD(next_num::TEXT, 9, '0');
+    new_id := 'Payroll-' || next_num::TEXT;
     RETURN new_id;
 END;
 $$ LANGUAGE plpgsql;

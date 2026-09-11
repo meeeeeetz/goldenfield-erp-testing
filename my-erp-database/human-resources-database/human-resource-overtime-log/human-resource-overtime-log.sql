@@ -19,9 +19,9 @@ CREATE TABLE overtime_log (
 -- Sequence for generating overtime IDs
 CREATE SEQUENCE IF NOT EXISTS overtime_log_seq START 1;
 
-SELECT setval('overtime_log_seq', COALESCE(MAX(CAST(SUBSTRING(overtime_id FROM 9) AS INTEGER)), 0), true) FROM overtime_log;
+SELECT setval('overtime_log_seq', COALESCE(MAX(CAST(REPLACE(overtime_id, 'OTLog-', '') AS INTEGER)), 0), true) FROM overtime_log;
 
--- Function to generate overtime ID in OTLog-000000001 format
+-- Function to generate overtime ID in OTLog-1 format
 CREATE OR REPLACE FUNCTION generate_overtime_id()
 RETURNS TEXT AS $$
 DECLARE
@@ -29,7 +29,7 @@ DECLARE
     new_id TEXT;
 BEGIN
     SELECT nextval('overtime_log_seq') INTO next_num;
-    new_id := 'OTLog-' || LPAD(next_num::TEXT, 9, '0');
+    new_id := 'OTLog-' || next_num::TEXT;
     RETURN new_id;
 END;
 $$ LANGUAGE plpgsql;

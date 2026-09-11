@@ -54,7 +54,7 @@ async function deleteSpecificAttendanceLogs() {
         });
 
         // Reset sequence if needed
-        const seqQuery = `SELECT setval('attendance_log_seq', (SELECT MAX(CAST(SUBSTRING(attendance_id FROM 8) AS INTEGER)) FROM attendance_log), true)`;
+        const seqQuery = `SELECT setval('attendance_log_seq', COALESCE(MAX(CAST(REPLACE(attendance_id, 'AttLog-', '') AS INTEGER)), 0), true) FROM attendance_log`;
         await pool.query(seqQuery);
         console.log('\nSequence reset to max existing ID.');
 

@@ -1,9 +1,11 @@
 const pool = require('../../config/database');
 const puppeteer = require('puppeteer');
+const ExpenseController = require('../../Controllers/main-finance-controller/expense-controller');
 
 class BatchPayrollController {
     constructor(dbConnection) {
         this.db = dbConnection;
+        this.expenseController = new ExpenseController(dbConnection);
     }
 
     async getNextBatchReference() {
@@ -11,7 +13,7 @@ class BatchPayrollController {
         const result = await this.db.query(query);
         const nextNum = result.rows[0]?.next_num;
         if (!nextNum) return null;
-        return 'BtPaRol-' + String(nextNum).padStart(9, '0');
+        return 'BtPaRol-' + String(nextNum);
     }
 
     async getAllBatches() {
@@ -191,6 +193,23 @@ class BatchPayrollController {
 
                 updatedPayrolls.push(payroll.payroll_id);
             }
+
+            const nextExpenseId = await this.expenseController.getNextExpenseId();
+            const expenseDescription = `From ${payPeriodStart} to ${payPeriodEnd} for ${payrollData.rows.length} Employees`;
+            const expenseRemarks = `${totalGrossPay.toFixed(2)} minus ${totalGrossDeduction.toFixed(2)}`;
+            await this.expenseController.addExpense({
+                expense_list_id: nextExpenseId,
+                tracking_id: batchReference,
+                date: payPeriodEnd || new Date().toISOString().split('T')[0],
+                accounting_code: '5120',
+                expense_type: 'Direct Farm Labor & Overtime',
+                description: expenseDescription,
+                remarks: expenseRemarks,
+                total_amount: totalNetPay.toFixed(2),
+                account_source: null,
+                cleared_date: null,
+                status: 'Pending'
+            });
 
             await client.query('COMMIT');
             return {

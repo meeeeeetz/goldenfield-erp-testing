@@ -28,7 +28,9 @@ CREATE TABLE attendance_log (
 -- Sequence for generating attendance IDs
 CREATE SEQUENCE IF NOT EXISTS attendance_log_seq START 1;
 
--- Function to generate attendance ID in AttLog-000000001 format
+SELECT setval('attendance_log_seq', COALESCE(MAX(CAST(REPLACE(attendance_id, 'AttLog-', '') AS INTEGER)), 0), true) FROM attendance_log;
+
+-- Function to generate attendance ID in AttLog-1 format
 CREATE OR REPLACE FUNCTION generate_attendance_id()
 RETURNS TEXT AS $$
 DECLARE
@@ -36,7 +38,7 @@ DECLARE
     new_id TEXT;
 BEGIN
     SELECT nextval('attendance_log_seq') INTO next_num;
-    new_id := 'AttLog-' || LPAD(next_num::TEXT, 9, '0');
+    new_id := 'AttLog-' || next_num::TEXT;
     RETURN new_id;
 END;
 $$ LANGUAGE plpgsql;

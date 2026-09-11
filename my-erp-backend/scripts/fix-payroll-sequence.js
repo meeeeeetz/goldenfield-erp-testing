@@ -31,7 +31,7 @@ async function fixPayrollSequence() {
             console.log('payroll_seq sequence already exists');
         }
 
-        const maxQuery = `SELECT MAX(CAST(SUBSTRING(payroll_id FROM 9) AS INTEGER)) AS max_num FROM payroll`;
+        const maxQuery = `SELECT MAX(CAST(REPLACE(payroll_id, 'Payroll-', '') AS INTEGER)) AS max_num FROM payroll`;
         const maxResult = await pool.query(maxQuery);
         const maxNum = maxResult.rows[0].max_num || 0;
         console.log('Max payroll_id numeric:', maxNum);
