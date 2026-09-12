@@ -171,8 +171,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         </table>
                     </div>
                     <div class="pagination" id="feeds-transaction-pagination">
-                        <button class="page-btn" id="feeds-transaction-first-btn">&laquo; 1st</button>
-                        <button class="page-btn" id="feeds-transaction-prev-btn">&laquo; Prev</button>
+                        <button class="page-btn" id="feeds-transaction-first-btn">&#120992; 1st</button>
+                        <button class="page-btn" id="feeds-transaction-prev-btn">&#8592; Prev</button>
                         <button class="page-btn" id="feeds-transaction-page-1">1</button>
                         <button class="page-btn" id="feeds-transaction-page-2">2</button>
                         <button class="page-btn" id="feeds-transaction-page-3">3</button>
@@ -180,8 +180,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         <button class="page-btn" id="feeds-transaction-page-5">5</button>
                         <button class="page-btn" id="feeds-transaction-page-6">6</button>
                         <button class="page-btn" id="feeds-transaction-page-7">7</button>
-                        <button class="page-btn" id="feeds-transaction-next-btn">Next &raquo;</button>
-                        <button class="page-btn" id="feeds-transaction-last-btn">Last &raquo;</button>
+                        <button class="page-btn" id="feeds-transaction-next-btn">Next &#8594;</button>
+                        <button class="page-btn" id="feeds-transaction-last-btn">&#120993; Last</button>
                     </div>
                 </div>
                 <div class="card graph-placeholder feeds-transaction-repayment-card">
@@ -2843,7 +2843,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             }
         }
 
-        async function loadFeedsTransactionTable() {
+        async function loadFeedsTransactionTable(resetPage = true) {
             const tbody = document.getElementById('feeds-transaction-table-body');
             if (!tbody) return;
 
@@ -2853,7 +2853,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 });
                 if (!res.ok) throw new Error('Failed to fetch transactions');
                 feedsTransactionData = await res.json();
-                feedsTransactionCurrentPage = 1;
+                if (resetPage) feedsTransactionCurrentPage = 1;
                 renderFeedsTransactionPage();
             } catch (err) {
                 console.error('Failed to load feeds transactions', err);
@@ -2902,6 +2902,11 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 });
             }
 
+            const totalPages = Math.max(1, Math.ceil(filteredData.length / FEEDS_TRANSACTION_PER_PAGE));
+            if (feedsTransactionCurrentPage > totalPages) {
+                feedsTransactionCurrentPage = totalPages;
+            }
+
             const start = (feedsTransactionCurrentPage - 1) * FEEDS_TRANSACTION_PER_PAGE;
             const end = start + FEEDS_TRANSACTION_PER_PAGE;
             const pageData = filteredData.slice(start, end);
@@ -2938,7 +2943,6 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 tbody.innerHTML += `<tr><td colspan="17" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>`;
             }
 
-            const totalPages = Math.max(1, Math.ceil(filteredData.length / FEEDS_TRANSACTION_PER_PAGE));
             renderFeedsTransactionPagination(totalPages);
 
             const txTable = document.querySelector('.feeds-transaction-card table.data-table');
@@ -2962,8 +2966,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!container) return;
 
             let html = '';
-            html += `<button class="page-btn" id="feeds-transaction-first-btn" ${totalPages <= 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
-            html += `<button class="page-btn" id="feeds-transaction-prev-btn" ${feedsTransactionCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+            if (totalPages > 1) {
+                html += `<button class="page-btn" id="feeds-transaction-first-btn" ${feedsTransactionCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
+            }
+            html += `<button class="page-btn" id="feeds-transaction-prev-btn" ${feedsTransactionCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
 
             if (totalPages <= 7) {
                 for (let i = 1; i <= totalPages; i++) {
@@ -2971,21 +2977,19 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 }
             } else {
                 let startPage = Math.max(1, feedsTransactionCurrentPage - 3);
-                let endPage = Math.min(totalPages, feedsTransactionCurrentPage + 3);
-                if (feedsTransactionCurrentPage <= 4) {
-                    startPage = 1;
-                    endPage = 7;
-                } else if (feedsTransactionCurrentPage >= totalPages - 3) {
-                    startPage = totalPages - 6;
-                    endPage = totalPages;
-                }
-                for (let i = startPage; i <= endPage; i++) {
+                let endPage = Math.min(totalPages, startPage + 6);
+                const actualStart = Math.max(1, endPage - 6);
+                
+                for (let i = actualStart; i <= endPage; i++) {
                     html += `<button class="page-btn ${i === feedsTransactionCurrentPage ? 'active' : ''}" id="feeds-transaction-page-${i}">${i}</button>`;
                 }
             }
 
-            html += `<button class="page-btn" id="feeds-transaction-next-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &raquo;</button>`;
-            html += `<button class="page-btn" id="feeds-transaction-last-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Last &raquo;</button>`;
+            html += `<button class="page-btn" id="feeds-transaction-next-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &#8594;</button>`;
+            
+            if (totalPages > 1) {
+                html += `<button class="page-btn" id="feeds-transaction-last-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>&#120993; Last</button>`;
+            }
 
             container.innerHTML = html;
 
@@ -3017,7 +3021,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 }
             });
 
-            for (let i = 1; i <= totalPages; i++) {
+            const pageCount = totalPages <= 7 ? totalPages : 7;
+            const startPage = totalPages <= 7 ? 1 : Math.max(1, feedsTransactionCurrentPage - 3);
+            const endPage = totalPages <= 7 ? totalPages : Math.min(totalPages, startPage + 6);
+            for (let i = startPage; i <= endPage; i++) {
                 const btn = document.getElementById(`feeds-transaction-page-${i}`);
                 if (btn) {
                     btn.addEventListener('click', () => {
@@ -3311,6 +3318,23 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             if (!orderId) return;
 
             currentPhotoUploadOrderId = orderId;
+            photoUploadFileBlob = null;
+            photoUploadOriginalFile = null;
+            const photoUploadDropZone = document.getElementById('photo-upload-drop-zone');
+            if (photoUploadDropZone) {
+                const preview = photoUploadDropZone.querySelector('.upload-preview');
+                const placeholder = photoUploadDropZone.querySelector('.upload-placeholder');
+                const previewImg = preview ? preview.querySelector('img') : null;
+                if (preview && placeholder && previewImg) {
+                    previewImg.src = '';
+                    placeholder.style.display = '';
+                    preview.style.display = 'none';
+                }
+                const photoUploadFileInput = document.getElementById('photo-upload-file-input');
+                if (photoUploadFileInput) {
+                    photoUploadFileInput.value = '';
+                }
+            }
             const modal = document.getElementById('photo-upload-modal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -3526,7 +3550,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     modal.classList.add('hidden');
                 }
 
-                await loadFeedsTransactionTable();
+                await loadFeedsTransactionTable(false);
                 alert('Photo uploaded successfully');
             } catch (err) {
                 console.error('Failed to upload photo', err);
