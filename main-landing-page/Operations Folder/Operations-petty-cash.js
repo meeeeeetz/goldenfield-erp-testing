@@ -59,7 +59,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             <button id="reject-filtered-petty-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
                         </div>
                     </div>
-                    <div style="padding: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
+                    <div style="overflow-x: auto; max-height: 50vh; overflow-y: auto;">
                         <table class="data-table product-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                             <thead>
                                 <tr>
@@ -88,7 +88,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         <h3>Petty Cash Transactions</h3>
                         <input type="text" id="petty-search" placeholder="Search transactions..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;" />
                     </div>
-                    <div style="padding: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
+                    <div style="overflow-x: auto; max-height: 50vh; overflow-y: auto;">
                         <table class="data-table product-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                             <thead>
                                 <tr>
@@ -337,7 +337,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     expense_type: expenseType,
                     description: description,
                     remarks: pettyCashData.remarks || '',
-                    total_amount: parseFloat(pettyCashData.amount || 0),
+                    total_amount: parseFloat(String(pettyCashData.amount || 0).replace(/,/g, '')) || 0,
                     account_source: null,
                     cleared_date: null,
                     status: 'Pending'
@@ -870,69 +870,71 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     let savedCount = 0;
                     let failedCount = 0;
 
-                    for (let i = 1; i < rows.length; i++) {
+                    for (let i = 0; i < rows.length; i++) {
                         const row = rows[i];
                         try {
                             const date = row[dateIdx] || '';
-                            const amount = row[amountIdx] || '';
-                            const status = statusIdx >= 0 ? (row[statusIdx] || 'Pending') : 'Pending';
-                            const category = categoryIdx >= 0 ? (row[categoryIdx] || '') : '';
-                            const item = itemIdx >= 0 ? (row[itemIdx] || '') : '';
-                            const remarks = remarksIdx >= 0 ? (row[remarksIdx] || '') : '';
-                            const store = storeIdx >= 0 ? (row[storeIdx] || '') : '';
-                            const source = sourceIdx >= 0 ? (row[sourceIdx] || '') : '';
-                            const checkNumber = checkIdx >= 0 ? (row[checkIdx] || '') : '';
-                            const replenishAmount = replenishAmountIdx >= 0 ? (row[replenishAmountIdx] || amount) : amount;
+                             const amount = row[amountIdx] || '';
+                             const parsedAmount = parseFloat(String(amount).replace(/,/g, '')) || 0;
+                             const status = statusIdx >= 0 ? (row[statusIdx] || 'Pending') : 'Pending';
+                             const category = categoryIdx >= 0 ? (row[categoryIdx] || '') : '';
+                             const item = itemIdx >= 0 ? (row[itemIdx] || '') : '';
+                             const remarks = remarksIdx >= 0 ? (row[remarksIdx] || '') : '';
+                             const store = storeIdx >= 0 ? (row[storeIdx] || '') : '';
+                             const source = sourceIdx >= 0 ? (row[sourceIdx] || '') : '';
+                             const checkNumber = checkIdx >= 0 ? (row[checkIdx] || '') : '';
+                             const replenishAmount = replenishAmountIdx >= 0 ? (row[replenishAmountIdx] || amount) : amount;
+                             const parsedReplenishAmount = parseFloat(String(replenishAmount).replace(/,/g, '')) || 0;
 
                             const typeIdx = headers.findIndex(h => String(h).toLowerCase().includes('type'));
                             const txnType = typeIdx >= 0 ? String(row[typeIdx] || '').toLowerCase() : '';
                             const isReplenishment = txnType === 'replenishment' || (txnType === '' && source && !category && !item);
 
-                            if (isReplenishment) {
-                                if (!date || !source || !replenishAmount) {
-                                    failedCount++;
-                                    continue;
-                                }
+                             if (isReplenishment) {
+                                 if (!date || !source || !parsedReplenishAmount) {
+                                     failedCount++;
+                                     continue;
+                                 }
 
-                                const res = await fetch('/api/petty-cash/replenish', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ date, source, replenish_amount: replenishAmount, check_number: checkNumber, status })
-                                });
+                                 const res = await fetch('/api/petty-cash/replenish', {
+                                     method: 'POST',
+                                     headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ date, source, replenish_amount: parsedReplenishAmount, check_number: checkNumber, status })
+                                 });
 
-                                if (!res.ok) {
-                                    const errorData = await res.json().catch(() => ({}));
-                                    throw new Error(errorData.error || 'Failed to save replenishment row');
-                                }
-                            } else {
-                                if (!date || !category || !item || !amount) {
-                                    failedCount++;
-                                    continue;
-                                }
+                                 if (!res.ok) {
+                                     const errorData = await res.json().catch(() => ({}));
+                                     throw new Error(errorData.error || 'Failed to save replenishment row');
+                                 }
+                             } else {
+                                 if (!date || !category || !item || !parsedAmount) {
+                                     failedCount++;
+                                     continue;
+                                 }
 
-                                const res = await fetch('/api/petty-cash', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount, status })
-                                });
+                                 const res = await fetch('/api/petty-cash', {
+                                     method: 'POST',
+                                     headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount: parsedAmount, status })
+                                 });
 
-                                if (!res.ok) {
-                                    const errorData = await res.json().catch(() => ({}));
-                                    throw new Error(errorData.error || 'Failed to save row');
-                                }
+                                 if (!res.ok) {
+                                     const errorData = await res.json().catch(() => ({}));
+                                     throw new Error(errorData.error || 'Failed to save row');
+                                 }
 
-                                const pettyCashResult = await res.json();
-                                if (pettyCashResult && pettyCashResult.petty_cash_code) {
-                                    createExpenseFromPettyCash({
-                                        petty_cash_code: pettyCashResult.petty_cash_code,
-                                        date: date,
-                                        pettycashcategory: category,
-                                        item: item,
-                                        remarks: remarks,
-                                        store: store,
-                                        amount: amount
-                                    });
-                                }
+                                 const pettyCashResult = await res.json();
+                                 if (pettyCashResult && pettyCashResult.petty_cash_code) {
+                                     await createExpenseFromPettyCash({
+                                         petty_cash_code: pettyCashResult.petty_cash_code,
+                                         date: date,
+                                         pettycashcategory: category,
+                                         item: item,
+                                         remarks: remarks,
+                                         store: store,
+                                         amount: parsedAmount
+                                     });
+                                 }
                             }
                             savedCount++;
                         } catch (err) {
@@ -945,6 +947,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     closeBulkModal();
                     loadPettyCashTransactions();
                     loadPettyCashStats();
+                    loadPendingPettyCashTransactions();
                 } catch (err) {
                     console.error('Bulk upload error:', err);
                     alert(err.message || 'Failed to process file');
@@ -954,17 +957,19 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
         document.getElementById('download-template-btn').onclick = async () => {
             try {
-                const [categoriesRes] = await Promise.all([
-                    fetch('/api/expense-categories')
+                const [categoriesRes, bankAccountsRes] = await Promise.all([
+                    fetch('/api/expense-categories'),
+                    fetch('/api/bank-accounts')
                 ]);
 
                 const categories = categoriesRes.ok ? await categoriesRes.json() : [];
+                const bankAccounts = bankAccountsRes.ok ? await bankAccountsRes.json() : [];
 
                 const transactionHeaders = ['Type', 'Date', 'Category', 'Item', 'Remarks', 'Store', 'Amount', 'Source', 'Check No.', 'Replenish Amount', 'Status'];
                 const transactionData = [
                     transactionHeaders,
                     ['Expense', '2026-07-01', 'Office', 'Office Supplies', 'Printer ink', 'ABC Store', 1200.00, '', '', '', 'Approved'],
-                    ['Replenishment', '2026-07-01', '', '', '', '', '', 'Bank Account - 1234', 'CHK-001', 5000.00, 'Pending']
+                    ['Replenishment', '2026-07-01', '', '', '', '', '', 'BPI-123456789', 'CHK-001', 5000.00, 'Pending']
                 ];
 
                 const categoryHeaders = ['Accounting Code', 'Expense Type', 'Remarks'];
@@ -979,12 +984,29 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     });
                 }
 
+                const bankHeaders = ['Bank Name', 'Bank Code', 'Account Number', 'Source Format (copy to Source column)'];
+                const bankData = [bankHeaders];
+                if (Array.isArray(bankAccounts)) {
+                    const activeAccounts = bankAccounts.filter(acc => acc.status === 'Active');
+                    activeAccounts.forEach(acc => {
+                        const sourceFormat = `${acc.bank_code}-${acc.bank_account_number}`;
+                        bankData.push([
+                            acc.bank || '',
+                            acc.bank_code || '',
+                            acc.bank_account_number || '',
+                            sourceFormat
+                        ]);
+                    });
+                }
+
                 const transactionSheet = XLSX.utils.aoa_to_sheet(transactionData);
                 const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
+                const bankSheet = XLSX.utils.aoa_to_sheet(bankData);
 
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, transactionSheet, 'Transactions');
                 XLSX.utils.book_append_sheet(workbook, categorySheet, 'Expense Categories');
+                XLSX.utils.book_append_sheet(workbook, bankSheet, 'Bank Accounts');
 
                 XLSX.writeFile(workbook, 'petty_cash_template.xlsx');
             } catch (err) {
@@ -1153,17 +1175,19 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
         document.getElementById('download-template-btn').onclick = async () => {
             try {
-                const [categoriesRes] = await Promise.all([
-                    fetch('/api/expense-categories')
+                const [categoriesRes, bankAccountsRes] = await Promise.all([
+                    fetch('/api/expense-categories'),
+                    fetch('/api/bank-accounts')
                 ]);
 
                 const categories = categoriesRes.ok ? await categoriesRes.json() : [];
+                const bankAccounts = bankAccountsRes.ok ? await bankAccountsRes.json() : [];
 
                 const transactionHeaders = ['Type', 'Date', 'Category', 'Item', 'Remarks', 'Store', 'Amount', 'Source', 'Check No.', 'Replenish Amount', 'Status'];
                 const transactionData = [
                     transactionHeaders,
                     ['Expense', '2026-07-01', 'Office', 'Office Supplies', 'Printer ink', 'ABC Store', 1200.00, '', '', '', 'Approved'],
-                    ['Replenishment', '2026-07-01', '', '', '', '', '', 'Bank Account - 1234', 'CHK-001', 5000.00, 'Pending']
+                    ['Replenishment', '2026-07-01', '', '', '', '', '', 'BPI-123456789', 'CHK-001', 5000.00, 'Pending']
                 ];
 
                 const categoryHeaders = ['Accounting Code', 'Expense Type', 'Remarks'];
@@ -1178,12 +1202,29 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     });
                 }
 
+                const bankHeaders = ['Bank Name', 'Bank Code', 'Account Number', 'Source Format (copy to Source column)'];
+                const bankData = [bankHeaders];
+                if (Array.isArray(bankAccounts)) {
+                    const activeAccounts = bankAccounts.filter(acc => acc.status === 'Active');
+                    activeAccounts.forEach(acc => {
+                        const sourceFormat = `${acc.bank_code}-${acc.bank_account_number}`;
+                        bankData.push([
+                            acc.bank || '',
+                            acc.bank_code || '',
+                            acc.bank_account_number || '',
+                            sourceFormat
+                        ]);
+                    });
+                }
+
                 const transactionSheet = XLSX.utils.aoa_to_sheet(transactionData);
                 const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
+                const bankSheet = XLSX.utils.aoa_to_sheet(bankData);
 
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, transactionSheet, 'Transactions');
                 XLSX.utils.book_append_sheet(workbook, categorySheet, 'Expense Categories');
+                XLSX.utils.book_append_sheet(workbook, bankSheet, 'Bank Accounts');
 
                 XLSX.writeFile(workbook, 'petty_cash_template.xlsx');
             } catch (err) {

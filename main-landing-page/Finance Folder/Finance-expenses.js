@@ -511,7 +511,13 @@ async function deleteExpense(id) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || 'Failed to delete expense');
         }
+        const searchInput = document.getElementById('expense-list-search');
+        const savedSearchTerm = searchInput ? searchInput.value.trim() : '';
         await loadExpenses();
+        if (savedSearchTerm && searchInput) {
+            searchInput.value = savedSearchTerm;
+            filterExpenses();
+        }
         alert('Expense deleted successfully');
     } catch (err) {
         alert('Error: ' + err.message);
@@ -623,7 +629,7 @@ function renderFilteredExpenseListPage(filteredData) {
         </tr>
     `).join('');
     const totalPages = Math.max(1, Math.ceil(filteredData.length / expenseListRowsPerPage));
-    renderExpenseListPagination(totalPages);
+    renderExpenseListPagination(totalPages, filteredData);
     updateSortIndicators();
 }
 
@@ -676,27 +682,41 @@ function renderExpenseListPage() {
     `).join('');
     
     const totalPages = Math.max(1, Math.ceil(displayData.length / expenseListRowsPerPage));
-    renderExpenseListPagination(totalPages);
+    renderExpenseListPagination(totalPages, null);
     updateSortIndicators();
 }
 
-function renderExpenseListPagination(totalPages) {
+function renderExpenseListPagination(totalPages, filteredData) {
     const container = document.getElementById('expense-list-pagination');
     if (!container) return;
     
     let html = '';
-    if (totalPages > 10) {
-        html += `<button class="page-btn" id="expense-list-first-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&laquo; 1st</button>`;
+    
+    if (totalPages > 1) {
+        html += `<button class="page-btn" id="expense-list-first-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
     }
-    html += `<button class="page-btn" id="expense-list-prev-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+    html += `<button class="page-btn" id="expense-list-prev-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
 
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="page-btn ${i === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${i}">${i}</button>`;
+    if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn ${i === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${i}">${i}</button>`;
+        }
+    } else {
+        const startPage = Math.max(1, expenseListCurrentPage - 3);
+        const endPage = Math.min(totalPages, startPage + 6);
+        const actualStart = Math.max(1, endPage - 6);
+        
+        let currentPage = actualStart;
+        for (let i = 0; i < 7 && currentPage + i <= endPage; i++) {
+            const pageNum = currentPage + i;
+            html += `<button class="page-btn ${pageNum === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${pageNum}">${pageNum}</button>`;
+        }
     }
 
-    html += `<button class="page-btn" id="expense-list-next-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
-    if (totalPages > 10) {
-        html += `<button class="page-btn" id="expense-list-last-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Last &raquo;</button>`;
+    html += `<button class="page-btn" id="expense-list-next-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+    
+    if (totalPages > 1) {
+        html += `<button class="page-btn" id="expense-list-last-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>&#120993; Last</button>`;
     }
 
     container.innerHTML = html;
@@ -704,36 +724,61 @@ function renderExpenseListPagination(totalPages) {
     document.getElementById('expense-list-first-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage !== 1) {
             expenseListCurrentPage = 1;
-            renderExpenseListPage();
+            if (filteredData) {
+                renderFilteredExpenseListPage(filteredData);
+            } else {
+                renderExpenseListPage();
+            }
         }
     });
 
     document.getElementById('expense-list-prev-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage > 1) {
             expenseListCurrentPage--;
-            renderExpenseListPage();
+            if (filteredData) {
+                renderFilteredExpenseListPage(filteredData);
+            } else {
+                renderExpenseListPage();
+            }
         }
     });
 
     document.getElementById('expense-list-next-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage < totalPages) {
             expenseListCurrentPage++;
-            renderExpenseListPage();
+            if (filteredData) {
+                renderFilteredExpenseListPage(filteredData);
+            } else {
+                renderExpenseListPage();
+            }
         }
     });
 
     document.getElementById('expense-list-last-btn')?.addEventListener('click', () => {
         if (expenseListCurrentPage < totalPages) {
             expenseListCurrentPage = totalPages;
-            renderExpenseListPage();
+            if (filteredData) {
+                renderFilteredExpenseListPage(filteredData);
+            } else {
+                renderExpenseListPage();
+            }
         }
     });
 
-    for (let i = 1; i <= totalPages; i++) {
-        document.getElementById(`expense-list-page-${i}`)?.addEventListener('click', () => {
-            expenseListCurrentPage = i;
-            renderExpenseListPage();
-        });
+    const pageCount = totalPages <= 7 ? totalPages : 7;
+    const startPage = totalPages <= 7 ? 1 : Math.max(1, expenseListCurrentPage - 3);
+    for (let i = 0; i < pageCount; i++) {
+        const pageNum = totalPages <= 7 ? (i + 1) : (startPage + i);
+        if (pageNum <= totalPages) {
+            document.getElementById(`expense-list-page-${pageNum}`)?.addEventListener('click', () => {
+                expenseListCurrentPage = pageNum;
+                if (filteredData) {
+                    renderFilteredExpenseListPage(filteredData);
+                } else {
+                    renderExpenseListPage();
+                }
+            });
+        }
     }
 }
 

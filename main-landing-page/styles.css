@@ -1351,6 +1351,9 @@ body {
     padding: 6px 8px;
 }
 
+.petty-transactions-card {
+    padding: 15px 0;
+}
 .petty-transactions-card .data-table th,
 .petty-transactions-card .data-table td {
     padding: 5px 10px;
