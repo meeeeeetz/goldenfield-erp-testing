@@ -19,6 +19,11 @@ CREATE TABLE overtime_log (
 -- Sequence for generating overtime IDs
 CREATE SEQUENCE IF NOT EXISTS overtime_log_seq START 1;
 
+-- Remove leading zeros from existing overtime IDs (OTLog-000000005 -> OTLog-5)
+UPDATE overtime_log 
+SET overtime_id = 'OTLog-' || (REPLACE(overtime_id, 'OTLog-', '')::INTEGER)::TEXT 
+WHERE overtime_id LIKE 'OTLog-0%';
+
 SELECT setval('overtime_log_seq', COALESCE(MAX(CAST(REPLACE(overtime_id, 'OTLog-', '') AS INTEGER)), 0), true) FROM overtime_log;
 
 -- Function to generate overtime ID in OTLog-1 format

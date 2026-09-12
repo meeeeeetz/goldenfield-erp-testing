@@ -39,64 +39,33 @@ async function fixOvertimeLogSequence() {
         await pool.query(`SELECT setval('overtime_log_seq', $1, true)`, [maxNum]);
         console.log(`Set overtime_log_seq to ${maxNum} (next value will be ${maxNum + 1})`);
 
-        const funcExistsQuery = `
-            SELECT EXISTS (
-                SELECT FROM pg_proc 
-                WHERE proname = 'generate_overtime_id'
-            ) AS func_exists;
-        `;
-        const funcResult = await pool.query(funcExistsQuery);
-        const funcExists = funcResult.rows[0].func_exists;
+        await pool.query(`
+            CREATE OR REPLACE FUNCTION generate_overtime_id()
+            RETURNS TEXT AS $$
+            DECLARE
+                next_num INTEGER;
+                new_id TEXT;
+            BEGIN
+                SELECT nextval('overtime_log_seq') INTO next_num;
+                new_id := 'OTLog-' || next_num::TEXT;
+                RETURN new_id;
+            END;
+            $$ LANGUAGE plpgsql;
+        `);
+        console.log('Updated generate_overtime_id() function (no zero padding)');
 
-        if (!funcExists) {
-            await pool.query(`
-                CREATE OR REPLACE FUNCTION generate_overtime_id()
-                RETURNS TEXT AS $$
-                DECLARE
-                    next_num INTEGER;
-                    new_id TEXT;
-                BEGIN
-                    SELECT nextval('overtime_log_seq') INTO next_num;
-                     new_id := 'OTLog-' || next_num::TEXT;
-                    RETURN new_id;
-                END;
-                $$ LANGUAGE plpgsql;
-            `);
-            console.log('Created generate_overtime_id() function');
-        } else {
-            console.log('generate_overtime_id() function already exists');
-        }
-
-        const triggerExistsQuery = `
-            SELECT EXISTS (
-                SELECT FROM pg_trigger 
-                WHERE tgname = 'trigger_set_overtime_id'
-            ) AS trigger_exists;
-        `;
-        const triggerResult = await pool.query(triggerExistsQuery);
-        const triggerExists = triggerResult.rows[0].trigger_exists;
-
-        if (!triggerExists) {
-            await pool.query(`
-                CREATE OR REPLACE FUNCTION set_overtime_id()
-                RETURNS TRIGGER AS $$
-                BEGIN
-                    IF NEW.overtime_id IS NULL THEN
-                        NEW.overtime_id := generate_overtime_id();
-                    END IF;
-                    RETURN NEW;
-                END;
-                $$ LANGUAGE plpgsql;
-
-                CREATE TRIGGER trigger_set_overtime_id
-                    BEFORE INSERT ON overtime_log
-                    FOR EACH ROW
-                    EXECUTE FUNCTION set_overtime_id();
-            `);
-            console.log('Created set_overtime_id() trigger');
-        } else {
-            console.log('trigger_set_overtime_id trigger already exists');
-        }
+        await pool.query(`
+            CREATE OR REPLACE FUNCTION set_overtime_id()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                IF NEW.overtime_id IS NULL THEN
+                    NEW.overtime_id := generate_overtime_id();
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        `);
+        console.log('Updated set_overtime_id() trigger function');
 
         await pool.query('COMMIT');
         console.log('\nFix completed successfully');

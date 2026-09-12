@@ -1787,6 +1787,7 @@ function initializeModule(contentArea) {
     }
 
     function buildChangesAlert() {
+        const changes = [];
         const fieldMap = [
             ['Last Name', 'last_name'],
             ['First Name', 'first_name'],

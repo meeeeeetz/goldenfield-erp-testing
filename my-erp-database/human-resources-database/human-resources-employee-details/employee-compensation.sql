@@ -22,6 +22,10 @@ CREATE INDEX IF NOT EXISTS idx_employee_compensation_department ON employee_comp
 CREATE INDEX IF NOT EXISTS idx_employee_compensation_pay_frequency ON employee_compensation(pay_frequency);
 CREATE INDEX IF NOT EXISTS idx_employee_compensation_payout_method ON employee_compensation(payout_method);
 
+-- Add created_at and updated_at columns if missing
+ALTER TABLE employee_compensation ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE employee_compensation ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
 -- Add leave columns if missing
 ALTER TABLE employee_compensation ADD COLUMN IF NOT EXISTS yearly_sick_leave INT;
 ALTER TABLE employee_compensation ADD COLUMN IF NOT EXISTS yearly_vacation_leave INT;

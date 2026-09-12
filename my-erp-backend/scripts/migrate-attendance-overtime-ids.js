@@ -16,7 +16,7 @@ async function migrateLogIds() {
         await pool.query('BEGIN');
 
         const attendanceResult = await pool.query(`
-            SELECT attendance_id FROM attendance_log WHERE attendance_id LIKE 'AttLog-000000%'
+            SELECT attendance_id FROM attendance_log WHERE attendance_id LIKE 'AttLog-0%'
         `);
         const attendanceRows = attendanceResult.rows;
         console.log(`Found ${attendanceRows.length} attendance log records to update`);
@@ -29,7 +29,7 @@ async function migrateLogIds() {
         }
 
         const overtimeResult = await pool.query(`
-            SELECT overtime_id FROM overtime_log WHERE overtime_id LIKE 'OTLog-000000%'
+            SELECT overtime_id FROM overtime_log WHERE overtime_id LIKE 'OTLog-0%'
         `);
         const overtimeRows = overtimeResult.rows;
         console.log(`\nFound ${overtimeRows.length} overtime log records to update`);

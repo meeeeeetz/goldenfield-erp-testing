@@ -195,8 +195,17 @@ class BatchPayrollController {
             }
 
             const nextExpenseId = await this.expenseController.getNextExpenseId();
-            const expenseDescription = `From ${payPeriodStart} to ${payPeriodEnd} for ${payrollData.rows.length} Employees`;
-            const expenseRemarks = `${totalGrossPay.toFixed(2)} minus ${totalGrossDeduction.toFixed(2)}`;
+            const formatDate = (d) => {
+                if (!d) return '';
+                const date = new Date(d);
+                if (isNaN(date.getTime())) return String(d);
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+            const expenseDescription = `From ${formatDate(payPeriodStart)} to ${formatDate(payPeriodEnd)} for ${payrollData.rows.length} Employees`;
+            const expenseRemarks = `${totalGrossPay.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} minus ${totalGrossDeduction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             await this.expenseController.addExpense({
                 expense_list_id: nextExpenseId,
                 tracking_id: batchReference,

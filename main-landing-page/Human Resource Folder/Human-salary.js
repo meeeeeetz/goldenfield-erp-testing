@@ -910,16 +910,19 @@ ModuleComponents['hr-salary'] = (container) => {
     updateBatchFinalConfirmState();
 
     const gatherBatchPrintData = async () => {
-        const overviewTbody = document.getElementById('salary-overview-tbody');
-        if (!overviewTbody) return null;
-
-        const rows = Array.from(overviewTbody.querySelectorAll('tr')).filter(row => {
-            const firstCell = row.querySelector('td');
-            const payrollId = firstCell?.textContent.trim();
-            return payrollId && payrollId !== 'No pending payrolls' && payrollId !== 'Failed to load payrolls';
-        });
-
-        if (rows.length === 0) return null;
+        let allPayrolls = window.__hrOverviewPayrolls;
+        if (!allPayrolls || allPayrolls.length === 0) {
+            try {
+                const res = await fetch('/api/payroll/status/Pending');
+                if (res.ok) {
+                    allPayrolls = await res.json();
+                    window.__hrOverviewPayrolls = allPayrolls;
+                }
+            } catch (e) {
+                console.error('Failed to fetch pending payrolls:', e);
+            }
+        }
+        if (!allPayrolls || allPayrolls.length === 0) return null;
 
         const employeeCountEl = document.getElementById('salary-overview-employee-count');
         const grossPayEl = document.getElementById('salary-overview-gross-pay');
@@ -929,37 +932,38 @@ ModuleComponents['hr-salary'] = (container) => {
         const endingPayPeriodEl = document.getElementById('salary-overview-ending-pay-period');
 
         const payrollIds = [];
-        const tableData = rows.map(row => {
-            const cells = row.querySelectorAll('td');
-            const payrollId = cells[0]?.textContent.trim() || '';
+        const tableData = allPayrolls.map(p => {
+            const payrollId = p.payroll_id || '';
             if (payrollId) payrollIds.push(payrollId);
+            const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
+            const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
             return {
                 payrollId,
-                employeeId: cells[1]?.textContent.trim() || '',
-                lastName: cells[2]?.textContent.trim() || '',
-                firstName: cells[3]?.textContent.trim() || '',
-                totalDays: parseFloat(cells[4]?.textContent) || 0,
-                totalOvertime: parseFloat(cells[5]?.textContent) || 0,
-                totalAllowance: parseFloat(cells[6]?.textContent) || 0,
-                totalLeaves: parseFloat(cells[7]?.textContent) || 0,
-                regularHoliday: parseFloat(cells[8]?.textContent) || 0,
-                specialHoliday: parseFloat(cells[9]?.textContent) || 0,
-                grossPay: parseFloat(cells[10]?.textContent) || 0,
-                totalTax: parseFloat(cells[11]?.textContent) || 0,
-                totalSss: parseFloat(cells[12]?.textContent) || 0,
-                totalSssLoan: parseFloat(cells[13]?.textContent) || 0,
-                totalPhilhealth: parseFloat(cells[14]?.textContent) || 0,
-                totalPagibig: parseFloat(cells[15]?.textContent) || 0,
-                totalPagibigLoan: parseFloat(cells[16]?.textContent) || 0,
-                totalCashLoanDeductions: parseFloat(cells[17]?.textContent) || 0,
-                totalLossesDeductions: parseFloat(cells[18]?.textContent) || 0,
-                grossDeduction: parseFloat(cells[19]?.textContent) || 0,
-                netPay: parseFloat(cells[20]?.textContent) || 0,
-                    startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
-                    endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                    startingLosses: parseFloat(cells[23]?.textContent) || 0,
-                    endingLosses: parseFloat(cells[24]?.textContent) || 0
-                };
+                employeeId: p.employee_id || '',
+                lastName: p.last_name || '',
+                firstName: p.first_name || '',
+                totalDays: Number(p.total_days_worked) || 0,
+                totalOvertime: Number(p.total_overtime_hours) || 0,
+                totalAllowance: Number(p.total_allowance) || 0,
+                totalLeaves: Number(p.total_leaves_usage) || 0,
+                regularHoliday: Number(p.regular_holiday) || 0,
+                specialHoliday: Number(p.special_holiday) || 0,
+                grossPay: grossPay,
+                totalTax: Number(p.total_income_tax) || 0,
+                totalSss: Number(p.total_sss_payment) || 0,
+                totalSssLoan: Number(p.total_sss_loan_payment) || 0,
+                totalPhilhealth: Number(p.total_philhealth_payment) || 0,
+                totalPagibig: Number(p.total_pagibig_payment) || 0,
+                totalPagibigLoan: Number(p.total_pagibig_loan_payment) || 0,
+                totalCashLoanDeductions: Number(p.total_cash_loan_deductions) || 0,
+                totalLossesDeductions: Number(p.total_losses_damages) || 0,
+                grossDeduction: grossDeduction,
+                netPay: Number(p.net_pay) || 0,
+                startingCashLoan: Number(p.starting_cash_loan) || 0,
+                endingCashLoan: Number(p.ending_cash_loan) || 0,
+                startingLosses: Number(p.starting_losses_damages) || 0,
+                endingLosses: Number(p.ending_losses_damages) || 0
+            };
         });
 
         let enrichedTableData = tableData;
@@ -1018,7 +1022,7 @@ ModuleComponents['hr-salary'] = (container) => {
             payPeriod: startingPayPeriod && endingPayPeriod ? `${formatPayPeriod(startingPayPeriod)} - ${formatPayPeriod(endingPayPeriod)}` : '-',
             payPeriodFrom: startingPayPeriod ? formatPayPeriod(startingPayPeriod) : '',
             payPeriodTo: endingPayPeriod ? formatPayPeriod(endingPayPeriod) : '',
-            employeeCount: employeeCountEl?.value || rows.length,
+            employeeCount: employeeCountEl?.value || allPayrolls.length,
             grossPay: grossPayEl?.value || '0.00',
             grossDeduction: grossDeductionEl?.value || '0.00',
             netPay: netPayEl?.value || '0.00'
@@ -1078,7 +1082,7 @@ ModuleComponents['hr-salary'] = (container) => {
             return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
-        const fmt = (val) => Number(val || 0).toFixed(2);
+        const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         contentEl.innerHTML = `
             <div style="font-family: Arial, sans-serif; color: #000;">
@@ -1186,11 +1190,11 @@ ModuleComponents['hr-salary'] = (container) => {
         };
 
         const pages = [];
-        for (let i = 0; i < tableData.length; i += 6) {
-            pages.push(tableData.slice(i, i + 6));
+        for (let i = 0; i < tableData.length; i += 4) {
+            pages.push(tableData.slice(i, i + 4));
         }
 
-        contentEl.innerHTML = pages.map(page => {
+        contentEl.innerHTML = pages.map((page, pageIndex) => {
             const rows = page.map(row => {
                 const grossPay = Number(row.gross_pay || row.grossPay) || 0;
                 const grossDeduction = Number(row.grossDeduction) || 0;
@@ -1241,7 +1245,7 @@ ModuleComponents['hr-salary'] = (container) => {
                 </tr>` : '';
 
                 return `
-                    <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm;">
+                    <div class="acknowledgement-page" style="display: flex; gap: 0; border: 1px solid #000; padding: 0; margin-bottom: 5mm; page-break-inside: avoid;">
                         <div style="flex: 0 0 60%; border-right: 2px dashed #000; padding: 3mm; display: flex; flex-direction: column;">
                             <div class="acknowledgement-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
                                 <div class="field" style="font-size: 9px;"><span class="field-label" style="font-weight: bold;">Name:</span> <span class="field-value">${row.lastName || ''}, ${row.firstName || ''}</span></div>
@@ -1320,190 +1324,114 @@ ModuleComponents['hr-salary'] = (container) => {
                 `;
             }).join('');
 
-            return `<div>${rows}</div>`;
+            return `<div style="page-break-before: ${pageIndex === 0 ? 'auto' : 'always'};">${rows}</div>`;
         }).join('');
     };
 
     if (batchPrintBtn && batchPrintPreviewContent) {
-        batchPrintBtn.addEventListener('click', () => {
+        batchPrintBtn.addEventListener('click', async () => {
             if (batchPrintActiveTab === 'acknowledgement') {
                 batchPrintAcknowledgementPrinted = true;
                 updateBatchFinalConfirmState();
 
-                const existingStyle = document.getElementById('batch-print-isolation-style');
-                if (existingStyle) existingStyle.remove();
+                const printWindow = window.open('', 'batchPrintAck', 'width=1200,height=800');
 
-                const style = document.createElement('style');
-                style.id = 'batch-print-isolation-style';
-                style.textContent = `
-                    @media print {
-                        @page { size: A4 portrait; margin: 10mm; }
-                        body > *:not(#batch-print-preview-modal) { display: none !important; }
-                        #batch-print-preview-modal {
-                            position: static !important;
-                            display: block !important;
-                            background: #fff !important;
-                            max-width: none !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            overflow: visible !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-content {
-                            max-width: none !important;
-                            width: 100% !important;
-                            max-height: none !important;
-                            overflow: visible !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        #batch-print-preview-modal .modal-header-row {
-                            display: none !important;
-                        }
-                        #batch-tab-summary, #batch-tab-acknowledgement {
-                            display: none !important;
-                        }
-                        #batch-print-preview-content {
-                            border: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
-                        .acknowledgement-page {
-                            display: flex !important;
-                            gap: 0 !important;
-                            border: 1px solid #000 !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                            height: 57.4mm !important;
-                            page-break-inside: avoid;
-                            box-sizing: border-box !important;
-                        }
-                        .acknowledgement-page > div:first-child {
-                            flex: 0 0 60% !important;
-                            border-right: 2px dashed #000 !important;
-                            padding: 3mm !important;
-                            box-sizing: border-box !important;
-                        }
-                        .acknowledgement-page > div:last-child {
-                            flex: 0 0 40% !important;
-                            padding: 3mm !important;
-                            box-sizing: border-box !important;
-                        }
-                        .acknowledgement-header {
-                            display: none !important;
-                        }
+                if (!batchPrintSummaryData || !batchPrintTableData) {
+                    const gathered = await gatherBatchPrintData();
+                    if (gathered) {
+                        batchPrintSummaryData = gathered.summaryData;
+                        batchPrintTableData = gathered.tableData;
                     }
-                `;
-                document.head.appendChild(style);
+                }
 
-                setTimeout(() => {
-                    window.print();
-                    setTimeout(() => style.remove(), 100);
-                }, 300);
+                if (batchPrintSummaryData && batchPrintTableData) {
+                    renderAcknowledgementContent(batchPrintPreviewContent, batchPrintSummaryData, batchPrintTableData);
+                }
+
+                const contentEl = document.getElementById('batch-print-preview-content');
+                const printContent = contentEl ? contentEl.innerHTML : '';
+                if (printWindow) {
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Pay slip Acknowledgement Receipt</title>
+                            <style>
+                                @page { size: portrait; margin: 0.3in; }
+                                body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; }
+                                * { box-sizing: border-box; }
+                                .acknowledgement-page { page-break-inside: avoid; }
+                            </style>
+                        </head>
+                        <body>${printContent}</body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    setTimeout(() => {
+                        printWindow.focus();
+                        printWindow.print();
+                        printWindow.close();
+                    }, 250);
+                } else {
+                    alert('Print preview was blocked. Please allow popups for this site and try again.');
+                }
                 return;
+            }
+
+            const printWindow = window.open('', 'batchPrintSummary', 'width=1200,height=800');
+
+            if (!batchPrintSummaryData || !batchPrintTableData) {
+                const gathered = await gatherBatchPrintData();
+                if (gathered) {
+                    batchPrintSummaryData = gathered.summaryData;
+                    batchPrintTableData = gathered.tableData;
+                }
+            }
+
+            if (batchPrintSummaryData && batchPrintTableData) {
+                renderBatchPrintPreview(batchPrintSummaryData, batchPrintTableData, 'summary');
             }
 
             batchPrintSummaryPrinted = true;
             updateBatchFinalConfirmState();
 
-            const existingStyle = document.getElementById('batch-print-isolation-style');
-            if (existingStyle) existingStyle.remove();
-
-            const style = document.createElement('style');
-            style.id = 'batch-print-isolation-style';
-            style.textContent = `
-                @media print {
-                    @page { size: landscape; margin: 0.3in; }
-                    body > *:not(#batch-print-preview-modal) { display: none !important; }
-                    #batch-print-preview-modal {
-                        position: static !important;
-                        display: block !important;
-                        background: #fff !important;
-                        max-width: none !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    #batch-print-preview-modal .modal-content {
-                        max-width: none !important;
-                        width: 100% !important;
-                        max-height: none !important;
-                        overflow: visible !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    #batch-print-preview-modal .modal-header-row {
-                        display: none !important;
-                    }
-                    #batch-tab-summary, #batch-tab-acknowledgement {
-                        display: none !important;
-                    }
-                    #batch-print-preview-content {
-                        border: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .print-summary {
-                        display: flex !important;
-                        flex-wrap: nowrap !important;
-                        gap: 8px !important;
-                        margin-bottom: 8px !important;
-                    }
-                    .print-summary > div {
-                        flex: 1 1 0 !important;
-                        min-width: 100px !important;
-                        padding: 6px !important;
-                    }
-                    .print-summary label {
-                        font-size: 9px !important;
-                        margin-bottom: 2px !important;
-                    }
-                    .print-summary input {
-                        font-size: 11px !important;
-                    }
-                    .print-table-wrap {
-                        overflow-x: visible !important;
-                    }
-                    table {
-                        font-size: 9px !important;
-                        width: 100% !important;
-                        table-layout: fixed !important;
-                        border-collapse: collapse !important;
-                    }
-                    th, td {
-                        padding: 3px 2px !important;
-                        border: 1px solid #ddd !important;
-                        word-wrap: break-word !important;
-                        overflow: hidden !important;
-                    }
-                    th {
-                        font-size: 9px !important;
-                        font-weight: 700 !important;
-                        background: #f4f4f4 !important;
-                    }
-                    h2 {
-                        font-size: 16px !important;
-                        margin-bottom: 2px !important;
-                    }
-                    .print-subtitle {
-                        font-size: 11px !important;
-                        margin-bottom: 10px !important;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => style.remove(), 100);
-            }, 300);
+            const contentEl = document.getElementById('batch-print-preview-content');
+            const printContent = contentEl ? contentEl.innerHTML : '';
+            if (printWindow) {
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Batch Payroll Summary</title>
+                            <style>
+                            @page { size: landscape; margin: 0.3in; }
+                            body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; }
+                            * { box-sizing: border-box; }
+                            table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; }
+                            th, td { border: 1px solid #ddd; padding: 3px 2px; text-align: right; word-wrap: break-word; overflow-wrap: break-word; }
+                            th { font-weight: 700; background: #f4f4f4; }
+                            .text-left { text-align: left; }
+                            h2 { text-align: center; margin-bottom: 2px; font-size: 16px; }
+                            .print-summary { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap; }
+                            .print-summary > div { flex: 1; min-width: 100px; border: 1px solid #ddd; padding: 6px; border-radius: 4px; }
+                            .print-summary label { display: block; font-size: 9px; color: #666; }
+                            .print-summary input { width: 100%; border: none; background: transparent; font-weight: 700; font-size: 11px; text-align: right; }
+                            .text-center { text-align: center; }
+                            .font-bold { font-weight: 600; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                    </html>
+                `);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            } else {
+                alert('Print preview was blocked. Please allow popups for this site and try again.');
+            }
         });
     }
 
@@ -1563,7 +1491,7 @@ function initializeModule(contentArea) {
             tbody.innerHTML = pageData.map((p) => {
                 const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
                 const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
-                const fmt = (val) => Number(val || 0).toFixed(2);
+                const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `
                     <tr>
                         <td>${p.payroll_id || ''}</td>
@@ -1646,7 +1574,7 @@ function initializeModule(contentArea) {
         if (pageData.length === 0) {
             tbody.innerHTML = '<tr><td colspan="27" style="text-align: center; padding: 20px; color: #999;">No payroll history</td></tr>';
         } else {
-            const fmt = (val) => Number(val || 0).toFixed(2);
+            const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             tbody.innerHTML = pageData.map((p) => {
                 const grossPay = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
                 const grossDeduction = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
@@ -1981,10 +1909,18 @@ function initializeModule(contentArea) {
 
     const openSalaryComputationModal = () => {
         if (salaryComputationModal) salaryComputationModal.style.display = 'flex';
+        const empIdEl = document.getElementById('salary-emp-id');
         const dateFromEl = document.getElementById('salary-date-from');
         const dateToEl = document.getElementById('salary-date-to');
+        const payModeEl = document.getElementById('salary-pay-mode');
+        const perJobDaysEl = document.getElementById('salary-per-job-days');
+        const perJobAmountEl = document.getElementById('salary-per-job-amount');
+        if (empIdEl) empIdEl.value = '';
         if (dateFromEl) dateFromEl.value = '';
         if (dateToEl) dateToEl.value = '';
+        if (payModeEl) payModeEl.value = '';
+        if (perJobDaysEl) perJobDaysEl.value = '0';
+        if (perJobAmountEl) perJobAmountEl.value = '0';
         updateTotalDaysVisibility();
         if (typeof updatePayslipPreview === 'function') updatePayslipPreview();
     };
@@ -2007,20 +1943,29 @@ function initializeModule(contentArea) {
     const salaryDateFrom = document.getElementById('salary-date-from');
     const salaryDateTo = document.getElementById('salary-date-to');
     let fetchSalaryTotals = null;
+    let salaryTotalsFetchId = 0;
 
     if (salaryDateFrom && salaryDateTo) {
         fetchSalaryTotals = async () => {
             const employeeId = document.getElementById('salary-emp-id')?.value.trim();
-            if (!employeeId) return;
-
             const from = salaryDateFrom.value;
             const to = salaryDateTo.value;
-            if (!from || !to) return;
+            console.log('fetchSalaryTotals CALLED - empId:', employeeId, 'from:', from, 'to:', to, new Error().stack.split('\n').slice(2, 8).join('\n'));
+            if (!employeeId) return;
+
+            const fetchId = ++salaryTotalsFetchId;
 
             try {
+                console.log('fetchSalaryTotals API call - employeeId:', employeeId, 'from:', from, 'to:', to);
                 const res = await fetch(`/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`);
-                if (!res.ok) throw new Error('Failed to load salary totals');
+                if (!res.ok) throw new Error('Failed to load salary totals (' + res.status + ')');
                 const data = await res.json();
+                console.log('fetchSalaryTotals data:', data, new Error().stack.split('\n').slice(2, 6).join('\n'));
+
+                if (fetchId !== salaryTotalsFetchId) {
+                    console.log('Stale response, skipping', { fetchId, currentId: salaryTotalsFetchId });
+                    return;
+                }
 
                 const totalDays = document.getElementById('salary-total-days');
                 const perJobDays = document.getElementById('salary-per-job-days');
@@ -2044,6 +1989,7 @@ function initializeModule(contentArea) {
                 if (totalDays) totalDays.value = data.total_days_worked != null ? data.total_days_worked : '0';
                 if (perJobDays) perJobDays.value = data.per_job_days != null ? data.per_job_days : '0';
                 if (perJobAmount) perJobAmount.value = data.per_job_amount != null ? data.per_job_amount : '0';
+                console.log('Set per_job_days:', perJobDays?.value, 'per_job_amount:', perJobAmount?.value);
                 if (totalAllowance) totalAllowance.value = data.total_allowance != null ? data.total_allowance : '0';
                 if (totalOvertime) totalOvertime.value = data.total_overtime != null ? data.total_overtime : '0';
                 if (totalLeaves) totalLeaves.value = data.total_leaves != null ? data.total_leaves : '0';
@@ -2062,6 +2008,7 @@ function initializeModule(contentArea) {
                 calculateEndingCashLoan();
                 calculateEndingLosses();
                 calculateNetPay();
+                console.log('After calc: per_job_days:', perJobDays?.value, 'per_job_amount:', perJobAmount?.value);
                 if (typeof updatePayslipPreview === 'function') updatePayslipPreview();
                 if (typeof updateTotalDaysVisibility === 'function') updateTotalDaysVisibility();
             } catch (err) {
@@ -2069,8 +2016,13 @@ function initializeModule(contentArea) {
             }
         };
 
-        salaryDateFrom.addEventListener('change', fetchSalaryTotals);
-        salaryDateTo.addEventListener('change', fetchSalaryTotals);
+         let debouncedFetchTimer = null;
+        const debouncedFetchSalaryTotals = () => {
+            if (debouncedFetchTimer) clearTimeout(debouncedFetchTimer);
+            debouncedFetchTimer = setTimeout(fetchSalaryTotals, 100);
+        };
+        salaryDateFrom.addEventListener('change', debouncedFetchSalaryTotals);
+        salaryDateTo.addEventListener('change', debouncedFetchSalaryTotals);
     }
 
     function calculateEndingCashLoan() {
@@ -2238,6 +2190,7 @@ function initializeModule(contentArea) {
                         'salary-emp-id', 'salary-date-from', 'salary-date-to',
                         'salary-total-days', 'salary-total-overtime', 'salary-total-allowance', 'salary-total-leaves',
                         'salary-regular-holiday', 'salary-special-holiday',
+                        'salary-per-job-days', 'salary-per-job-amount',
                         'salary-total-tax', 'salary-total-sss', 'salary-total-sss-loan',
                         'salary-total-philhealth', 'salary-total-pagibig', 'salary-total-pagibig-loan',
                         'salary-total-cash-loan-deductions', 'salary-starting-cash-loan', 'salary-ending-cash-loan',
@@ -2444,6 +2397,7 @@ function initializeModule(contentArea) {
             if (!res.ok) throw new Error('Failed to load pending payrolls');
             const payrolls = await res.json();
             overviewPayrolls = payrolls || [];
+            window.__hrOverviewPayrolls = overviewPayrolls;
             overviewCurrentPage = 1;
 
             if (!overviewPayrolls.length) {
@@ -2489,6 +2443,7 @@ function initializeModule(contentArea) {
         } catch (err) {
             console.error('Failed to load pending payrolls:', err);
             overviewPayrolls = [];
+            window.__hrOverviewPayrolls = [];
             overviewCurrentPage = 1;
             renderOverviewPagination();
             const employeeCountEl = document.getElementById('salary-overview-employee-count');
@@ -2630,30 +2585,17 @@ function initializeModule(contentArea) {
     const confirmBatchPayrollBtn = document.getElementById('confirm-batch-payroll-btn');
     if (confirmBatchPayrollBtn && batchPrint) {
         confirmBatchPayrollBtn.addEventListener('click', async () => {
-            const tbody = document.getElementById('salary-overview-tbody');
-            if (!tbody) return;
+            if (!overviewPayrolls || overviewPayrolls.length === 0) {
+                alert('No pending payrolls to confirm');
+                return;
+            }
 
-            const payrollIds = [];
-            tbody.querySelectorAll('tr').forEach(row => {
-                const firstCell = row.querySelector('td');
-                if (firstCell) {
-                    const payrollId = firstCell.textContent.trim();
-                    if (payrollId && payrollId !== 'No pending payrolls' && payrollId !== 'Failed to load payrolls') {
-                        payrollIds.push(payrollId);
-                    }
-                }
-            });
+            const payrollIds = overviewPayrolls.map(p => p.payroll_id).filter(Boolean);
 
             if (payrollIds.length === 0) {
                 alert('No pending payrolls to confirm');
                 return;
             }
-
-            const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
-                const firstCell = row.querySelector('td');
-                const payrollId = firstCell?.textContent.trim();
-                return payrollId && payrollId !== 'No pending payrolls' && payrollId !== 'Failed to load payrolls';
-            });
 
             const employeeCountEl = document.getElementById('salary-overview-employee-count');
             const grossPayEl = document.getElementById('salary-overview-gross-pay');
@@ -2666,7 +2608,7 @@ function initializeModule(contentArea) {
                 payPeriod: startingPayPeriodEl?.value && endingPayPeriodEl?.value ? `${startingPayPeriodEl.value} - ${endingPayPeriodEl.value}` : '-',
                 payPeriodFrom: startingPayPeriodEl?.value || '',
                 payPeriodTo: endingPayPeriodEl?.value || '',
-                employeeCount: employeeCountEl?.value || rows.length,
+                employeeCount: employeeCountEl?.value || overviewPayrolls.length,
                 grossPay: grossPayEl?.value || '0.00',
                 grossDeduction: grossDeductionEl?.value || '0.00',
                 netPay: netPayEl?.value || '0.00'
@@ -2678,33 +2620,34 @@ function initializeModule(contentArea) {
                 payPeriodEnd: endingPayPeriodEl?.value || ''
             };
 
-            batchPrint.batchPrintTableData = rows.map(row => {
-                const cells = row.querySelectorAll('td');
+            batchPrint.batchPrintTableData = overviewPayrolls.map(p => {
+                const grossPayCalc = (Number(p.total_days_worked) || 0) + (Number(p.total_overtime_hours) || 0) + (Number(p.total_allowance) || 0) + (Number(p.total_leaves_usage) || 0) + (Number(p.regular_holiday) || 0) + (Number(p.special_holiday) || 0);
+                const grossDeductionCalc = (Number(p.total_income_tax) || 0) + (Number(p.total_sss_payment) || 0) + (Number(p.total_sss_loan_payment) || 0) + (Number(p.total_philhealth_payment) || 0) + (Number(p.total_pagibig_payment) || 0) + (Number(p.total_pagibig_loan_payment) || 0) + (Number(p.total_cash_loan_deductions) || 0) + (Number(p.total_losses_damages) || 0);
                 return {
-                    employeeId: cells[1]?.textContent.trim() || '',
-                    lastName: cells[2]?.textContent.trim() || '',
-                    firstName: cells[3]?.textContent.trim() || '',
-                    totalDays: parseFloat(cells[4]?.textContent) || 0,
-                    totalOvertime: parseFloat(cells[5]?.textContent) || 0,
-                    totalAllowance: parseFloat(cells[6]?.textContent) || 0,
-                    totalLeaves: parseFloat(cells[7]?.textContent) || 0,
-                    regularHoliday: parseFloat(cells[8]?.textContent) || 0,
-                    specialHoliday: parseFloat(cells[9]?.textContent) || 0,
-                    grossPay: parseFloat(cells[10]?.textContent) || 0,
-                    totalTax: parseFloat(cells[11]?.textContent) || 0,
-                    totalSss: parseFloat(cells[12]?.textContent) || 0,
-                    totalSssLoan: parseFloat(cells[13]?.textContent) || 0,
-                    totalPhilhealth: parseFloat(cells[14]?.textContent) || 0,
-                    totalPagibig: parseFloat(cells[15]?.textContent) || 0,
-                    totalPagibigLoan: parseFloat(cells[16]?.textContent) || 0,
-                    totalCashLoanDeductions: parseFloat(cells[17]?.textContent) || 0,
-                    totalLossesDeductions: parseFloat(cells[18]?.textContent) || 0,
-                    grossDeduction: parseFloat(cells[19]?.textContent) || 0,
-                    netPay: parseFloat(cells[20]?.textContent) || 0,
-                    startingCashLoan: parseFloat(cells[21]?.textContent) || 0,
-                    endingCashLoan: parseFloat(cells[22]?.textContent) || 0,
-                    startingLosses: parseFloat(cells[23]?.textContent) || 0,
-                    endingLosses: parseFloat(cells[24]?.textContent) || 0
+                    employeeId: p.employee_id || '',
+                    lastName: p.last_name || '',
+                    firstName: p.first_name || '',
+                    totalDays: Number(p.total_days_worked) || 0,
+                    totalOvertime: Number(p.total_overtime_hours) || 0,
+                    totalAllowance: Number(p.total_allowance) || 0,
+                    totalLeaves: Number(p.total_leaves_usage) || 0,
+                    regularHoliday: Number(p.regular_holiday) || 0,
+                    specialHoliday: Number(p.special_holiday) || 0,
+                    grossPay: grossPayCalc,
+                    totalTax: Number(p.total_income_tax) || 0,
+                    totalSss: Number(p.total_sss_payment) || 0,
+                    totalSssLoan: Number(p.total_sss_loan_payment) || 0,
+                    totalPhilhealth: Number(p.total_philhealth_payment) || 0,
+                    totalPagibig: Number(p.total_pagibig_payment) || 0,
+                    totalPagibigLoan: Number(p.total_pagibig_loan_payment) || 0,
+                    totalCashLoanDeductions: Number(p.total_cash_loan_deductions) || 0,
+                    totalLossesDeductions: Number(p.total_losses_damages) || 0,
+                    grossDeduction: grossDeductionCalc,
+                    netPay: Number(p.net_pay) || 0,
+                    startingCashLoan: Number(p.starting_cash_loan) || 0,
+                    endingCashLoan: Number(p.ending_cash_loan) || 0,
+                    startingLosses: Number(p.starting_losses_damages) || 0,
+                    endingLosses: Number(p.ending_losses_damages) || 0
                 };
             });
 
@@ -2963,6 +2906,9 @@ function initializeModule(contentArea) {
         }
     };
 
+    const formatCurrency = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatNumber = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     const clearBatchSalaryModal = () => {
         const batchDepartmentSelect = document.getElementById('batch-search-employee');
         const batchDateFrom = document.getElementById('batch-date-from');
@@ -3067,28 +3013,28 @@ function initializeModule(contentArea) {
             <tr>
                 <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; font-size: 12px; position: -webkit-sticky; position: sticky; left: 0; background: #EADECB; z-index: 1; transform: translateZ(0); backface-visibility: hidden; box-shadow: 1px 0 0 #D6D6D6; box-sizing: border-box;">${row.employeeId}</td>
                 <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; font-size: 12px; position: -webkit-sticky; position: sticky; left: 80px; background: #EADECB; z-index: 1; transform: translateZ(0); backface-visibility: hidden; box-shadow: 1px 0 0 #D6D6D6; box-sizing: border-box;">${row.lastName}</td>
-                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; font-size: 12px; position: -webkit-sticky; position: sticky; left: 160px; background: #EADECB; z-index: 1; transform: translateZ(0); backface-visibility: hidden; box-sizing: border-box;">${row.firstName}</td>
-                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalDays.toFixed(2)}</td>
-                <td style="min-width: 50px; max-width: 50px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalOvertime.toFixed(2)}</td>
-                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalAllowance.toFixed(2)}</td>
-                <td style="min-width: 60px; max-width: 60px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalLeaves.toFixed(2)}</td>
-                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.regularHoliday.toFixed(2)}</td>
-                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.specialHoliday.toFixed(2)}</td>
-                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${row.grossPay.toFixed(2)}</td>
-                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalTax.toFixed(2)}</td>
-                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalSss.toFixed(2)}</td>
-                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalSssLoan.toFixed(2)}</td>
-                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalPhilhealth.toFixed(2)}</td>
-                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalPagibig.toFixed(2)}</td>
-                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalPagibigLoan.toFixed(2)}</td>
-                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalCashLoanDeductions.toFixed(2)}</td>
-                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.totalLossesDeductions.toFixed(2)}</td>
-                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${row.grossDeduction.toFixed(2)}</td>
-                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${row.netPay.toFixed(2)}</td>
-                <td style="min-width: 95px; max-width: 95px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.startingCashLoan.toFixed(2)}</td>
-                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.endingCashLoan.toFixed(2)}</td>
-                <td style="min-width: 105px; max-width: 105px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.startingLosses.toFixed(2)}</td>
-                <td style="min-width: 105px; max-width: 105px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${row.endingLosses.toFixed(2)}</td>
+                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; font-size: 12px; position: -webkit-sticky; position: sticky; left: 160px; background: #EADECB; z-index: 1; transform: translateZ(0); backface-visibility: hidden; box-shadow: 1px 0 0 #D6D6D6; box-sizing: border-box;">${row.firstName}</td>
+                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatNumber(row.totalDays)}</td>
+                <td style="min-width: 50px; max-width: 50px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatNumber(row.totalOvertime)}</td>
+                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalAllowance)}</td>
+                <td style="min-width: 60px; max-width: 60px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalLeaves)}</td>
+                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.regularHoliday)}</td>
+                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.specialHoliday)}</td>
+                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${formatCurrency(row.grossPay)}</td>
+                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalTax)}</td>
+                <td style="min-width: 75px; max-width: 75px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalSss)}</td>
+                <td style="min-width: 70px; max-width: 70px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalSssLoan)}</td>
+                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalPhilhealth)}</td>
+                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalPagibig)}</td>
+                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalPagibigLoan)}</td>
+                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalCashLoanDeductions)}</td>
+                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.totalLossesDeductions)}</td>
+                <td style="min-width: 85px; max-width: 85px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${formatCurrency(row.grossDeduction)}</td>
+                <td style="min-width: 80px; max-width: 80px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; font-weight: 600; box-sizing: border-box;">${formatCurrency(row.netPay)}</td>
+                <td style="min-width: 95px; max-width: 95px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.startingCashLoan)}</td>
+                <td style="min-width: 90px; max-width: 90px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.endingCashLoan)}</td>
+                <td style="min-width: 105px; max-width: 105px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.startingLosses)}</td>
+                <td style="min-width: 105px; max-width: 105px; padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-size: 12px; box-sizing: border-box;">${formatCurrency(row.endingLosses)}</td>
             </tr>
         `).join('');
     };

@@ -1,7 +1,5 @@
--- Drop existing table if needed (optional)
--- DROP TABLE IF EXISTS attendance_log;
-
-CREATE TABLE attendance_log (
+-- Create table (IF NOT EXISTS to support re-runs)
+CREATE TABLE IF NOT EXISTS attendance_log (
     attendance_id VARCHAR(20) PRIMARY KEY,
     employee_id VARCHAR(20) NOT NULL,
     date DATE NOT NULL,
@@ -27,6 +25,11 @@ CREATE TABLE attendance_log (
 
 -- Sequence for generating attendance IDs
 CREATE SEQUENCE IF NOT EXISTS attendance_log_seq START 1;
+
+-- Remove leading zeros from existing attendance IDs (AttLog-000005461 -> AttLog-5461)
+UPDATE attendance_log 
+SET attendance_id = 'AttLog-' || (REPLACE(attendance_id, 'AttLog-', '')::INTEGER)::TEXT 
+WHERE attendance_id LIKE 'AttLog-0%';
 
 SELECT setval('attendance_log_seq', COALESCE(MAX(CAST(REPLACE(attendance_id, 'AttLog-', '') AS INTEGER)), 0), true) FROM attendance_log;
 
@@ -54,12 +57,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop triggers if they exist (to allow re-creation)
+DROP TRIGGER IF EXISTS trigger_set_attendance_id ON attendance_log;
 CREATE TRIGGER trigger_set_attendance_id
     BEFORE INSERT ON attendance_log
     FOR EACH ROW
     EXECUTE FUNCTION set_attendance_id();
 
 -- Index for fast lookups by employee and date
+DROP INDEX IF EXISTS idx_attendance_log_employee_date;
 CREATE INDEX idx_attendance_log_employee_date ON attendance_log(employee_id, date);
 
 -- Trigger to update updated_at timestamp
@@ -71,6 +77,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_attendance_updated_at ON attendance_log;
 CREATE TRIGGER trigger_update_attendance_updated_at
     BEFORE UPDATE ON attendance_log
     FOR EACH ROW

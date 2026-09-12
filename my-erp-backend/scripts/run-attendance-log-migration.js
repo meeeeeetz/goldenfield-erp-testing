@@ -14,13 +14,13 @@ const pool = new Pool({
 });
 
 async function runMigration() {
-    const sqlFile = path.join(__dirname, '..', '..', 'my-erp-database', 'human-resources-database', 'human-resources-employee-details', 'employee-compensation.sql');
+    const sqlFile = path.join(__dirname, '..', '..', 'my-erp-database', 'human-resources-database', 'human-resource-attendance-log', 'human-resource-attendance.sql');
     const sql = fs.readFileSync(sqlFile, 'utf8');
     try {
         await pool.query(sql);
-        console.log('Migration completed successfully');
+        console.log('Attendance log migration completed successfully');
     } catch (error) {
-        console.error('Migration error:', error.message);
+        console.error('Attendance log migration error:', error.message);
     } finally {
         await pool.end();
     }
