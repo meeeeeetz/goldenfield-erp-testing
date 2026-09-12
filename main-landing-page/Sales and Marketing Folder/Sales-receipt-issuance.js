@@ -24,6 +24,10 @@ function buildReceiptHtml(receipt, items) {
 <head>
     <title>Receipt ${receipt.si_number}</title>
     <style>
+        @page {
+            size: portrait;
+            margin: 1in;
+        }
         body {
             font-family: Arial, sans-serif;
             background: white;
@@ -611,14 +615,29 @@ function setTodayDate() {
     dateInput.value = `${year}-${month}-${day}`;
 }
 
+function resetReceiptModal() {
+    const siInput = document.getElementById('receipt-si-number');
+    if (siInput) siInput.value = '';
+    const dateInput = document.getElementById('receipt-date');
+    if (dateInput) dateInput.value = '';
+    const customerSelect = document.getElementById('receipt-customer');
+    if (customerSelect) customerSelect.selectedIndex = 0;
+    const grandTotalInput = document.getElementById('receipt-grand-total');
+    if (grandTotalInput) grandTotalInput.value = '0.00';
+    const itemsBody = document.getElementById('receipt-items-body');
+    if (itemsBody) itemsBody.innerHTML = '';
+    tempReceiptData = null;
+}
+
 function initializeReceiptModal() {
     const modal = document.getElementById('receipt-modal');
     const openBtn = document.getElementById('issue-receipt-btn');
     const closeBtn = document.getElementById('close-receipt-modal');
-    
+
     if (!modal || !openBtn) return;
 
     openBtn.addEventListener('click', async () => {
+        resetReceiptModal();
         modal.style.display = 'flex';
         await generateNextSINumber();
         setTodayDate();
@@ -632,11 +651,15 @@ function initializeReceiptModal() {
         await addCaseProducts();
     });
     closeBtn.addEventListener('click', () => {
+        resetReceiptModal();
         modal.style.display = 'none';
     });
 
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.style.display = 'none';
+        if (e.target === modal) {
+            resetReceiptModal();
+            modal.style.display = 'none';
+        }
     });
 
     document.getElementById('receipt-items-body').addEventListener('input', (e) => {
@@ -731,20 +754,31 @@ function initializeReceiptModal() {
         };
 
         const html = buildReceiptHtml(receipt, items);
+        const htmlWithClose = html.replace('</body>', `<button onclick="window.close()" style="position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:13px;">Close</button><script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
         const previewWindow = window.open('', '_blank');
         if (!previewWindow) {
             alert('Popup blocked. Please allow popups for this site.');
             return;
         }
-        previewWindow.document.write(html);
+        previewWindow.document.write(htmlWithClose);
         previewWindow.document.close();
         previewWindow.focus();
         previewWindow.print();
+        previewWindow.addEventListener('afterprint', function() {
+            previewWindow.close();
+        });
     });
 
     document.getElementById('final-save-receipt-btn').addEventListener('click', async () => {
         if (!tempReceiptData) return;
-        const { si_number, receipts } = tempReceiptData;
+        const saveBtn = document.getElementById('final-save-receipt-btn');
+        const originalText = saveBtn ? saveBtn.textContent : '';
+        const si_number = tempReceiptData.si_number;
+        const receipts = tempReceiptData.receipts;
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+        }
         try {
             const res = await fetch(`${API_BASE_RECEIPTS}/batch`, {
                 method: 'POST',
@@ -756,8 +790,8 @@ function initializeReceiptModal() {
                 throw new Error(errData.error || `Server error: ${res.status}`);
             }
             alert('Receipt issued successfully: ' + si_number);
+            resetReceiptModal();
             document.getElementById('receipt-modal').style.display = 'none';
-            tempReceiptData = null;
             loadReceiptTransactions();
             loadCustomerReceivables();
             loadTotalReceivables();
@@ -767,6 +801,10 @@ function initializeReceiptModal() {
         } catch (err) {
             console.error('Failed to save receipt', err);
             alert('Error saving receipt: ' + err.message);
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
         }
     });
 
@@ -1481,16 +1519,20 @@ function initializeReceiptModal() {
         }
 
         const html = buildReceiptHtml(receipt, items);
+        const htmlWithClose = html.replace('</body>', `<button onclick="window.close()" style="position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:13px;">Close</button><script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert('Popup blocked. Please allow popups for this site.');
             return;
         }
 
-        printWindow.document.write(html);
+        printWindow.document.write(htmlWithClose);
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
+        printWindow.addEventListener('afterprint', function() {
+            printWindow.close();
+        });
     }
 
     async function loadCustomerReceivables() {

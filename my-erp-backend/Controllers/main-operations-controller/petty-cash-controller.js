@@ -81,7 +81,24 @@ class PettyCashController {
             petty_cash_code,
             replenish_amount || 0
         ]);
-        return result.rows[0];
+        const savedTransaction = result.rows[0];
+
+        const expenseListId = await this.expenseController.getNextExpenseId();
+        await this.expenseController.addExpense({
+            expense_list_id: expenseListId,
+            tracking_id: petty_cash_code,
+            date: date,
+            accounting_code: null,
+            expense_type: pettycashcategory,
+            description: item + ' bought at ' + (store || 'Unknown Store'),
+            remarks: remarks || '',
+            total_amount: parseFloat(amount || 0),
+            account_source: null,
+            cleared_date: null,
+            status: status || 'Pending'
+        });
+
+        return savedTransaction;
     }
 
     async updatePettyCashTransaction(pettyCashCode, transactionData) {

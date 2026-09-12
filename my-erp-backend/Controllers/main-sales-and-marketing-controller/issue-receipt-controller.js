@@ -52,6 +52,7 @@ class ReceiptIssueController {
             INSERT INTO receipt_issues 
             (si_number, date, customer, qty, product, total) 
             VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (si_number, date, customer, product) DO NOTHING
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -71,11 +72,22 @@ class ReceiptIssueController {
 
     async createReceiptIssuesBatch(receipts, created_by) {
         if (!receipts || receipts.length === 0) return [];
+
+        const uniqueReceipts = [];
+        const seenKeys = new Set();
+        receipts.forEach((receipt) => {
+            const key = `${receipt.si_number}|${receipt.date}|${receipt.customer}|${receipt.product}`;
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                uniqueReceipts.push(receipt);
+            }
+        });
+
         const values = [];
         const params = [];
         let paramCount = 0;
-        
-        receipts.forEach((receipt) => {
+
+        uniqueReceipts.forEach((receipt) => {
             paramCount++;
             params.push(receipt.si_number);
             paramCount++;
@@ -90,17 +102,18 @@ class ReceiptIssueController {
             params.push(receipt.total);
             values.push(`($${paramCount - 5}, $${paramCount - 4}, $${paramCount - 3}, $${paramCount - 2}, $${paramCount - 1}, $${paramCount})`);
         });
-        
-        const query = `
-            INSERT INTO receipt_issues 
-            (si_number, date, customer, qty, product, total) 
+
+        const insertQuery = `
+            INSERT INTO receipt_issues
+            (si_number, date, customer, qty, product, total)
             VALUES ${values.join(', ')}
+            ON CONFLICT (si_number, date, customer, product) DO NOTHING
             RETURNING *
         `;
-        const result = await this.db.query(query, params);
-        
+        const result = await this.db.query(insertQuery, params);
+
         const summaryUpdates = new Map();
-        receipts.forEach(receipt => {
+        uniqueReceipts.forEach(receipt => {
             if (!summaryUpdates.has(receipt.si_number)) {
                 summaryUpdates.set(receipt.si_number, {
                     date: receipt.date,
@@ -112,13 +125,13 @@ class ReceiptIssueController {
             }
             summaryUpdates.get(receipt.si_number).total += parseFloat(receipt.total);
         });
-        
+
         for (const [si_number, data] of summaryUpdates) {
             await this.upsertSummary(si_number, data.date, data.customer, data.total, data.status, data.posted, created_by);
         }
 
-        await this.saveEggTraySoldFromReceipts(receipts);
-        
+        await this.saveEggTraySoldFromReceipts(uniqueReceipts);
+
         return result.rows;
     }
 
@@ -458,7 +471,7 @@ class ReceiptIssueController {
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (si_number)
             DO UPDATE SET 
-                grand_total = receipt_issue_summaries.grand_total + $4,
+                grand_total = EXCLUDED.grand_total,
                 date = EXCLUDED.date,
                 customer = EXCLUDED.customer,
                 status = EXCLUDED.status,

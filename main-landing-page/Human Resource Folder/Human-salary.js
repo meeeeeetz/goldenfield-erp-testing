@@ -1950,20 +1950,16 @@ function initializeModule(contentArea) {
             const employeeId = document.getElementById('salary-emp-id')?.value.trim();
             const from = salaryDateFrom.value;
             const to = salaryDateTo.value;
-            console.log('fetchSalaryTotals CALLED - empId:', employeeId, 'from:', from, 'to:', to, new Error().stack.split('\n').slice(2, 8).join('\n'));
             if (!employeeId) return;
 
             const fetchId = ++salaryTotalsFetchId;
 
             try {
-                console.log('fetchSalaryTotals API call - employeeId:', employeeId, 'from:', from, 'to:', to);
                 const res = await fetch(`/api/salary-computation/totals/salary?employee_id=${encodeURIComponent(employeeId)}&date_from=${from}&date_to=${to}`);
                 if (!res.ok) throw new Error('Failed to load salary totals (' + res.status + ')');
                 const data = await res.json();
-                console.log('fetchSalaryTotals data:', data, new Error().stack.split('\n').slice(2, 6).join('\n'));
 
                 if (fetchId !== salaryTotalsFetchId) {
-                    console.log('Stale response, skipping', { fetchId, currentId: salaryTotalsFetchId });
                     return;
                 }
 
@@ -2008,7 +2004,6 @@ function initializeModule(contentArea) {
                 calculateEndingCashLoan();
                 calculateEndingLosses();
                 calculateNetPay();
-                console.log('After calc: per_job_days:', perJobDays?.value, 'per_job_amount:', perJobAmount?.value);
                 if (typeof updatePayslipPreview === 'function') updatePayslipPreview();
                 if (typeof updateTotalDaysVisibility === 'function') updateTotalDaysVisibility();
             } catch (err) {
@@ -2016,7 +2011,7 @@ function initializeModule(contentArea) {
             }
         };
 
-         let debouncedFetchTimer = null;
+        let debouncedFetchTimer = null;
         const debouncedFetchSalaryTotals = () => {
             if (debouncedFetchTimer) clearTimeout(debouncedFetchTimer);
             debouncedFetchTimer = setTimeout(fetchSalaryTotals, 100);

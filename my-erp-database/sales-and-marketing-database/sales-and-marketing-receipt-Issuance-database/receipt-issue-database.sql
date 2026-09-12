@@ -13,6 +13,8 @@ CREATE INDEX IF NOT EXISTS idx_receipt_issues_si_number ON receipt_issues(si_num
 CREATE INDEX IF NOT EXISTS idx_receipt_issues_customer ON receipt_issues(customer);
 CREATE INDEX IF NOT EXISTS idx_receipt_issues_date ON receipt_issues(date);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_receipt_issues_unique ON receipt_issues(si_number, date, customer, product);
+
 CREATE TABLE IF NOT EXISTS receipt_issue_summaries (
     si_number VARCHAR(50) PRIMARY KEY,
     date DATE NOT NULL,

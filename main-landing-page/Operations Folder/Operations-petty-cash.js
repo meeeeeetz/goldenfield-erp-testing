@@ -175,6 +175,18 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                     <div id="bulk-preview-table" style="overflow-x: auto;"></div>
                                 </div>
                             </div>
+                            <div id="bulk-validation-results" style="display: none; flex: 1; gap: 16px;">
+                                <div id="bulk-success-box" style="flex: 1; border: 2px solid #22c55e; border-radius: 8px; padding: 14px 16px; background: #f0fdf4; display: none;">
+                                    <div style="font-weight: 600; color: #15803d; font-size: 14px; margin-bottom: 4px;">Successful Rows</div>
+                                    <div id="bulk-success-count" style="font-size: 24px; font-weight: 700; color: #16a34a;"></div>
+                                    <div id="bulk-success-details" style="font-size: 12px; color: #4ade80; margin-top: 4px;"></div>
+                                </div>
+                                <div id="bulk-rejected-box" style="flex: 1; border: 2px solid #ef4444; border-radius: 8px; padding: 14px 16px; background: #fef2f2; display: none;">
+                                    <div style="font-weight: 600; color: #b91c1c; font-size: 14px; margin-bottom: 4px;">Rejected Rows</div>
+                                    <div id="bulk-rejected-count" style="font-size: 24px; font-weight: 700; color: #dc2626;"></div>
+                                    <div id="bulk-rejected-details" style="font-size: 12px; color: #991b1b; margin-top: 4px;"></div>
+                                </div>
+                            </div>
                             <div style="display: flex; gap: 12px; justify-content: flex-end;">
                                 <button id="download-template-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Download Template</button>
                                 <button id="cancel-bulk-upload-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
@@ -721,6 +733,16 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             const bulkFileName = document.getElementById('bulk-file-name');
             if (bulkFileName) bulkFileName.textContent = '';
             if (bulkFileInput) bulkFileInput.value = '';
+            const validationResults = document.getElementById('bulk-validation-results');
+            if (validationResults) validationResults.style.display = 'none';
+            const successCount = document.getElementById('bulk-success-count');
+            if (successCount) successCount.textContent = '';
+            const successDetails = document.getElementById('bulk-success-details');
+            if (successDetails) successDetails.textContent = '';
+            const rejectedCount = document.getElementById('bulk-rejected-count');
+            if (rejectedCount) rejectedCount.textContent = '';
+            const rejectedDetails = document.getElementById('bulk-rejected-details');
+            if (rejectedDetails) rejectedDetails.textContent = '';
         };
         const bulkDropZone = document.getElementById('bulk-drop-zone');
         const bulkFileInput = document.getElementById('bulk-file-input');
@@ -774,6 +796,13 @@ ModuleComponents['operations-petty-cash'] = (container) => {
         }
 
         const renderBulkPreview = (file) => {
+            const validationResults = document.getElementById('bulk-validation-results');
+            if (validationResults) validationResults.style.display = 'none';
+            const successBox = document.getElementById('bulk-success-box');
+            if (successBox) successBox.style.display = 'none';
+            const rejectedBox = document.getElementById('bulk-rejected-box');
+            if (rejectedBox) rejectedBox.style.display = 'none';
+
             const previewContainer = document.getElementById('bulk-preview');
             const previewTable = document.getElementById('bulk-preview-table');
             if (!previewContainer || !previewTable || !file) return;
@@ -867,74 +896,124 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         return;
                     }
 
-                    let savedCount = 0;
-                    let failedCount = 0;
+                    const validRows = [];
+                    const invalidRows = [];
 
                     for (let i = 0; i < rows.length; i++) {
                         const row = rows[i];
+                        const date = row[dateIdx] || '';
+                        const amount = row[amountIdx] || '';
+                        const parsedAmount = parseFloat(String(amount).replace(/,/g, '')) || 0;
+                        const status = statusIdx >= 0 ? (row[statusIdx] || 'Pending') : 'Pending';
+                        const category = categoryIdx >= 0 ? (row[categoryIdx] || '') : '';
+                        const item = itemIdx >= 0 ? (row[itemIdx] || '') : '';
+                        const remarks = remarksIdx >= 0 ? (row[remarksIdx] || '') : '';
+                        const store = storeIdx >= 0 ? (row[storeIdx] || '') : '';
+                        const source = sourceIdx >= 0 ? (row[sourceIdx] || '') : '';
+                        const checkNumber = checkIdx >= 0 ? (row[checkIdx] || '') : '';
+                        const replenishAmount = replenishAmountIdx >= 0 ? (row[replenishAmountIdx] || amount) : amount;
+                        const parsedReplenishAmount = parseFloat(String(replenishAmount).replace(/,/g, '')) || 0;
+
+                        const typeIdx = headers.findIndex(h => String(h).toLowerCase().includes('type'));
+                        const txnType = typeIdx >= 0 ? String(row[typeIdx] || '').toLowerCase() : '';
+                        const isReplenishment = txnType === 'replenishment' || (txnType === '' && source && !category && !item);
+
+                        let isValid = true;
+                        let reasons = [];
+
+                        if (isReplenishment) {
+                            if (!date) { isValid = false; reasons.push('missing date'); }
+                            if (!source) { isValid = false; reasons.push('missing source'); }
+                            if (!parsedReplenishAmount) { isValid = false; reasons.push('missing replenish amount'); }
+                        } else {
+                            if (!date) { isValid = false; reasons.push('missing date'); }
+                            if (!category) { isValid = false; reasons.push('missing category'); }
+                            if (!item) { isValid = false; reasons.push('missing item'); }
+                            if (!parsedAmount) { isValid = false; reasons.push('missing amount'); }
+                        }
+
+                        if (isValid) {
+                            validRows.push({ row, isReplenishment, date, category, item, remarks, store, source, checkNumber, amount: parsedAmount, replenishAmount: parsedReplenishAmount, status });
+                        } else {
+                            invalidRows.push({ rowIndex: i + 2, reasons, isReplenishment });
+                        }
+                    }
+
+                    const totalRows = rows.length;
+                    const validCount = validRows.length;
+                    const invalidCount = invalidRows.length;
+
+                    let validationMsg = 'Validation Summary\\n';
+                    validationMsg += 'Total: ' + totalRows + '\\n';
+                    validationMsg += 'Valid: ' + validCount + '\\n';
+                    validationMsg += 'Rejected: ' + invalidCount + '\\n';
+
+                    if (invalidCount > 0) {
+                        validationMsg += '\\nRejected rows:\\n';
+                        invalidRows.forEach(ir => {
+                            validationMsg += 'Row ' + ir.rowIndex + ': ' + ir.reasons.join(', ') + '\\n';
+                        });
+                    }
+
+                    const validationResults = document.getElementById('bulk-validation-results');
+                    if (validationResults) validationResults.style.display = 'flex';
+                    const successBox = document.getElementById('bulk-success-box');
+                    if (successBox) {
+                        successBox.style.display = validCount > 0 ? 'block' : 'none';
+                        const successCountEl = document.getElementById('bulk-success-count');
+                        if (successCountEl) successCountEl.textContent = validCount;
+                        const successDetailsEl = document.getElementById('bulk-success-details');
+                        if (successDetailsEl) successDetailsEl.textContent = validCount > 0 ? 'Rows: 1-' + (validCount) + ' validated' : '';
+                    }
+                    const rejectedBox = document.getElementById('bulk-rejected-box');
+                    if (rejectedBox) {
+                        rejectedBox.style.display = invalidCount > 0 ? 'block' : 'none';
+                        const rejectedCountEl = document.getElementById('bulk-rejected-count');
+                        if (rejectedCountEl) rejectedCountEl.textContent = invalidCount;
+                        const rejectedDetailsEl = document.getElementById('bulk-rejected-details');
+                        if (rejectedDetailsEl) {
+                            if (invalidCount > 0) {
+                                rejectedDetailsEl.textContent = invalidRows.map(ir => 'Row ' + ir.rowIndex).join(', ');
+                            } else {
+                                rejectedDetailsEl.textContent = '';
+                            }
+                        }
+                    }
+
+                    const proceedMsg = validationMsg.replace(/(\\n)+$/, '') + '\\nProceed to save ' + validCount + ' valid row(s)?';
+
+                    if (!confirm(proceedMsg)) {
+                        return;
+                    }
+
+                    let savedCount = 0;
+                    let failedCount = 0;
+
+                    for (let i = 0; i < validRows.length; i++) {
+                        const vr = validRows[i];
                         try {
-                            const date = row[dateIdx] || '';
-                             const amount = row[amountIdx] || '';
-                             const parsedAmount = parseFloat(String(amount).replace(/,/g, '')) || 0;
-                             const status = statusIdx >= 0 ? (row[statusIdx] || 'Pending') : 'Pending';
-                             const category = categoryIdx >= 0 ? (row[categoryIdx] || '') : '';
-                             const item = itemIdx >= 0 ? (row[itemIdx] || '') : '';
-                             const remarks = remarksIdx >= 0 ? (row[remarksIdx] || '') : '';
-                             const store = storeIdx >= 0 ? (row[storeIdx] || '') : '';
-                             const source = sourceIdx >= 0 ? (row[sourceIdx] || '') : '';
-                             const checkNumber = checkIdx >= 0 ? (row[checkIdx] || '') : '';
-                             const replenishAmount = replenishAmountIdx >= 0 ? (row[replenishAmountIdx] || amount) : amount;
-                             const parsedReplenishAmount = parseFloat(String(replenishAmount).replace(/,/g, '')) || 0;
+                            if (vr.isReplenishment) {
+                                const res = await fetch('/api/petty-cash/replenish', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ date: vr.date, source: vr.source, replenish_amount: vr.replenishAmount, check_number: vr.checkNumber, status: vr.status })
+                                });
 
-                            const typeIdx = headers.findIndex(h => String(h).toLowerCase().includes('type'));
-                            const txnType = typeIdx >= 0 ? String(row[typeIdx] || '').toLowerCase() : '';
-                            const isReplenishment = txnType === 'replenishment' || (txnType === '' && source && !category && !item);
+                                if (!res.ok) {
+                                    const errorData = await res.json().catch(() => ({}));
+                                    throw new Error(errorData.error || 'Failed to save replenishment row');
+                                }
+                            } else {
+                                const res = await fetch('/api/petty-cash', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ date: vr.date, pettycashcategory: vr.category, item: vr.item, remarks: vr.remarks, store: vr.store, amount: vr.amount, status: vr.status })
+                                });
 
-                             if (isReplenishment) {
-                                 if (!date || !source || !parsedReplenishAmount) {
-                                     failedCount++;
-                                     continue;
-                                 }
-
-                                 const res = await fetch('/api/petty-cash/replenish', {
-                                     method: 'POST',
-                                     headers: { 'Content-Type': 'application/json' },
-                                     body: JSON.stringify({ date, source, replenish_amount: parsedReplenishAmount, check_number: checkNumber, status })
-                                 });
-
-                                 if (!res.ok) {
-                                     const errorData = await res.json().catch(() => ({}));
-                                     throw new Error(errorData.error || 'Failed to save replenishment row');
-                                 }
-                             } else {
-                                 if (!date || !category || !item || !parsedAmount) {
-                                     failedCount++;
-                                     continue;
-                                 }
-
-                                 const res = await fetch('/api/petty-cash', {
-                                     method: 'POST',
-                                     headers: { 'Content-Type': 'application/json' },
-                                     body: JSON.stringify({ date, pettycashcategory: category, item, remarks, store, amount: parsedAmount, status })
-                                 });
-
-                                 if (!res.ok) {
-                                     const errorData = await res.json().catch(() => ({}));
-                                     throw new Error(errorData.error || 'Failed to save row');
-                                 }
-
-                                 const pettyCashResult = await res.json();
-                                 if (pettyCashResult && pettyCashResult.petty_cash_code) {
-                                     await createExpenseFromPettyCash({
-                                         petty_cash_code: pettyCashResult.petty_cash_code,
-                                         date: date,
-                                         pettycashcategory: category,
-                                         item: item,
-                                         remarks: remarks,
-                                         store: store,
-                                         amount: parsedAmount
-                                     });
-                                 }
+                                if (!res.ok) {
+                                    const errorData = await res.json().catch(() => ({}));
+                                    throw new Error(errorData.error || 'Failed to save row');
+                                }
                             }
                             savedCount++;
                         } catch (err) {
@@ -1154,16 +1233,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 loadPettyCashStats();
 
                 if (pettyCashResult && pettyCashResult.petty_cash_code) {
-                    console.log('Creating expense for petty cash:', pettyCashResult.petty_cash_code);
-                    createExpenseFromPettyCash({
-                        petty_cash_code: pettyCashResult.petty_cash_code,
-                        date: date,
-                        pettycashcategory: category,
-                        item: item,
-                        remarks: remarks,
-                        store: store,
-                        amount: amount
-                    });
+                    console.log('Petty cash saved with expense via backend:', pettyCashResult.petty_cash_code);
                 } else {
                     console.warn('No petty_cash_code in result:', pettyCashResult);
                 }

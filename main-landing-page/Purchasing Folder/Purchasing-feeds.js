@@ -2919,8 +2919,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             tbody.innerHTML = pageData.map(tx => `
                 <tr>
                     <td>${tx.order_id || '-'}</td>
-                    <td>${tx.status === 'Rebate' ? '-' : formatDate(tx.date)}</td>
-                    <td>${tx.status === 'Rebate' ? '-' : formatDate(tx.due_date)}</td>
+                    <td>${formatDate(tx.date)}</td>
+                    <td>${formatDate(tx.due_date)}</td>
                     <td>${tx.company_name || '-'}</td>
                     <td>${tx.sales_invoice || '-'}</td>
                     <td>${tx.feed_type || 'Rebate'}</td>
