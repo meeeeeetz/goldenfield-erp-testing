@@ -1352,7 +1352,10 @@ body {
 }
 
 .petty-transactions-card {
-    padding: 15px 0;
+    padding: 15px 20px;
+    width: 100%;
+    align-self: stretch;
+    align-items: stretch;
 }
 .petty-transactions-card .data-table th,
 .petty-transactions-card .data-table td {

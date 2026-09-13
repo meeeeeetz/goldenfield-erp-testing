@@ -46,12 +46,12 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         <h3>Pendings</h3>
                         <p class="card-sub-label">amount Pendings to be approved and paid</p>
                         <div class="card-value-row">
-                            <div class="card-value">P 35,000.00</div>
+                            <div class="card-value" id="pending-amount-value">₱ 0.00</div>
                         </div>
                     </div>
-                </div>
-                <div class="card graph-placeholder petty-transactions-card" style="overflow: hidden;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+</div>
+                <div class="card graph-placeholder petty-transactions-card">
+<div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Pending Petty Cash Transactions</h3>
                         <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
                             <input type="text" id="pending-petty-search" placeholder="Search name or date..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;">
@@ -63,18 +63,18 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         <table class="data-table product-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                             <thead>
                                 <tr>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Transaction ID</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Date</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Category</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Item</th>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Remarks</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Store</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Source</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Check No.</th>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Replenish Amount</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Amount</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Status</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Action</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Transaction ID</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Date</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Category</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Item</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Remarks</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Store</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Source</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Check No.</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Replenish Amount</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Amount</th>
+                                    <th style="width: 8.33%; padding: 2px; font-size: 15px;">Status</th>
+                                    <th style="width: 8.34%; padding: 2px; font-size: 15px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-petty-tbody">
@@ -82,9 +82,9 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="card graph-placeholder petty-transactions-card" style="overflow: hidden;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+</div>
+                <div class="card graph-placeholder petty-transactions-card">
+<div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <h3>Petty Cash Transactions</h3>
                         <input type="text" id="petty-search" placeholder="Search transactions..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;" />
                     </div>
@@ -92,17 +92,17 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         <table class="data-table product-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                             <thead>
                                 <tr>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Transaction ID</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Date</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Category</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Item</th>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Remarks</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Store</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Source</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Check No.</th>
-                                    <th style="width: 140px; padding: 2px; font-size: 15px;">Replenish Amount</th>
-                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Amount</th>
-                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Status</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Transaction ID</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Date</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Category</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Item</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Remarks</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Store</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Source</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Check No.</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Replenish Amount</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Amount</th>
+                                    <th style="width: 9.09%; padding: 2px; font-size: 15px;">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="petty-tbody">
@@ -303,6 +303,23 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 }
             } catch (err) {
                 console.error('Failed to load petty cash stats:', err);
+            }
+
+            // Fetch pending transactions and calculate total pending amount
+            try {
+                const res = await fetch('/api/petty-cash/status/Pending');
+                if (res.ok) {
+                    const transactions = await res.json();
+                    const pendingTotal = transactions
+                        .filter(txn => (txn.status || '').toLowerCase() === 'pending')
+                        .reduce((sum, txn) => sum + (Number(txn.amount || 0) || 0), 0);
+                    const pendingEl = document.getElementById('pending-amount-value');
+                    if (pendingEl) {
+                        pendingEl.textContent = '₱' + pendingTotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load pending amount:', err);
             }
         };
 
