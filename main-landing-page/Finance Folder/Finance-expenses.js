@@ -534,56 +534,114 @@ function formatDateLocal(dateValue) {
 }
 
 function filterExpenses() {
-    const searchInput = document.getElementById('expense-list-search');
-    if (!searchInput) return;
-    const term = searchInput.value.trim().toLowerCase();
-    if (!term) {
-        renderExpenseListPage();
-        return;
-    }
-    const filtered = expensesData.filter(exp => {
-        const searchable = [
-            exp.expense_list_id,
-            exp.tracking_id,
-            formatDateLocal(exp.date),
-            exp.accounting_code,
-            exp.expense_type,
-            Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        ].join(' ').toLowerCase();
-        return searchable.includes(term);
-    });
-    expenseListCurrentPage = 1;
-    renderFilteredExpenseListPage(filtered);
-}
-
-function sortExpenses(column) {
-    if (expenseListSortColumn === column) {
-        expenseListSortDirection = expenseListSortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        expenseListSortColumn = column;
-        expenseListSortDirection = 'asc';
+        const searchInput = document.getElementById('expense-list-search');
+        if (!searchInput) return;
+        const term = searchInput.value.trim().toLowerCase();
+        let filtered = expensesData;
+        if (term) {
+            filtered = expensesData.filter(exp => {
+                const searchable = [
+                    exp.expense_list_id,
+                    exp.tracking_id,
+                    formatDateLocal(exp.date),
+                    exp.accounting_code,
+                    exp.expense_type,
+                    Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                ].join(' ').toLowerCase();
+                return searchable.includes(term);
+            });
+        }
+        expenseListCurrentPage = 1;
+        applyFilterAndSort(filtered);
     }
 
-    const sorted = [...expensesData].sort((a, b) => {
-        let valA = a[column];
-        let valB = b[column];
-
-        if (column === 'date') {
-            valA = valA ? new Date(valA).getTime() : 0;
-            valB = valB ? new Date(valB).getTime() : 0;
+    function sortExpenses(column) {
+        if (expenseListSortColumn === column) {
+            expenseListSortDirection = expenseListSortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            valA = (valA || '').toString().toLowerCase();
-            valB = (valB || '').toString().toLowerCase();
+            expenseListSortColumn = column;
+            expenseListSortDirection = 'asc';
+        }
+        expenseListCurrentPage = 1;
+
+        const searchInput = document.getElementById('expense-list-search');
+        const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        let filtered = expensesData;
+        if (term) {
+            filtered = expensesData.filter(exp => {
+                const searchable = [
+                    exp.expense_list_id,
+                    exp.tracking_id,
+                    formatDateLocal(exp.date),
+                    exp.accounting_code,
+                    exp.expense_type,
+                    Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                ].join(' ').toLowerCase();
+                return searchable.includes(term);
+            });
         }
 
-        if (valA < valB) return expenseListSortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return expenseListSortDirection === 'asc' ? 1 : -1;
-        return 0;
-    });
+        applyFilterAndSort(filtered);
+    }
 
-    updateSortIndicators();
-    renderFilteredExpenseListPage(sorted);
-}
+    function applyFilterAndSort(sourceData) {
+        let displayData = [...sourceData];
+        if (expenseListSortColumn) {
+            displayData.sort((a, b) => {
+                let valA = a[expenseListSortColumn];
+                let valB = b[expenseListSortColumn];
+                if (expenseListSortColumn === 'date') {
+                    valA = valA ? new Date(valA).getTime() : 0;
+                    valB = valB ? new Date(valB).getTime() : 0;
+                } else {
+                    valA = (valA || '').toString().toLowerCase();
+                    valB = (valB || '').toString().toLowerCase();
+                }
+                if (valA < valB) return expenseListSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return expenseListSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        const tbody = document.getElementById('expense-list-body');
+        if (!tbody) return;
+
+        const computedTotalPages = Math.max(1, Math.ceil(displayData.length / expenseListRowsPerPage));
+        if (expenseListCurrentPage > computedTotalPages) {
+            expenseListCurrentPage = computedTotalPages;
+        }
+
+        const start = (expenseListCurrentPage - 1) * expenseListRowsPerPage;
+        const end = start + expenseListRowsPerPage;
+        const pageData = displayData.slice(start, end);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No expenses found</td></tr>';
+            renderExpenseListPagination(computedTotalPages);
+            updateSortIndicators();
+            return;
+        }
+
+        tbody.innerHTML = pageData.map(exp => `
+            <tr>
+                <td>${exp.expense_list_id || '-'}</td>
+                <td>${exp.tracking_id || '-'}</td>
+                <td>${formatDateLocal(exp.date)}</td>
+                <td>${exp.accounting_code || '-'}</td>
+                <td>${exp.expense_type || '-'}</td>
+                <td>${exp.description || '-'}</td>
+                <td>${exp.remarks || '-'}</td>
+                <td>${Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>${exp.account_source || '-'}</td>
+                <td>${formatDateLocal(exp.cleared_date)}</td>
+                <td>${exp.status || '-'}</td>
+                <td style="text-align: center; color: #e74c3c; font-weight: bold; cursor: pointer; font-size: 20px; padding: 8px;"><span class="delete-expense-btn" data-expense-id="${exp.id}" style="cursor: pointer;">&times;</span></td>
+            </tr>
+        `).join('');
+
+        renderExpenseListPagination(computedTotalPages);
+        updateSortIndicators();
+    }
 
 function updateSortIndicators() {
     document.querySelectorAll('#expense-list-body').forEach(el => {});
@@ -602,185 +660,105 @@ function updateSortIndicators() {
     });
 }
 
-function renderFilteredExpenseListPage(filteredData) {
-    const tbody = document.getElementById('expense-list-body');
-    if (!tbody) return;
-    const start = (expenseListCurrentPage - 1) * expenseListRowsPerPage;
-    const end = start + expenseListRowsPerPage;
-    const pageData = filteredData.slice(start, end);
-    if (pageData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No expenses found</td></tr>';
-        return;
-    }
-    tbody.innerHTML = pageData.map(exp => `
-        <tr>
-            <td>${exp.expense_list_id || '-'}</td>
-            <td>${exp.tracking_id || '-'}</td>
-            <td>${formatDateLocal(exp.date)}</td>
-            <td>${exp.accounting_code || '-'}</td>
-            <td>${exp.expense_type || '-'}</td>
-            <td>${exp.description || '-'}</td>
-            <td>${exp.remarks || '-'}</td>
-            <td>${Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td>${exp.account_source || '-'}</td>
-            <td>${formatDateLocal(exp.cleared_date)}</td>
-            <td>${exp.status || '-'}</td>
-            <td style="text-align: center; color: #e74c3c; font-weight: bold; cursor: pointer; font-size: 20px; padding: 8px;"><span class="delete-expense-btn" data-expense-id="${exp.id}" style="cursor: pointer;">&times;</span></td>
-        </tr>
-    `).join('');
-    const totalPages = Math.max(1, Math.ceil(filteredData.length / expenseListRowsPerPage));
-    renderExpenseListPagination(totalPages, filteredData);
-    updateSortIndicators();
-}
-
 function renderExpenseListPage() {
-    const tbody = document.getElementById('expense-list-body');
-    if (!tbody) return;
+        applyFilterAndSort(expensesData);
+    }
 
-    let displayData = expensesData;
-    if (expenseListSortColumn) {
-        displayData = [...expensesData].sort((a, b) => {
-            let valA = a[expenseListSortColumn];
-            let valB = b[expenseListSortColumn];
-            if (expenseListSortColumn === 'date') {
-                valA = valA ? new Date(valA).getTime() : 0;
-                valB = valB ? new Date(valB).getTime() : 0;
-            } else {
-                valA = (valA || '').toString().toLowerCase();
-                valB = (valB || '').toString().toLowerCase();
+function renderExpenseListPagination(totalPages) {
+        const container = document.getElementById('expense-list-pagination');
+        if (!container) return;
+
+        let html = '';
+
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="expense-list-first-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
+        }
+        html += `<button class="page-btn" id="expense-list-prev-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${i}">${i}</button>`;
             }
-            if (valA < valB) return expenseListSortDirection === 'asc' ? -1 : 1;
-            if (valA > valB) return expenseListSortDirection === 'asc' ? 1 : -1;
-            return 0;
+        } else {
+            const startPage = Math.max(1, expenseListCurrentPage - 3);
+            const endPage = Math.min(totalPages, startPage + 6);
+            const actualStart = Math.max(1, endPage - 6);
+
+            let currentPage = actualStart;
+            for (let i = 0; i < 7 && currentPage + i <= endPage; i++) {
+                const pageNum = currentPage + i;
+                html += `<button class="page-btn ${pageNum === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${pageNum}">${pageNum}</button>`;
+            }
+        }
+
+        html += `<button class="page-btn" id="expense-list-next-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="expense-list-last-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>&#120993; Last</button>`;
+        }
+
+        container.innerHTML = html;
+
+        const refresh = () => {
+            const searchInput = document.getElementById('expense-list-search');
+            const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            let filtered = expensesData;
+            if (term) {
+                filtered = expensesData.filter(exp => {
+                    const searchable = [
+                        exp.expense_list_id,
+                        exp.tracking_id,
+                        formatDateLocal(exp.date),
+                        exp.accounting_code,
+                        exp.expense_type,
+                        Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    ].join(' ').toLowerCase();
+                    return searchable.includes(term);
+                });
+            }
+            applyFilterAndSort(filtered);
+        };
+
+        document.getElementById('expense-list-first-btn')?.addEventListener('click', () => {
+            if (expenseListCurrentPage !== 1) {
+                expenseListCurrentPage = 1;
+                refresh();
+            }
         });
-    }
-    
-    const start = (expenseListCurrentPage - 1) * expenseListRowsPerPage;
-    const end = start + expenseListRowsPerPage;
-    const pageData = displayData.slice(start, end);
-    
-    if (pageData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No expenses found</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = pageData.map(exp => `
-        <tr>
-            <td>${exp.expense_list_id || '-'}</td>
-            <td>${exp.tracking_id || '-'}</td>
-            <td>${formatDateLocal(exp.date)}</td>
-            <td>${exp.accounting_code || '-'}</td>
-            <td>${exp.expense_type || '-'}</td>
-            <td>${exp.description || '-'}</td>
-            <td>${exp.remarks || '-'}</td>
-            <td>${Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td>${exp.account_source || '-'}</td>
-            <td>${formatDateLocal(exp.cleared_date)}</td>
-            <td>${exp.status || '-'}</td>
-            <td style="text-align: center; color: #e74c3c; font-weight: bold; cursor: pointer; font-size: 20px; padding: 8px;"><span class="delete-expense-btn" data-expense-id="${exp.id}" style="cursor: pointer;">&times;</span></td>
-        </tr>
-    `).join('');
-    
-    const totalPages = Math.max(1, Math.ceil(displayData.length / expenseListRowsPerPage));
-    renderExpenseListPagination(totalPages, null);
-    updateSortIndicators();
-}
 
-function renderExpenseListPagination(totalPages, filteredData) {
-    const container = document.getElementById('expense-list-pagination');
-    if (!container) return;
-    
-    let html = '';
-    
-    if (totalPages > 1) {
-        html += `<button class="page-btn" id="expense-list-first-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
-    }
-    html += `<button class="page-btn" id="expense-list-prev-btn" ${expenseListCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+        document.getElementById('expense-list-prev-btn')?.addEventListener('click', () => {
+            if (expenseListCurrentPage > 1) {
+                expenseListCurrentPage--;
+                refresh();
+            }
+        });
 
-    if (totalPages <= 7) {
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="page-btn ${i === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${i}">${i}</button>`;
-        }
-    } else {
-        const startPage = Math.max(1, expenseListCurrentPage - 3);
-        const endPage = Math.min(totalPages, startPage + 6);
-        const actualStart = Math.max(1, endPage - 6);
-        
-        let currentPage = actualStart;
-        for (let i = 0; i < 7 && currentPage + i <= endPage; i++) {
-            const pageNum = currentPage + i;
-            html += `<button class="page-btn ${pageNum === expenseListCurrentPage ? 'active' : ''}" id="expense-list-page-${pageNum}">${pageNum}</button>`;
-        }
-    }
+        document.getElementById('expense-list-next-btn')?.addEventListener('click', () => {
+            if (expenseListCurrentPage < totalPages) {
+                expenseListCurrentPage++;
+                refresh();
+            }
+        });
 
-    html += `<button class="page-btn" id="expense-list-next-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
-    
-    if (totalPages > 1) {
-        html += `<button class="page-btn" id="expense-list-last-btn" ${expenseListCurrentPage >= totalPages ? 'disabled' : ''}>&#120993; Last</button>`;
-    }
+        document.getElementById('expense-list-last-btn')?.addEventListener('click', () => {
+            if (expenseListCurrentPage < totalPages) {
+                expenseListCurrentPage = totalPages;
+                refresh();
+            }
+        });
 
-    container.innerHTML = html;
-
-    document.getElementById('expense-list-first-btn')?.addEventListener('click', () => {
-        if (expenseListCurrentPage !== 1) {
-            expenseListCurrentPage = 1;
-            if (filteredData) {
-                renderFilteredExpenseListPage(filteredData);
-            } else {
-                renderExpenseListPage();
+        const pageCount = totalPages <= 7 ? totalPages : 7;
+        const startPage = totalPages <= 7 ? 1 : Math.max(1, expenseListCurrentPage - 3);
+        for (let i = 0; i < pageCount; i++) {
+            const pageNum = totalPages <= 7 ? (i + 1) : (startPage + i);
+            if (pageNum <= totalPages) {
+                document.getElementById(`expense-list-page-${pageNum}`)?.addEventListener('click', () => {
+                    expenseListCurrentPage = pageNum;
+                    refresh();
+                });
             }
         }
-    });
-
-    document.getElementById('expense-list-prev-btn')?.addEventListener('click', () => {
-        if (expenseListCurrentPage > 1) {
-            expenseListCurrentPage--;
-            if (filteredData) {
-                renderFilteredExpenseListPage(filteredData);
-            } else {
-                renderExpenseListPage();
-            }
-        }
-    });
-
-    document.getElementById('expense-list-next-btn')?.addEventListener('click', () => {
-        if (expenseListCurrentPage < totalPages) {
-            expenseListCurrentPage++;
-            if (filteredData) {
-                renderFilteredExpenseListPage(filteredData);
-            } else {
-                renderExpenseListPage();
-            }
-        }
-    });
-
-    document.getElementById('expense-list-last-btn')?.addEventListener('click', () => {
-        if (expenseListCurrentPage < totalPages) {
-            expenseListCurrentPage = totalPages;
-            if (filteredData) {
-                renderFilteredExpenseListPage(filteredData);
-            } else {
-                renderExpenseListPage();
-            }
-        }
-    });
-
-    const pageCount = totalPages <= 7 ? totalPages : 7;
-    const startPage = totalPages <= 7 ? 1 : Math.max(1, expenseListCurrentPage - 3);
-    for (let i = 0; i < pageCount; i++) {
-        const pageNum = totalPages <= 7 ? (i + 1) : (startPage + i);
-        if (pageNum <= totalPages) {
-            document.getElementById(`expense-list-page-${pageNum}`)?.addEventListener('click', () => {
-                expenseListCurrentPage = pageNum;
-                if (filteredData) {
-                    renderFilteredExpenseListPage(filteredData);
-                } else {
-                    renderExpenseListPage();
-                }
-            });
-        }
     }
-}
 
 function setupExpenseListSort() {
     document.querySelectorAll('.sortable').forEach(th => {

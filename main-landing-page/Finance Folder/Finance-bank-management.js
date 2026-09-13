@@ -38,6 +38,7 @@ ModuleComponents['finance-bank-management'] = (container) => {
                                 <th>Bank Account No.</th>
                                 <th>Status</th>
                                 <th>Starting Bank Cash</th>
+                                    <th>Adjusted Cash</th>
                             </tr>
                         </thead>
                         <tbody id="bank-accounts-table-body">
@@ -122,30 +123,51 @@ ModuleComponents['finance-bank-management'] = (container) => {
 var API_BASE_BANK_ACCOUNTS = '/api/bank-accounts';
 
 async function loadAccountsCarousel() {
-    const carousel = document.getElementById('accounts-carousel');
-    if (!carousel) return;
+        const carousel = document.getElementById('accounts-carousel');
+        if (!carousel) return;
 
-    try {
-        const res = await fetch(`${API_BASE_BANK_ACCOUNTS}`);
-        if (!res.ok) throw new Error('Failed to fetch bank accounts');
-        const accounts = await res.json();
+        try {
+            const [accRes, expRes] = await Promise.all([
+                fetch(`${API_BASE_BANK_ACCOUNTS}`),
+                fetch('/api/expenses', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                })
+            ]);
+            if (!accRes.ok) throw new Error('Failed to fetch bank accounts');
+            const accounts = await accRes.json();
+            const expenses = expRes.ok ? await expRes.json() : [];
 
-        carousel.innerHTML = accounts.map(acc => `
-            <div style="flex: 0 0 calc(33.333% - 12px); padding: 24px; border-radius: 8px; background: #f9f9f9; border: 1px solid #e0e0e0;">
-                <div style="font-weight: 700; font-size: 22px; color: #1a1f2e;">${acc.bank || '-'}</div>
-                <div style="font-size: 14px; color: #555; margin-top: 6px;">${acc.bank_code || ''}</div>
-                <div style="font-size: 14px; color: #555; margin-top: 4px;">Account No. : ${acc.bank_account_number || '-'}</div>
-                <div style="font-size: 14px; color: #555; margin-top: 4px;">Starting Cash : P ${Number(acc.starting_bank_cash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                <div style="font-size: 24px; font-weight: 700; color: #1a1f2e; margin-top: 10px;">${acc.status || ''}</div>
-            </div>
-        `).join('');
+            const expenseTotalsByBank = {};
+            expenses.forEach(exp => {
+                const src = exp.account_source;
+                if (!src || src.startsWith('LOAN:')) return;
+                if (!expenseTotalsByBank[src]) expenseTotalsByBank[src] = 0;
+                expenseTotalsByBank[src] += parseFloat(exp.total_amount || 0);
+            });
 
-        initAccountsCarousel();
-    } catch (err) {
-        console.error('Failed to load accounts carousel', err);
-        carousel.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load accounts</div>';
+            carousel.innerHTML = accounts.map(acc => {
+                const bankCode = (acc.bank_code || '').trim();
+                const expenseTotal = expenseTotalsByBank[bankCode] || 0;
+                const startingCash = parseFloat(acc.starting_bank_cash || 0);
+                const adjustedCash = startingCash - expenseTotal;
+                const isNegative = adjustedCash < 0;
+                return `
+                    <div style="flex: 0 0 calc(33.333% - 12px); padding: 24px; border-radius: 8px; background: #f9f9f9; border: 1px solid #e0e0e0;">
+                        <div style="font-weight: 700; font-size: 22px; color: #1a1f2e;">${acc.bank || '-'}</div>
+                        <div style="font-size: 14px; color: #555; margin-top: 6px;">${acc.bank_code || ''}</div>
+                        <div style="font-size: 14px; color: #555; margin-top: 4px;">Account No. : ${acc.bank_account_number || '-'}</div>
+                        <div style="font-size: 14px; color: #555; margin-top: 4px;">Starting Cash : <span style="color: ${isNegative ? '#e74c3c' : '#1a1f2e'}; font-weight: 600;">P ${Math.abs(adjustedCash).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>${isNegative ? ' (deficit)' : ''}</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1a1f2e; margin-top: 10px;">${acc.status || ''}</div>
+                    </div>
+                `;
+            }).join('');
+
+            initAccountsCarousel();
+        } catch (err) {
+            console.error('Failed to load accounts carousel', err);
+            carousel.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load accounts</div>';
+        }
     }
-}
 
 function initAccountsCarousel() {
     const carousel = document.getElementById('accounts-carousel');
@@ -465,21 +487,41 @@ var bankAccountsData = [];
 var BANK_ACCOUNTS_PER_PAGE = 5;
 
 async function loadBankAccountsTable() {
-    const tbody = document.getElementById('bank-accounts-table-body');
-    if (!tbody) return;
-    
-    try {
-        const res = await fetch(`${API_BASE_BANK_ACCOUNTS}`);
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const tbody = document.getElementById('bank-accounts-table-body');
+        if (!tbody) return;
+
+        try {
+            const [accRes, expRes] = await Promise.all([
+                fetch(`${API_BASE_BANK_ACCOUNTS}`),
+                fetch('/api/expenses', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                })
+            ]);
+            if (!accRes.ok) {
+                throw new Error(`HTTP ${accRes.status}: ${accRes.statusText}`);
+            }
+            bankAccountsData = await accRes.json();
+            const expenses = expRes.ok ? await expRes.json() : [];
+
+            const expenseTotalsByBank = {};
+            expenses.forEach(exp => {
+                const src = exp.account_source;
+                if (!src || src.startsWith('LOAN:')) return;
+                if (!expenseTotalsByBank[src]) expenseTotalsByBank[src] = 0;
+                expenseTotalsByBank[src] += parseFloat(exp.total_amount || 0);
+            });
+
+            bankAccountsData = bankAccountsData.map(acc => ({
+                ...acc,
+                adjusted_starting_cash: parseFloat(acc.starting_bank_cash || 0) - (expenseTotalsByBank[acc.bank_code] || 0)
+            }));
+
+            renderBankAccountsTable();
+        } catch (err) {
+            console.error('Failed to load bank accounts', err);
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #e74c3c;">Error loading bank accounts. Please refresh.</td></tr>';
         }
-        bankAccountsData = await res.json();
-        renderBankAccountsTable();
-    } catch (err) {
-        console.error('Failed to load bank accounts', err);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #e74c3c;">Error loading bank accounts. Please refresh.</td></tr>';
     }
-}
 
 function renderBankAccountsTable() {
     const tbody = document.getElementById('bank-accounts-table-body');
@@ -489,23 +531,26 @@ function renderBankAccountsTable() {
     const end = start + BANK_ACCOUNTS_PER_PAGE;
     const pageData = bankAccountsData.slice(start, end);
     
-    let html = pageData.map(acc => `
-        <tr>
-            <td>${acc.bank_account_id}</td>
-            <td>${acc.bank_code || ''}</td>
-            <td>${acc.bank}</td>
-            <td>${acc.address || ''}</td>
-            <td>${acc.bank_account_number}</td>
-            <td>${acc.status}</td>
-            <td>${Number(acc.starting_bank_cash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        </tr>
-    `).join('');
-    
-    const totalPages = Math.ceil(bankAccountsData.length / BANK_ACCOUNTS_PER_PAGE);
-    const rowsNeeded = Math.min(BANK_ACCOUNTS_PER_PAGE, totalPages * BANK_ACCOUNTS_PER_PAGE - (bankAccountsCurrentPage - 1) * BANK_ACCOUNTS_PER_PAGE);
-    for (let i = pageData.length; i < BANK_ACCOUNTS_PER_PAGE; i++) {
-        html += `<tr class="empty-row"><td colspan="7" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>`;
-    }
+let html = pageData.map(acc => {
+            const adj = acc.adjusted_starting_cash;
+            const isNeg = adj < 0;
+            return `
+            <tr>
+                <td>${acc.bank_account_id}</td>
+                <td>${acc.bank_code || ''}</td>
+                <td>${acc.bank}</td>
+                <td>${acc.address || ''}</td>
+                <td>${acc.bank_account_number}</td>
+                <td>${acc.status}</td>
+                <td>${Number(acc.starting_bank_cash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td style="color: ${isNeg ? '#e74c3c' : '#1a1f2e'}; font-weight: 600;">${isNeg ? '-' : ''}P ${Math.abs(adj).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>`;
+        }).join('');
+
+        const totalPages = Math.ceil(bankAccountsData.length / BANK_ACCOUNTS_PER_PAGE);
+        for (let i = pageData.length; i < BANK_ACCOUNTS_PER_PAGE; i++) {
+            html += `<tr class="empty-row"><td colspan="8" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>`;
+        }
     
     tbody.innerHTML = html;
     renderBankAccountsPagination(totalPages);
