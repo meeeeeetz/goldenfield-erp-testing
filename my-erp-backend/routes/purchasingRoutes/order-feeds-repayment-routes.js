@@ -27,18 +27,18 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    try {
-        const { repayment_id, order_id, bank_source, check_number, total } = req.body;
-        
-        if (!repayment_id || !order_id || typeof total !== 'number') {
-            return res.status(400).json({ error: 'repayment_id, order_id, and total are required' });
-        }
+        try {
+            const { repayment_id, order_id, bank_source, check_number, total, date } = req.body;
+            
+            if (!repayment_id || !order_id || typeof total !== 'number') {
+                return res.status(400).json({ error: 'repayment_id, order_id, and total are required' });
+            }
 
-        const result = await controller.createRepayment(repayment_id, order_id, bank_source, check_number, total);
-        res.status(201).json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+            const result = await controller.createRepayment(repayment_id, order_id, bank_source, check_number, total, date);
+            res.status(201).json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
 
 module.exports = router;

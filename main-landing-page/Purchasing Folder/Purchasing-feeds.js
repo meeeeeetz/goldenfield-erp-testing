@@ -210,7 +210,6 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                                 <tr class="empty-row"><td colspan="8" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>
                                 <tr class="empty-row"><td colspan="8" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>
                                 <tr class="empty-row"><td colspan="8" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>
-                                <tr class="empty-row"><td colspan="8" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -432,10 +431,11 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                                         <th>Feed Type</th>
                                         <th>Quantity</th>
                                         <th>Total Price</th>
+                                        <th style="width: 40px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="repayment-search-results">
-                                    <tr class="empty-row"><td colspan="6" style="height: 48px; background: #fff;">&nbsp;</td></tr>
+                                    <tr class="empty-row"><td colspan="7" style="height: 48px; background: #fff;">&nbsp;</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -918,14 +918,41 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 console.error('Failed to load banks', err);
             }
 
+            try {
+                const loanRes = await fetch('/api/loan-accounts', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (loanRes.ok) {
+                    const loanAccounts = await loanRes.json();
+                    const activeLoanAccounts = loanAccounts.filter(a => a.status === 'Active');
+                    if (activeLoanAccounts.length > 0) {
+                        const separator = document.createElement('option');
+                        separator.disabled = true;
+                        separator.textContent = '--- Active Loan Accounts ---';
+                        bankSelect.appendChild(separator);
+                        activeLoanAccounts.forEach(account => {
+                            const option = document.createElement('option');
+                            option.value = 'LOAN:' + account.loan_account_id;
+                            option.dataset.loanAccountId = account.loan_account_id;
+                            option.textContent = account.company_individual || account.loan_account_id;
+                            bankSelect.appendChild(option);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load loan accounts', err);
+            }
+
             const tbody = document.getElementById('repayment-search-results');
             if (tbody) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="6" style="height: 48px; background: #fff;">&nbsp;</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7" style="height: 48px; background: #fff;">&nbsp;</td></tr>';
             }
             updateRepaymentGrandTotal();
 
             const select = document.getElementById('repayment-search');
             select.innerHTML = '<option value="">-- Select Pending Feed --</option>';
+
+            window.__repaymentPendingOrders = {};
 
             try {
                 const idRes = await fetch('/api/order-feeds-repayment/next-id', {
@@ -957,7 +984,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         option.dataset.feedType = order.feed_type || '';
                         option.dataset.quantity = order.quantity || '';
                         option.dataset.totalPrice = order.total_price || '';
-                        option.textContent = `${order.order_id} - ${order.company_name || 'Unknown'} [${order.rebate_status || 'Unclaimed'}]`;
+                        option.textContent = `${order.sales_invoice || 'No Invoice'} - ${order.company_name || 'Unknown'} [${order.rebate_status || 'Unclaimed'}]`;
+                        window.__repaymentPendingOrders[order.order_id] = option;
                         select.appendChild(option);
                     });
                 }
@@ -989,16 +1017,21 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 tbody.innerHTML = '';
             }
 
+            const orderId = selected.dataset.orderId || selected.value;
             const row = document.createElement('tr');
+            row.dataset.orderId = orderId;
             row.innerHTML = `
-                <td>${selected.dataset.orderId || selected.value}</td>
+                <td>${orderId}</td>
                 <td>${selected.dataset.supplier || '-'}</td>
                 <td>${selected.dataset.invoice || '-'}</td>
                 <td>${selected.dataset.feedType || '-'}</td>
                 <td>${formatNumber(parseFloat(selected.dataset.quantity))}</td>
                 <td>P ${formatNumber(parseFloat(selected.dataset.totalPrice || 0))}</td>
+                <td><button class="remove-repay-row-btn" data-order-id="${orderId}" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:16px; padding:2px 6px;" title="Remove">&times;</button></td>
             `;
             tbody.appendChild(row);
+
+            selected.remove();
 
             updateRepaymentGrandTotal();
 
@@ -1019,17 +1052,22 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             tbody.innerHTML = '';
 
             options.forEach(option => {
+                const orderId = option.dataset.orderId || option.value;
                 const row = document.createElement('tr');
+                row.dataset.orderId = orderId;
                 row.innerHTML = `
-                    <td>${option.dataset.orderId || option.value}</td>
+                    <td>${orderId}</td>
                     <td>${option.dataset.supplier || '-'}</td>
                     <td>${option.dataset.invoice || '-'}</td>
                     <td>${option.dataset.feedType || '-'}</td>
                     <td>${formatNumber(parseFloat(option.dataset.quantity))}</td>
                     <td>P ${formatNumber(parseFloat(option.dataset.totalPrice || 0))}</td>
+                    <td><button class="remove-repay-row-btn" data-order-id="${orderId}" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:16px; padding:2px 6px;" title="Remove">&times;</button></td>
                 `;
                 tbody.appendChild(row);
             });
+
+            select.innerHTML = '<option value="">-- Select Pending Feed --</option>';
 
             updateRepaymentGrandTotal();
         });
@@ -1042,15 +1080,37 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             let total = 0;
             const rows = tbody.querySelectorAll('tr:not(.empty-row)');
             rows.forEach(row => {
-                const lastCell = row.querySelector('td:last-child');
-                if (lastCell) {
-                    const text = lastCell.textContent.replace('P ', '').replace(',', '');
+                const priceCell = row.querySelector('td:nth-child(6)');
+                if (priceCell) {
+                    const text = priceCell.textContent.replace('P ', '').replace(',', '');
                     const num = parseFloat(text);
                     if (!isNaN(num)) total += num;
                 }
             });
 
             grandTotalEl.textContent = 'P ' + formatNumber(total);
+        }
+
+        const repaymentTbody = document.getElementById('repayment-search-results');
+        if (repaymentTbody) {
+            repaymentTbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-repay-row-btn');
+                if (!btn) return;
+                const orderId = btn.dataset.orderId;
+                const row = btn.closest('tr');
+                if (!row) return;
+
+                row.remove();
+
+                const select = document.getElementById('repayment-search');
+                const storedOption = window.__repaymentPendingOrders && window.__repaymentPendingOrders[orderId];
+                if (storedOption && select) {
+                    const clone = storedOption.cloneNode(true);
+                    select.appendChild(clone);
+                }
+
+                updateRepaymentGrandTotal();
+            });
         }
 
         document.getElementById('close-repayment-modal').onclick = () => {
@@ -1068,14 +1128,29 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             const bankSource = document.getElementById('repayment-bank-source').value;
             const checkNumber = document.getElementById('repayment-check-number').value;
 
-            try {
-                const idRes = await fetch('/api/order-feeds-repayment/next-id', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                });
-                if (!idRes.ok) throw new Error('Failed to get repayment ID');
-                const { repayment_id } = await idRes.json();
+            const bankSelect = document.getElementById('repayment-bank-source');
+            const selectedOption = bankSelect && bankSelect.selectedOptions && bankSelect.selectedOptions[0];
+            const isLoanAccount = bankSource && bankSource.startsWith('LOAN:');
+            const loanAccountId = isLoanAccount ? bankSource.replace('LOAN:', '') : null;
+            const loanAccountName = (selectedOption && selectedOption.textContent) || loanAccountId || '';
 
-                const promises = Array.from(rows).map(async (row) => {
+            let expenseStatus = 'Cleared';
+            if (isLoanAccount && loanAccountName) {
+                expenseStatus = 'Cleared by ' + loanAccountName;
+            }
+
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const savedRepaymentIds = [];
+
+                for (const row of Array.from(rows)) {
+                    const idRes = await fetch('/api/order-feeds-repayment/next-id', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (!idRes.ok) throw new Error('Failed to get repayment ID');
+                    const { repayment_id } = await idRes.json();
+                    savedRepaymentIds.push(repayment_id);
+
                     const cells = row.querySelectorAll('td');
                     const orderId = cells[0].textContent.trim();
                     const totalText = cells[5].textContent.replace('P ', '').replace(',', '');
@@ -1092,7 +1167,8 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                             order_id: orderId,
                             bank_source: bankSource,
                             check_number: checkNumber,
-                            total
+                            total,
+                            date: today
                         })
                     });
 
@@ -1101,10 +1177,49 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         throw new Error(errData.error || 'Failed to save repayment');
                     }
 
-                    return res.json();
-                });
+                    await res.json();
+                }
 
-                await Promise.all(promises);
+                if (isLoanAccount) {
+                    try {
+                        const loanIdRes = await fetch('/api/loan-transactions/next-id?prefix=LoApID', {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                        });
+                        if (!loanIdRes.ok) throw new Error('Failed to get loan transaction ID');
+                        const { next_id } = await loanIdRes.json();
+
+                        const grandTotalText = document.getElementById('repayment-grand-total').textContent.replace('P ', '').replace(/,/g, '');
+                        const grandTotal = parseFloat(grandTotalText) || 0;
+
+                        const loanTxRes = await fetch('/api/loan-transactions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                            },
+                            body: JSON.stringify({
+                                loan_transaction_id: next_id,
+                                source_id: savedRepaymentIds.join(', ') || null,
+                                date: today,
+                                loan_account_id: loanAccountId,
+                                borrow_amount: grandTotal,
+                                payment_interest_amount: 0,
+                                payment_principal_amount: 0,
+                                source_account: null,
+                                check_number: checkNumber || null
+                            })
+                        });
+
+                        if (!loanTxRes.ok) {
+                            const errData = await loanTxRes.json().catch(() => ({}));
+                            throw new Error(errData.error || 'Failed to create loan transaction');
+                        }
+                    } catch (loanErr) {
+                        console.error('Failed to create loan transaction', loanErr);
+                        alert('Failed to create loan transaction: ' + (loanErr.message || 'Unknown error'));
+                        return;
+                    }
+                }
 
                 const orderIds = Array.from(rows).map(row => {
                     const cells = row.querySelectorAll('td');
@@ -1120,7 +1235,6 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                     body: JSON.stringify({ order_ids: orderIds })
                 });
 
-                const today = new Date().toISOString().split('T')[0];
                 const expenseUpdatePromises = orderIds.map(orderId =>
                     fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(orderId)}`, {
                         method: 'PUT',
@@ -1131,7 +1245,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         body: JSON.stringify({
                             account_source: bankSource,
                             cleared_date: today,
-                            status: 'Paid'
+                            status: expenseStatus
                         })
                     }).then(res => {
                         if (!res.ok) return res.json().catch(() => ({}));
@@ -1162,6 +1276,14 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             const last3 = accountNumber.slice(-3);
             const stars = '*'.repeat(accountNumber.length - 5);
             return `${first2}${stars}${last3}`;
+        }
+
+        function formatBankSource(source) {
+            if (!source) return '-';
+            if (source.startsWith('LOAN:')) {
+                return source.replace('LOAN:', '') + ' (Loan Account)';
+            }
+            return source;
         }
 
         function formatNumber(num) {
@@ -2768,12 +2890,12 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 <tr>
                     <td>${r.repayment_id || '-'}</td>
                     <td>${r.order_id || '-'}</td>
-                    <td>${formatDate(r.created_at)}</td>
+                    <td>${formatDate(r.date || r.created_at)}</td>
                     <td>${r.sales_invoice || '-'}</td>
                     <td>${r.check_number || '-'}</td>
                     <td>P ${formatNumber(parseFloat(r.total || 0))}</td>
                     <td>Paid</td>
-                    <td>${r.bank_code || r.bank_source || '-'}</td>
+                    <td>${formatBankSource(r.bank_code || r.bank_source || '-')}</td>
                 </tr>
             `).join('');
 

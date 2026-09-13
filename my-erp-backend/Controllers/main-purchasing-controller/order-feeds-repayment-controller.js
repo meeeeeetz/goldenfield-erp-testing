@@ -12,15 +12,15 @@ class OrderFeedRepaymentController {
         return 'ReOrFeID-' + (maxNum + 1);
     }
 
-    async createRepayment(repaymentId, orderId, bankSource, checkNumber, total) {
+    async createRepayment(repaymentId, orderId, bankSource, checkNumber, total, date) {
         const client = await this.db.connect();
         try {
             await client.query('BEGIN');
 
             const insertQuery = `
                 INSERT INTO order_feeds_repayment 
-                (repayment_id, order_id, bank_source, check_number, total) 
-                VALUES ($1, $2, $3, $4, $5)
+                (repayment_id, order_id, bank_source, check_number, total, date) 
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
             `;
             const result = await client.query(insertQuery, [
@@ -28,7 +28,8 @@ class OrderFeedRepaymentController {
                 orderId,
                 bankSource || null,
                 checkNumber || null,
-                total
+                total,
+                date || new Date().toISOString().split('T')[0]
             ]);
             const repayment = result.rows[0];
 

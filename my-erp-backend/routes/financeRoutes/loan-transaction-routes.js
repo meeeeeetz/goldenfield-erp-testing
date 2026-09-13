@@ -66,29 +66,30 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 router.post('/', authenticateToken, async (req, res) => {
-    try {
-        const { loan_transaction_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number } = req.body;
+        try {
+            const { loan_transaction_id, source_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number } = req.body;
         
-        if (!loan_transaction_id || !date || !loan_account_id) {
-            return res.status(400).json({ error: 'loan_transaction_id, date, and loan_account_id are required' });
-        }
+            if (!loan_transaction_id || !date || !loan_account_id) {
+                return res.status(400).json({ error: 'loan_transaction_id, date, and loan_account_id are required' });
+            }
 
-        const result = await controller.createTransaction({
-            loan_transaction_id,
-            date,
-            loan_account_id,
-            borrow_amount: borrow_amount || 0,
-            payment_interest_amount: payment_interest_amount || 0,
-            payment_principal_amount: payment_principal_amount || 0,
-            source_account: source_account || null,
-            check_number: check_number || null,
-            created_by: req.user?.id || null
-        });
-        res.status(201).json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+            const result = await controller.createTransaction({
+                loan_transaction_id,
+                source_id,
+                date,
+                loan_account_id,
+                borrow_amount: borrow_amount || 0,
+                payment_interest_amount: payment_interest_amount || 0,
+                payment_principal_amount: payment_principal_amount || 0,
+                source_account: source_account || null,
+                check_number: check_number || null,
+                created_by: req.user?.id || null
+            });
+            res.status(201).json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {

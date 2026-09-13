@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS loan_transactions (
     id SERIAL PRIMARY KEY,
     loan_transaction_id VARCHAR(50) UNIQUE NOT NULL,
+    source_id VARCHAR(255),
     date DATE NOT NULL,
     loan_account_id VARCHAR(50) NOT NULL,
     borrow_amount DECIMAL(15,2) DEFAULT 0,

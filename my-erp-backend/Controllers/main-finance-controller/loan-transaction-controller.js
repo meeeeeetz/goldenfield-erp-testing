@@ -53,15 +53,16 @@ class LoanTransactionController {
     }
 
     async createTransaction(transactionData) {
-        const { loan_transaction_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number, created_by } = transactionData;
+        const { loan_transaction_id, source_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number, created_by } = transactionData;
         const query = `
             INSERT INTO loan_transactions 
-            (loan_transaction_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            (loan_transaction_id, source_id, date, loan_account_id, borrow_amount, payment_interest_amount, payment_principal_amount, source_account, check_number, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
         `;
         const result = await this.db.query(query, [
             loan_transaction_id,
+            source_id || null,
             date,
             loan_account_id,
             borrow_amount || 0,

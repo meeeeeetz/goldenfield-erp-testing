@@ -93,20 +93,21 @@ ModuleComponents['finance-loans'] = (container) => {
                 <h3>Loan Transaction</h3>
                 <div class="table-wrap">
                     <table class="data-table product-table">
-                        <thead>
-                            <tr>
-                                <th>Loan Transaction ID</th>
-                                <th>Date</th>
-                                <th>Loan Account</th>
-                                <th>Borrow</th>
-                                <th>Pay Principal</th>
-                                <th>Pay Interest</th>
-                                <th>Source Account</th>
-                                <th>Check Number</th>
-                                <th>Remaining Balance</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
+<thead>
+                                <tr>
+                                    <th>Loan Transaction ID</th>
+                                    <th>Source ID</th>
+                                    <th>Date</th>
+                                    <th>Loan Account</th>
+                                    <th>Borrow</th>
+                                    <th>Pay Principal</th>
+                                    <th>Pay Interest</th>
+                                    <th>Source Account</th>
+                                    <th>Check Number</th>
+                                    <th>Remaining Balance</th>
+                                    <th>Delete</th>
+                                </tr>
+                            </thead>
                         <tbody id="loan-transactions-table-body">
                         </tbody>
                     </table>
@@ -896,6 +897,7 @@ ModuleComponents['finance-loans'] = (container) => {
             return `
                 <tr>
                     <td>${t.loan_transaction_id || '-'}</td>
+                    <td>${t.source_id || '-'}</td>
                     <td>${t.date ? new Date(t.date).toLocaleDateString() : '-'}</td>
                     <td>${acct || '-'}</td>
                     <td>${t.borrow_amount ? fmt(t.borrow_amount) : '-'}</td>
@@ -912,7 +914,7 @@ ModuleComponents['finance-loans'] = (container) => {
         // Fill remaining rows to always show 5
         const emptyRowsNeeded = loanTransactionsPerPage - pageData.length;
         for (let i = 0; i < emptyRowsNeeded; i++) {
-            rows += '<tr class="empty-row"><td colspan="10" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
+            rows += '<tr class="empty-row"><td colspan="11" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>';
         }
 
         tbody.innerHTML = rows;
@@ -954,24 +956,76 @@ ModuleComponents['finance-loans'] = (container) => {
 
     function renderLoanTransactionsPagination(totalPages) {
         const container = document.getElementById('loan-transactions-pagination');
-        if (!container || totalPages < 2) {
-            if (container) container.innerHTML = '';
-            return;
-        }
+        if (!container) return;
 
         let html = '';
-        if (totalPages > 10) {
-            html += `<button class="page-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''} onclick="loanTransactionsCurrentPage=1; renderLoanTransactionsTable();">&laquo; 1st</button>`;
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="loan-transactions-first-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
         }
-        html += `<button class="page-btn" ${loanTransactionsCurrentPage === 1 ? 'disabled' : ''} onclick="loanTransactionsCurrentPage--; renderLoanTransactionsTable();">&lt;</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="page-btn ${i === loanTransactionsCurrentPage ? 'active' : ''}" onclick="loanTransactionsCurrentPage=${i}; renderLoanTransactionsTable();">${i}</button>`;
+        html += `<button class="page-btn" id="loan-transactions-prev-btn" ${loanTransactionsCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === loanTransactionsCurrentPage ? 'active' : ''}" id="loan-transactions-page-${i}">${i}</button>`;
+            }
+        } else {
+            let startPage = Math.max(1, loanTransactionsCurrentPage - 3);
+            let endPage = Math.min(totalPages, startPage + 6);
+            const actualStart = Math.max(1, endPage - 6);
+
+            for (let i = actualStart; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === loanTransactionsCurrentPage ? 'active' : ''}" id="loan-transactions-page-${i}">${i}</button>`;
+            }
         }
-        html += `<button class="page-btn" ${loanTransactionsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanTransactionsCurrentPage++; renderLoanTransactionsTable();">&gt;</button>`;
-        if (totalPages > 10) {
-            html += `<button class="page-btn" ${loanTransactionsCurrentPage >= totalPages ? 'disabled' : ''} onclick="loanTransactionsCurrentPage=${totalPages}; renderLoanTransactionsTable();">Last &raquo;</button>`;
+
+        html += `<button class="page-btn" id="loan-transactions-next-btn" ${loanTransactionsCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &#8594;</button>`;
+
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="loan-transactions-last-btn" ${loanTransactionsCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>&#120993; Last</button>`;
         }
+
         container.innerHTML = html;
+
+        document.getElementById('loan-transactions-first-btn')?.addEventListener('click', () => {
+            if (loanTransactionsCurrentPage !== 1 && totalPages > 1) {
+                loanTransactionsCurrentPage = 1;
+                renderLoanTransactionsTable();
+            }
+        });
+
+        document.getElementById('loan-transactions-prev-btn')?.addEventListener('click', () => {
+            if (loanTransactionsCurrentPage > 1 && totalPages > 1) {
+                loanTransactionsCurrentPage--;
+                renderLoanTransactionsTable();
+            }
+        });
+
+        document.getElementById('loan-transactions-next-btn')?.addEventListener('click', () => {
+            if (loanTransactionsCurrentPage < totalPages && totalPages > 1) {
+                loanTransactionsCurrentPage++;
+                renderLoanTransactionsTable();
+            }
+        });
+
+        document.getElementById('loan-transactions-last-btn')?.addEventListener('click', () => {
+            if (loanTransactionsCurrentPage !== totalPages && totalPages > 1) {
+                loanTransactionsCurrentPage = totalPages;
+                renderLoanTransactionsTable();
+            }
+        });
+
+        const pageCount = totalPages <= 7 ? totalPages : 7;
+        const startPage = totalPages <= 7 ? 1 : Math.max(1, loanTransactionsCurrentPage - 3);
+        const endPage = totalPages <= 7 ? totalPages : Math.min(totalPages, startPage + 6);
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.getElementById(`loan-transactions-page-${i}`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    loanTransactionsCurrentPage = i;
+                    renderLoanTransactionsTable();
+                });
+            }
+        }
     }
 
     // Loan Summary Table
