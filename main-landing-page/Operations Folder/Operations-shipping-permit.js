@@ -157,15 +157,148 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                         </div>
                     </div>
                 </div>
-                <div id="permit-modal" class="modal hidden">
-                    <div class="modal-content">
-                        <h3>Issue Shipping Permit</h3>
-                        <input type="text" placeholder="Destination" id="permit-dest-input" />
-                        <input type="text" placeholder="Vehicle / Plate" id="permit-vehicle-input" />
-                        <button id="save-permit-btn" class="btn-primary">Issue Permit</button>
-                    </div>
-                </div>
-            </div>
+                 <div id="permit-modal" class="modal hidden">
+                     <div class="modal-content">
+                         <h3>Issue Shipping Permit</h3>
+                         <input type="text" placeholder="Destination" id="permit-dest-input" />
+                         <input type="text" placeholder="Vehicle / Plate" id="permit-vehicle-input" />
+                         <button id="save-permit-btn" class="btn-primary">Issue Permit</button>
+                     </div>
+                 </div>
+                 <div id="recipient-details-modal" class="modal hidden">
+                     <div class="modal-content" style="max-width: 980px; width: 95%;">
+                         <div class="modal-header-row">
+                             <h3>Recipients Details</h3>
+                             <button class="modal-close-btn" id="close-recipient-details-modal">&times;</button>
+                         </div>
+                         <div class="modal-tabs">
+                             <button class="modal-tab active" id="tab-create-recipient" onclick="switchRecipientTab('create')">Create New Recipients</button>
+                             <button class="modal-tab" id="tab-manage-recipient" onclick="switchRecipientTab('manage')">Manage Recipients</button>
+                         </div>
+                         <div id="panel-create-recipient" class="modal-tab-panel" style="display: block;">
+                             <div class="modal-field">
+                                 <label>Recipient ID (ShReID-1 Start with)</label>
+                                 <input type="text" id="create-recipient-id" readonly />
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Customer Name</label>
+                                     <input type="text" id="create-recipient-customer-name" placeholder="Enter customer name" />
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Province</label>
+                                     <input type="text" id="create-recipient-province" placeholder="Enter province" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>City</label>
+                                     <input type="text" id="create-recipient-city" placeholder="Enter city" />
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Barangay</label>
+                                     <input type="text" id="create-recipient-barangay" placeholder="Enter barangay" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Transport Type</label>
+                                     <select id="create-recipient-transport-type" class="modal-select">
+                                         <option value="">Select Transport Type</option>
+                                         <option value="Truck">Truck</option>
+                                         <option value="Van">Van</option>
+                                         <option value="Lorries">Lorries</option>
+                                         <option value="Tricycle">Tricycle</option>
+                                         <option value="Motorcycle">Motorcycle</option>
+                                         <option value="Car">Car</option>
+                                         <option value="Pickup">Pickup</option>
+                                     </select>
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Plate Number</label>
+                                     <input type="text" id="create-recipient-plate-number" placeholder="Enter plate number" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Contact</label>
+                                     <input type="text" id="create-recipient-contact" placeholder="Enter contact person" />
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Contact Number</label>
+                                     <input type="text" id="create-recipient-contact-number" placeholder="+63 XXX-XXX-XXXX" maxlength="16" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Handlers License</label>
+                                     <input type="text" id="create-recipient-handlers-license" placeholder="Enter handlers license" />
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Handlers Expiration</label>
+                                     <input type="date" id="create-recipient-handlers-expiration" class="modal-select" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Transport Carrier</label>
+                                     <input type="text" id="create-recipient-transport-carrier" placeholder="Enter transport carrier" />
+                                 </div>
+                                 <div class="modal-field">
+                                     <label>Transport Expiration</label>
+                                     <input type="date" id="create-recipient-transport-expiration" class="modal-select" />
+                                 </div>
+                             </div>
+                             <div class="modal-meta-row">
+                                 <div class="modal-field">
+                                     <label>Status</label>
+                                     <select id="create-recipient-status" class="modal-select">
+                                         <option value="Active">Active</option>
+                                         <option value="Inactive">Inactive</option>
+                                     </select>
+                                 </div>
+                             </div>
+                             <div class="modal-tab-actions">
+                                 <button id="save-create-recipient-btn" class="btn-primary">Save</button>
+                             </div>
+                         </div>
+                         <div id="panel-manage-recipient" class="modal-tab-panel" style="display: none;">
+                             <div class="modal-field">
+                                 <label>Search Recipient</label>
+                                 <input type="text" id="manage-recipient-search" placeholder="Search by customer name, plate number..." />
+                             </div>
+                             <div class="table-wrap" style="max-height: 380px; overflow-y: auto; margin-top: 8px;">
+                                 <table class="data-table permit-table">
+                                     <thead>
+                                         <tr>
+                                             <th>Recipient ID</th>
+                                             <th>Customer Name</th>
+                                             <th>Province</th>
+                                             <th>City</th>
+                                             <th>Barangay</th>
+                                             <th>Transport Type</th>
+                                             <th>Plate Number</th>
+                                             <th>Contact</th>
+                                             <th>Contact Number</th>
+                                             <th>Handlers License</th>
+                                             <th>Handlers Expiration</th>
+                                             <th>Transport Carrier</th>
+                                             <th>Transport Expiration</th>
+                                             <th>Status</th>
+                                             <th style="width: 90px;"></th>
+                                         </tr>
+                                     </thead>
+                                 </table>
+                             </div>
+                             <div class="pagination">
+                                 <button class="page-btn">&laquo; Prev</button>
+                                 <button class="page-btn active">1</button>
+                                 <button class="page-btn">Next &raquo;</button>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
         `;
 
         document.getElementById('open-permit-modal').onclick = () => {
@@ -175,7 +308,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             alert('Renew Licenses clicked');
         };
         document.getElementById('add-recipient-details-btn').onclick = () => {
-            alert('Add Recipient Details clicked');
+            openRecipientDetailsModal();
         };
         document.getElementById('save-permit-btn').onclick = () => {
             const dest = document.getElementById('permit-dest-input').value;
@@ -183,6 +316,100 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             alert(`Issuing permit to ${dest} via ${vehicle}...`);
             document.getElementById('permit-modal').classList.add('hidden');
         };
+
+        function switchRecipientTab(tab) {
+            const createPanel = document.getElementById('panel-create-recipient');
+            const managePanel = document.getElementById('panel-manage-recipient');
+            const createTab = document.getElementById('tab-create-recipient');
+            const manageTab = document.getElementById('tab-manage-recipient');
+
+            if (tab === 'create') {
+                createPanel.style.display = 'block';
+                managePanel.style.display = 'none';
+                createTab.classList.add('active');
+                manageTab.classList.remove('active');
+            } else {
+                createPanel.style.display = 'none';
+                managePanel.style.display = 'block';
+                createTab.classList.remove('active');
+                manageTab.classList.add('active');
+            }
+        }
+
+        function openRecipientDetailsModal() {
+            const modal = document.getElementById('recipient-details-modal');
+            if (!modal) return;
+
+            document.getElementById('create-recipient-id').value = 'ShReID-1';
+            document.getElementById('create-recipient-customer-name').value = '';
+            document.getElementById('create-recipient-province').value = '';
+            document.getElementById('create-recipient-city').value = '';
+            document.getElementById('create-recipient-barangay').value = '';
+            document.getElementById('create-recipient-transport-type').value = '';
+            document.getElementById('create-recipient-plate-number').value = '';
+            document.getElementById('create-recipient-contact').value = '';
+            document.getElementById('create-recipient-contact-number').value = '';
+            document.getElementById('create-recipient-handlers-license').value = '';
+            document.getElementById('create-recipient-handlers-expiration').value = '';
+            document.getElementById('create-recipient-transport-carrier').value = '';
+            document.getElementById('create-recipient-transport-expiration').value = '';
+            document.getElementById('create-recipient-status').value = 'Active';
+
+            switchRecipientTab('create');
+            modal.classList.remove('hidden');
+        }
+
+        function closeRecipientDetailsModal() {
+            const modal = document.getElementById('recipient-details-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function saveCreateRecipient() {
+            const customerId = document.getElementById('create-recipient-id').value;
+            const customerName = document.getElementById('create-recipient-customer-name').value.trim();
+            const province = document.getElementById('create-recipient-province').value.trim();
+            const city = document.getElementById('create-recipient-city').value.trim();
+            const barangay = document.getElementById('create-recipient-barangay').value.trim();
+            const transportType = document.getElementById('create-recipient-transport-type').value;
+            const plateNumber = document.getElementById('create-recipient-plate-number').value.trim();
+            const contact = document.getElementById('create-recipient-contact').value.trim();
+            const contactNumber = document.getElementById('create-recipient-contact-number').value.trim();
+            const handlersLicense = document.getElementById('create-recipient-handlers-license').value.trim();
+            const handlersExpiration = document.getElementById('create-recipient-handlers-expiration').value;
+            const transportCarrier = document.getElementById('create-recipient-transport-carrier').value.trim();
+            const transportExpiration = document.getElementById('create-recipient-transport-expiration').value.trim();
+            const status = document.getElementById('create-recipient-status').value;
+
+            if (!customerName) {
+                alert('Customer Name is required');
+                return;
+            }
+
+            alert(`Recipient ${customerId} for ${customerName} saved successfully (design only - no backend)`);
+        }
+
+        const closeRecipientDetailsBtn = document.getElementById('close-recipient-details-modal');
+        if (closeRecipientDetailsBtn) {
+            closeRecipientDetailsBtn.onclick = closeRecipientDetailsModal;
+        }
+
+        if (document.getElementById('recipient-details-modal')) {
+            document.getElementById('recipient-details-modal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('recipient-details-modal')) {
+                    document.getElementById('recipient-details-modal').classList.add('hidden');
+                }
+            });
+        }
+
+        const saveCreateRecipientBtn = document.getElementById('save-create-recipient-btn');
+        if (saveCreateRecipientBtn) {
+            saveCreateRecipientBtn.onclick = saveCreateRecipient;
+        }
+
+        window.switchRecipientTab = switchRecipientTab;
+        window.openRecipientDetailsModal = openRecipientDetailsModal;
+        window.closeRecipientDetailsModal = closeRecipientDetailsModal;
+        window.saveCreateRecipient = saveCreateRecipient;
     };
 
 function initializeModule(contentArea) {
