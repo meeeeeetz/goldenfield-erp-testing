@@ -1330,7 +1330,13 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
 
         function formatDate(value) {
             if (!value) return '';
+            // Handle comma-separated dates
+            if (typeof value === 'string' && value.includes(',')) {
+                return value.split(',').map(v => formatDate(v.trim())).join(', ');
+            }
+            // Return YYYY-MM-DD as-is
             if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+            // Parse ISO string in local timezone
             const d = new Date(value);
             if (isNaN(d.getTime())) return value;
             const y = d.getFullYear();
@@ -1515,7 +1521,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                                     expense_type: 'Flock Acquisition',
                                     description: `RTL from ${company} with SI# ${invoice || 'N/A'}`,
                                     remarks: remarks,
-                                    total_amount: grandTotal,
+                                    total_amount: null,
                                     account_source: null,
                                     cleared_date: null,
                                     status: 'Pending'
@@ -1641,12 +1647,38 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                     activeAccounts.forEach(acc => {
                         const option = document.createElement('option');
                         option.value = acc.bank_account_id;
+                        option.dataset.bankName = acc.bank;
                         option.textContent = `${acc.bank} - ${maskBankAccount(acc.bank_account_number)}`;
                         bankSelect.appendChild(option);
                     });
                 }
             } catch (err) {
                 console.error('Failed to load banks for pay RTL', err);
+            }
+
+            try {
+                const loanRes = await fetch('/api/loan-accounts', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (loanRes.ok) {
+                    const loanAccounts = await loanRes.json();
+                    const activeLoanAccounts = loanAccounts.filter(a => a.status === 'Active');
+                    if (activeLoanAccounts.length > 0) {
+                        const separator = document.createElement('option');
+                        separator.disabled = true;
+                        separator.textContent = '--- Active Loan Accounts ---';
+                        bankSelect.appendChild(separator);
+                        activeLoanAccounts.forEach(account => {
+                            const option = document.createElement('option');
+                            option.value = 'LOAN:' + account.loan_account_id;
+                            option.dataset.loanAccountId = account.loan_account_id;
+                            option.textContent = account.company_individual || account.loan_account_id;
+                            bankSelect.appendChild(option);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load loan accounts', err);
             }
         }
 
@@ -1789,7 +1821,8 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 const balance = parseFloat(balanceStr) || 0;
                 const bankSource = document.getElementById('pay-rtl-bank-source').value;
                 const checkNumber = document.getElementById('pay-rtl-check-number').value.trim();
-                const date = document.getElementById('pay-rtl-invoice').options[invoiceSelect.selectedIndex]?.getAttribute('data-date') || new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split('T')[0];
+                const date = document.getElementById('pay-rtl-invoice').options[invoiceSelect.selectedIndex]?.getAttribute('data-date') || today;
 
                 if (!orderId) {
                     alert('Please select a sales invoice');
@@ -1803,6 +1836,26 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                     alert('Please select a bank source');
                     return;
                 }
+
+                const isLoanAccount = bankSource.startsWith('LOAN:');
+                const loanAccountId = isLoanAccount ? bankSource.replace('LOAN:', '') : null;
+                const bankSelect = document.getElementById('pay-rtl-bank-source');
+                const selectedOption = bankSelect && bankSelect.selectedOptions && bankSelect.selectedOptions[0];
+                const loanAccountName = isLoanAccount ? (selectedOption?.textContent || loanAccountId) : '';
+                const bankName = !isLoanAccount ? (selectedOption?.dataset?.bankName || bankSource) : '';
+
+                const createdBy = (() => {
+                    try {
+                        const token = localStorage.getItem('goldenfield_auth_token');
+                        if (token) {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            return payload.id || payload.user_id || payload.email || 'Admin';
+                        }
+                    } catch (e) {
+                        console.error('Failed to decode token', e);
+                    }
+                    return null;
+                })();
 
                 try {
                     const res = await fetch(API_BASE_ORDER_RTL_REPAYMENTS, {
@@ -1820,7 +1873,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                             remaining_balance: Math.max(0, balance - paymentAmount),
                             bank_source: bankSource,
                             check_number: checkNumber || null,
-                            date: new Date().toISOString().split('T')[0],
+                            date: today,
                             status: 'Pending'
                         })
                     });
@@ -1836,200 +1889,166 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                     const orders = orderRes.ok ? await orderRes.json() : [];
                     const order = orders.find(o => o.order_id === orderId);
 
-                    if (paymentType === 'Full') {
-                        const createdBy = (() => {
-                            try {
-                                const token = localStorage.getItem('goldenfield_auth_token');
-                                if (token) {
-                                    const payload = JSON.parse(atob(token.split('.')[1]));
-                                    return payload.email || 'Admin';
-                                }
-                            } catch (e) {
-                                console.error('Failed to decode token', e);
-                            }
-                            return 'Admin';
-                        })();
+                    const isFull = paymentType === 'Full';
 
-                        await fetch(`${API_BASE_ORDER_RTL}/${encodeURIComponent(orderId)}`, {
-                            method: 'PUT',
+                    const expenseNextRes = await fetch('/api/expenses/next-id', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    let expenseListId = null;
+                    if (expenseNextRes.ok) {
+                        const expenseNextData = await expenseNextRes.json();
+                        expenseListId = expenseNextData.expense_list_id;
+                    }
+
+                    const expenseStatus = isLoanAccount ? `Cleared by ${loanAccountName}` : 'Cleared';
+                    const expenseRemarks = isFull ? 'Full Payment' : `Partial Payment ${paymentAmount} out of ${balance}`;
+                    const expenseAccountSource = isLoanAccount ? loanAccountName : bankName;
+
+                    if (expenseListId) {
+                        await fetch('/api/expenses', {
+                            method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                             },
                             body: JSON.stringify({
-                                status: 'Paid',
-                                payment_date: date,
-                                payment_source: bankSource,
-                                check_number: checkNumber,
-                                created_by: createdBy
+                                expense_list_id: expenseListId,
+                                tracking_id: repaymentId,
+                                date: today,
+                                accounting_code: '5105',
+                                expense_type: 'Flock Acquisition',
+                                description: `RTL from ${order?.company || ''} with SI# ${order?.sales_invoice || 'N/A'}`,
+                                remarks: expenseRemarks,
+                                total_amount: paymentAmount,
+                                account_source: expenseAccountSource,
+                                cleared_date: today,
+                                status: expenseStatus
                             })
                         });
+                    }
 
-                        const expenseRes = await fetch('/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                        });
-
-                        let expenseUpdated = false;
-                        if (expenseRes.ok) {
-                            const expenses = await expenseRes.json();
-                            if (expenses.length > 0) {
-                                const existingExpense = expenses[0];
-                                const updateRes = await fetch('/api/expenses/' + encodeURIComponent(existingExpense.id), {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                                    },
-                                    body: JSON.stringify({
-                                        status: 'Paid',
-                                        cleared_date: date,
-                                        payment_date: date,
-                                        account_source: bankSource
-                                    })
-                                });
-                                expenseUpdated = updateRes.ok;
-                            }
-                        }
-
-                        if (!expenseUpdated) {
-                            try {
-                                const expenseNextRes = await fetch('/api/expenses/next-id', {
-                                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                                });
-                                if (expenseNextRes.ok) {
-                                    const expenseNextData = await expenseNextRes.json();
-                                    const expenseListId = expenseNextData.expense_list_id;
-                                    if (expenseListId) {
-                                        const createRes = await fetch('/api/expenses', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                                            },
-                                            body: JSON.stringify({
-                                                expense_list_id: expenseListId,
-                                                tracking_id: orderId,
-                                                date: date,
-                                                accounting_code: '5105',
-                                                expense_type: 'Flock Acquisition',
-                                                description: `RTL from ${order?.company || ''} with SI# ${order?.sales_invoice || 'N/A'}`,
-                                                remarks: orderRtlItems.map(item => `${item.item} priced at ${formatNumber(item.price)}`).join(', '),
-                                                total_amount: parseFloat(order?.grand_total || 0),
-                                                account_source: bankSource,
-                                                cleared_date: date,
-                                                payment_date: date,
-                                                status: 'Paid'
-                                            })
-                                        });
-                                        if (!createRes.ok) {
-                                            const errData = await createRes.json().catch(() => ({}));
-                                            console.error('Failed to create fallback expense:', errData);
-                                        }
-                                    }
-                                }
-                            } catch (expenseErr) {
-                                console.error('Error creating fallback expense:', expenseErr);
-                            }
-                        }
-                    } else {
-                        const expenseNextRes = await fetch('/api/expenses/next-id', {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                        });
-                        if (expenseNextRes.ok) {
-                            const expenseNextData = await expenseNextRes.json();
-                            const expenseListId = expenseNextData.expense_list_id;
-                            if (expenseListId) {
-                                const createRes = await fetch('/api/expenses', {
+                    if (isLoanAccount) {
+                        try {
+                            const loanIdRes = await fetch('/api/loan-transactions/next-id?prefix=LoApID', {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                            });
+                            if (loanIdRes.ok) {
+                                const { next_id } = await loanIdRes.json();
+                                await fetch('/api/loan-transactions', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                                     },
-                                body: JSON.stringify({
-                                    expense_list_id: expenseListId,
-                                    tracking_id: repaymentId,
-                                    date: date,
-                                    accounting_code: '',
-                                    expense_type: '',
-                                    description: `Partial Payment to ${orderId} from ${order?.company || ''}`,
-                                    remarks: `${paymentAmount} out of ${balance}`,
-                                    total_amount: null,
-                                    account_source: bankSource,
-                                    cleared_date: date,
-                                    status: 'Pending'
-                                })
+                                    body: JSON.stringify({
+                                        loan_transaction_id: next_id,
+                                        source_id: repaymentId,
+                                        date: today,
+                                        loan_account_id: loanAccountId,
+                                        borrow_amount: paymentAmount,
+                                        payment_interest_amount: 0,
+                                        payment_principal_amount: 0,
+                                        source_account: null,
+                                        check_number: null,
+                                        created_by: createdBy
+                                    })
                                 });
-                                if (!createRes.ok) {
-                                    const errData = await createRes.json().catch(() => ({}));
-                                    console.error('Failed to create partial expense:', errData);
-                                }
                             }
+                        } catch (loanErr) {
+                            console.error('Failed to create loan transaction', loanErr);
+                            alert('Failed to create loan transaction: ' + (loanErr.message || 'Unknown error'));
                         }
+                    }
 
-                        const repaymentsRes = await fetch(API_BASE_ORDER_RTL_REPAYMENTS + '/order/' + encodeURIComponent(orderId), {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                        });
-                        if (repaymentsRes.ok) {
-                            const allRepayments = await repaymentsRes.json();
-                            const totalPaid = allRepayments.reduce((sum, r) => sum + (parseFloat(r.payment_amount) || 0), 0);
-                            const grandTotal = parseFloat(order?.grand_total || 0);
+                    const repaymentsRes = await fetch(API_BASE_ORDER_RTL_REPAYMENTS + '/order/' + encodeURIComponent(orderId), {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (repaymentsRes.ok) {
+                        const allRepayments = await repaymentsRes.json();
+                        const totalPaid = allRepayments.reduce((sum, r) => sum + (parseFloat(r.payment_amount) || 0), 0);
+                        const grandTotal = parseFloat(order?.grand_total || 0);
 
-                            if (totalPaid >= grandTotal && grandTotal > 0) {
-                                const sortedRepayments = allRepayments
-                                    .filter(r => r.date)
-                                    .sort((a, b) => new Date(b.date) - new Date(a.date));
-                                const lastPaymentDate = sortedRepayments.length > 0 ? sortedRepayments[0].date : new Date().toISOString().split('T')[0];
-                                const paymentSources = [...new Set(allRepayments.map(r => r.bank_source).filter(Boolean))].join(', ');
-                                const checkNumbers = [...new Set(allRepayments.map(r => r.check_number).filter(Boolean))].join(', ');
+                        if (totalPaid >= grandTotal && grandTotal > 0) {
+                            const sortedRepayments = allRepayments
+                                .filter(r => r.date)
+                                .sort((a, b) => new Date(a.date) - new Date(b.date));
+                            
+                            const paymentDates = sortedRepayments.map(r => r.date).join(', ');
+                            const paymentSources = [...new Set(allRepayments.map(r => r.bank_source).filter(Boolean))].join(', ');
+                            const checkNumbers = [...new Set(allRepayments.map(r => r.check_number).filter(Boolean))].join(', ');
 
-                                const createdBy = (() => {
+                            const hasBank = allRepayments.some(r => r.bank_source && !r.bank_source.startsWith('LOAN:'));
+                            const hasLoan = allRepayments.some(r => r.bank_source && r.bank_source.startsWith('LOAN:'));
+                            let finalStatus;
+                            if (hasBank && hasLoan) {
+                                finalStatus = 'Cleared multiple ways';
+                            } else if (hasLoan) {
+                                const lastLoanPayment = [...allRepayments].reverse().find(r => r.bank_source?.startsWith('LOAN:'));
+                                const lastLoanId = lastLoanPayment?.bank_source?.replace('LOAN:', '');
+                                let lastLoanName = lastLoanId || 'Loan Account';
+                                if (lastLoanId) {
                                     try {
-                                        const token = localStorage.getItem('goldenfield_auth_token');
-                                        if (token) {
-                                            const payload = JSON.parse(atob(token.split('.')[1]));
-                                            return payload.email || 'Admin';
+                                        const loanRes = await fetch(`/api/loan-accounts/${encodeURIComponent(lastLoanId)}`, {
+                                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                                        });
+                                        if (loanRes.ok) {
+                                            const loanData = await loanRes.json();
+                                            lastLoanName = loanData.company_individual || lastLoanId;
                                         }
                                     } catch (e) {
-                                        console.error('Failed to decode token', e);
+                                        console.error('Failed to fetch loan account name', e);
                                     }
-                                    return 'Admin';
-                                })();
+                                }
+                                finalStatus = `Cleared by ${lastLoanName}`;
+                            } else {
+                                finalStatus = 'Cleared';
+                            }
 
-                                await fetch(`${API_BASE_ORDER_RTL}/${encodeURIComponent(orderId)}`, {
+                            await fetch(`${API_BASE_ORDER_RTL}/${encodeURIComponent(orderId)}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                },
+                                body: JSON.stringify({
+                                    status: 'Paid',
+                                    payment_date: paymentDates,
+                                    payment_source: paymentSources,
+                                    check_number: checkNumbers,
+                                    created_by: createdBy
+                                })
+                            });
+
+                            for (const r of allRepayments) {
+                                await fetch(`${API_BASE_ORDER_RTL_REPAYMENTS}/repayment-id/${encodeURIComponent(r.repayment_id)}`, {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
                                     },
-                                    body: JSON.stringify({
-                                        status: 'Paid',
-                                        payment_date: lastPaymentDate,
-                                        payment_source: paymentSources || bankSource,
-                                        check_number: checkNumbers || checkNumber,
-                                        created_by: createdBy
-                                    })
+                                    body: JSON.stringify({ status: 'Paid' })
                                 });
+                            }
 
-                                const expenseRes = await fetch('/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
-                                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                                });
-                                if (expenseRes.ok) {
-                                    const expenses = await expenseRes.json();
-                                    for (const expense of expenses) {
-                                        await fetch('/api/expenses/' + encodeURIComponent(expense.id), {
-                                            method: 'PUT',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                                            },
-                                            body: JSON.stringify({
-                                                status: 'Paid',
-                                                cleared_date: date,
-                                                payment_date: date,
-                                                account_source: bankSource
-                                            })
-                                        });
-                                    }
+                            const expenseRes = await fetch('/api/expenses/by-tracking-id/' + encodeURIComponent(orderId), {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                            });
+                            if (expenseRes.ok) {
+                                const expenses = await expenseRes.json();
+                                for (const expense of expenses) {
+                                    await fetch('/api/expenses/' + encodeURIComponent(expense.id), {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
+                                        },
+                                        body: JSON.stringify({
+                                            status: finalStatus,
+                                            cleared_date: today,
+                                            payment_date: today,
+                                            account_source: expenseAccountSource
+                                        })
+                                    });
                                 }
                             }
                         }

@@ -52,6 +52,35 @@ class OrderRtlRepaymentsController {
         const result = await this.db.query(query, [repaymentId]);
         return result.rows[0];
     }
+
+    async updateRepayment(repaymentId, repaymentData) {
+        const { status, payment_type, payment_amount, starting_amount, remaining_balance, bank_source, check_number, date } = repaymentData;
+        
+        const updates = [];
+        const values = [];
+        let counter = 1;
+
+        if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
+        if (payment_type !== undefined) { updates.push(`payment_type = $${counter++}`); values.push(payment_type); }
+        if (payment_amount !== undefined) { updates.push(`payment_amount = $${counter++}`); values.push(parseFloat(payment_amount) || 0); }
+        if (starting_amount !== undefined) { updates.push(`starting_amount = $${counter++}`); values.push(parseFloat(starting_amount) || 0); }
+        if (remaining_balance !== undefined) { updates.push(`remaining_balance = $${counter++}`); values.push(parseFloat(remaining_balance) || 0); }
+        if (bank_source !== undefined) { updates.push(`bank_source = $${counter++}`); values.push(bank_source || null); }
+        if (check_number !== undefined) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }
+        if (date !== undefined) { updates.push(`date = $${counter++}`); values.push(date); }
+
+        values.push(repaymentId);
+
+        const query = `
+            UPDATE order_rtl_repayments 
+            SET ${updates.join(', ')}
+            WHERE repayment_id = $${counter}
+            RETURNING *
+        `;
+        
+        const result = await this.db.query(query, values);
+        return result.rows[0];
+    }
 }
 
 module.exports = OrderRtlRepaymentsController;

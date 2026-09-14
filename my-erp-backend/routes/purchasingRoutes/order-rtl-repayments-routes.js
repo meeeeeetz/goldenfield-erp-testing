@@ -61,4 +61,17 @@ router.delete('/repayment-id/:repaymentId', async (req, res) => {
     }
 });
 
+router.put('/repayment-id/:repaymentId', async (req, res) => {
+    try {
+        const result = await controller.updateRepayment(req.params.repaymentId, req.body);
+        if (result) {
+            res.json(result);
+        } else {
+            res.status(404).json({ error: 'Repayment not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

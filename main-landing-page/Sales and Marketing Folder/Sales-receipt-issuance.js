@@ -8,6 +8,19 @@ var receiptSortColumn = 'si_number';
 var receiptSortDirection = 'asc';
 var receiptSearchQuery = '';
 
+function formatDateForDisplay(dateStr) {
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function buildReceiptHtml(receipt, items) {
     const fmt = (val) => 'P ' + parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const itemsHtml = (items && Array.isArray(items)) ? items.map(item => `
@@ -90,7 +103,7 @@ function buildReceiptHtml(receipt, items) {
         <div class="receipt-meta">
             <span>SI# ${receipt.si_number}</span>
             <span>Customer: ${receipt.customer}</span>
-            <span>Date: ${(receipt.date || '').split('T')[0]}</span>
+            <span>Date: ${formatDateForDisplay(receipt.date)}</span>
         </div>
         <table class="receipt-table">
             <thead>
@@ -1322,7 +1335,7 @@ function initializeReceiptModal() {
             return `
             <tr class="${isCrossed ? 'voided-row' : ''}">
                 <td>${row.si_number}</td>
-                <td>${row.date.split('T')[0]}</td>
+                <td>${formatDateForDisplay(row.date)}</td>
                 <td>${row.customer}</td>
                 <td>${parseFloat(row.grand_total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${row.status}</td>
