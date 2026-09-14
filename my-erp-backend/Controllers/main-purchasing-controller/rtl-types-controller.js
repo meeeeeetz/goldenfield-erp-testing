@@ -36,20 +36,30 @@ class RtlTypesController {
     async createType(typeData) {
         const { type_id, company, item, remarks, price, status } = typeData;
         const query = `
-            INSERT INTO rtl_types 
-            (type_id, company, item, remarks, price, status) 
+            INSERT INTO rtl_types
+            (type_id, company, item, remarks, price, status)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         `;
-        const result = await this.db.query(query, [
+        const values = [
             type_id,
             company,
             item,
             remarks || null,
             parseFloat(price) || 0,
             status || 'Active'
-        ]);
-        return result.rows[0];
+        ];
+        try {
+            const result = await this.db.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            if (error.code === '23505' && error.constraint === 'rtl_types_pkey') {
+                await this.db.query("SELECT setval('rtl_types_id_seq', COALESCE((SELECT MAX(id) FROM rtl_types), 1), (SELECT MAX(id) FROM rtl_types) IS NOT NULL)");
+                const result = await this.db.query(query, values);
+                return result.rows[0];
+            }
+            throw error;
+        }
     }
 
     async updateType(typeId, typeData) {

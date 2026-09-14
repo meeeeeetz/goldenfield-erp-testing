@@ -36,12 +36,12 @@ class RtlSuppliersController {
     async createSupplier(supplierData) {
         const { supplier_id, company_name, address, tin_number, contact_person, contact_number, status } = supplierData;
         const query = `
-            INSERT INTO rtl_suppliers 
-            (supplier_id, company_name, address, tin_number, contact_person, contact_number, status) 
+            INSERT INTO rtl_suppliers
+            (supplier_id, company_name, address, tin_number, contact_person, contact_number, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
         `;
-        const result = await this.db.query(query, [
+        const values = [
             supplier_id,
             company_name,
             address || null,
@@ -49,8 +49,18 @@ class RtlSuppliersController {
             contact_person || null,
             contact_number || null,
             status || 'Active'
-        ]);
-        return result.rows[0];
+        ];
+        try {
+            const result = await this.db.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            if (error.code === '23505' && error.constraint === 'rtl_suppliers_pkey') {
+                await this.db.query("SELECT setval('rtl_suppliers_id_seq', COALESCE((SELECT MAX(id) FROM rtl_suppliers), 1), (SELECT MAX(id) FROM rtl_suppliers) IS NOT NULL)");
+                const result = await this.db.query(query, values);
+                return result.rows[0];
+            }
+            throw error;
+        }
     }
 
     async updateSupplier(supplierId, supplierData) {

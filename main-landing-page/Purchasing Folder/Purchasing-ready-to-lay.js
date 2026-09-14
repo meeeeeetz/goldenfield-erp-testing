@@ -528,6 +528,33 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
         var API_BASE_RTL_TYPES = '/api/rtl-types';
         var API_BASE_ORDER_RTL = '/api/order-rtl';
         var API_BASE_ORDER_RTL_REPAYMENTS = '/api/order-rtl-repayments';
+        var rtlCompaniesCache = null;
+
+        async function loadRtlCompanies() {
+            if (rtlCompaniesCache) return rtlCompaniesCache;
+            try {
+                const suppliersRes = await fetch(API_BASE_RTL_SUPPLIERS, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (suppliersRes.ok) {
+                    const suppliers = await suppliersRes.json();
+                    rtlCompaniesCache = (suppliers || []).filter(s => s.status === 'Active');
+                    return rtlCompaniesCache;
+                }
+            } catch (err) {
+                console.error('Failed to load RTL companies:', err);
+            }
+            rtlCompaniesCache = [];
+            return rtlCompaniesCache;
+        }
+
+        async function populateRtlCompanySelect(selectId) {
+            const selectEl = document.getElementById(selectId);
+            if (!selectEl) return;
+            const suppliers = await loadRtlCompanies();
+            selectEl.innerHTML = '<option value="">Select Company</option>' +
+                suppliers.map(s => `<option value="${s.company_name}">${s.company_name}</option>`).join('');
+        }
 
         async function loadRtlTypes() {
             const tbody = document.getElementById('rtl-types-table-body');
@@ -618,6 +645,31 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             document.getElementById('create-rtl-supplier-id').value = 'RTLSuID-1';
             switchRtlSupplierTab('create');
             modal.classList.remove('hidden');
+
+            fetchNextSupplierId();
+        }
+
+        async function fetchNextSupplierId() {
+            let timedOut = false;
+            const timeout = setTimeout(() => { timedOut = true; }, 2500);
+            try {
+                const idRes = await fetch(API_BASE_RTL_SUPPLIERS + '/next-id', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                if (timedOut) return;
+                if (idRes.ok) {
+                    const idData = await idRes.json();
+                    const input = document.getElementById('create-rtl-supplier-id');
+                    const modal = document.getElementById('rtl-suppliers-modal');
+                    if (input && modal && !modal.classList.contains('hidden') && input.value === 'RTLSuID-1') {
+                        input.value = idData.supplier_id || 'RTLSuID-1';
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch next supplier id:', err);
+            } finally {
+                clearTimeout(timeout);
+            }
         }
 
         function closeRtlSuppliersModal() {
@@ -885,20 +937,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
 
             const companySelect = document.getElementById('create-rtl-type-company');
             if (companySelect && companySelect.options.length <= 1) {
-                try {
-                    const suppliersRes = await fetch(API_BASE_RTL_SUPPLIERS, {
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                    });
-                    if (suppliersRes.ok) {
-                        const suppliers = await suppliersRes.json();
-                        companySelect.innerHTML = '<option value="">Select Company</option>' +
-                            suppliers.filter(s => s.status === 'Active').map(s =>
-                                `<option value="${s.company_name}">${s.company_name}</option>`
-                            ).join('');
-                    }
-                } catch (err) {
-                    console.error('Failed to load companies:', err);
-                }
+                await populateRtlCompanySelect('create-rtl-type-company');
             }
 
             switchRtlTypeTab('create');
@@ -953,8 +992,11 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                     document.getElementById('edit-rtl-type-price').value = type.price || '';
                     document.getElementById('edit-rtl-type-status').value = type.status || 'Active';
                     const companySelect = document.getElementById('edit-rtl-type-company');
-                    if (companySelect && type.company) {
-                        companySelect.value = type.company;
+                    if (companySelect) {
+                        await populateRtlCompanySelect('edit-rtl-type-company');
+                        if (type.company) {
+                            companySelect.value = type.company;
+                        }
                     }
                 }
             } catch (err) {
@@ -1286,6 +1328,17 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
             }
         }
 
+        function formatDate(value) {
+            if (!value) return '';
+            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return value;
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
         async function loadOrderRtlTransactions() {
             const tbody = document.getElementById('rtl-transactions-table-body');
             if (!tbody) return;
@@ -1303,8 +1356,8 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 tbody.innerHTML = orders.map(order => {
-                    const date = order.date ? new Date(order.date).toISOString().split('T')[0] : '';
-                    const paymentDate = order.payment_date ? new Date(order.payment_date).toISOString().split('T')[0] : '';
+                    const date = order.date ? formatDate(order.date) : '';
+                    const paymentDate = order.payment_date ? formatDate(order.payment_date) : '';
                     return `<tr>
                         <td>${order.order_id || ''}</td>
                         <td>${date}</td>
@@ -1343,7 +1396,7 @@ ModuleComponents['purchasing-ready-to-lay'] = (container) => {
                 }
 
                 tbody.innerHTML = repayments.map(repayment => {
-                    const date = repayment.date ? new Date(repayment.date).toISOString().split('T')[0] : '';
+                    const date = repayment.date ? formatDate(repayment.date) : '';
                     return `<tr>
                         <td>${repayment.repayment_id || ''}</td>
                         <td>${repayment.order_id || ''}</td>
