@@ -65,8 +65,9 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const gasOperatorRoutes = require('./routes/purchasingRoutes/gas-operator-routes');
     const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
     const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
-    const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
-    const uploadRoutes = require('./routes/uploadRoutes');
+const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
+const shippingPermitRecipientsRoutes = require('./routes/operationRoutes/shipping-permit-recipients-routes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -117,6 +118,7 @@ app.use('/api/schedules', schedulingRoutes);
 app.use('/api/petty-cash', pettyCashRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
 app.use('/api/scratch-layer', scratchLayerRoutes);
+app.use('/api/shipping-permit-recipients', shippingPermitRecipientsRoutes);
 app.use('/api/egg-products', eggProductsRoutes);
 app.use('/api/daily-egg-production', dailyEggProductionRoutes);
 app.use('/api/feeds-suppliers', feedsSupplierRoutes);
