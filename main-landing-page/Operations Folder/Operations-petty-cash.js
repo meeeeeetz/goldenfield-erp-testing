@@ -66,7 +66,12 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             <button id="reject-filtered-petty-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
                         </div>
                     </div>
-                    <div style="overflow-x: auto; max-height: 50vh; overflow-y: auto;">
+<div style="overflow-x: auto; max-height: 50vh; overflow-y: auto; position: relative;">
+                        <div id="pending-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                            <div style="font-size: 14px; font-weight: 600; color: #1a1f2e;">Processing...</div>
+                            <div id="pending-loading-count" style="font-size: 12px; color: #64748b;"></div>
+                        </div>
                         <table class="data-table product-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                             <thead>
                                 <tr>
@@ -605,8 +610,25 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         const item = (txn.item || '').toLowerCase();
                         return code.includes(searchTerm) || category.includes(searchTerm) || item.includes(searchTerm);
                     });
+
+                    const pendingOverlay = document.getElementById('pending-loading-overlay');
+                    const pendingCount = document.getElementById('pending-loading-count');
+                    if (pendingOverlay) {
+                        pendingOverlay.style.display = 'flex';
+                        pendingOverlay.style.position = 'fixed';
+                        pendingOverlay.style.top = '0';
+                        pendingOverlay.style.left = '0';
+                        pendingOverlay.style.right = '0';
+                        pendingOverlay.style.bottom = '0';
+                        pendingOverlay.style.zIndex = '9999';
+                        pendingOverlay.style.borderRadius = '0';
+                    }
+                    if (pendingCount) pendingCount.textContent = 'Approved 0 of ' + filtered.length + '...';
+
                     let successCount = 0;
-                    for (const txn of filtered) {
+                    for (let i = 0; i < filtered.length; i++) {
+                        const txn = filtered[i];
+                        if (pendingCount) pendingCount.textContent = 'Approved ' + (i + 1) + ' of ' + filtered.length + '...';
                         const code = txn.petty_cash_code || txn.petty_cash_id;
                         if (!code) continue;
                         try {
@@ -646,6 +668,9 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             console.error('Approve filtered error:', err);
                         }
                     }
+
+                    if (pendingOverlay) pendingOverlay.style.display = 'none';
+
                     alert(`Approved ${successCount} of ${filtered.length} transactions`);
                     loadPendingPettyCashTransactions();
                     loadPettyCashTransactions();
@@ -671,8 +696,24 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     const user = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
                     const rejectedBy = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
 
+                    const pendingOverlay = document.getElementById('pending-loading-overlay');
+                    const pendingCount = document.getElementById('pending-loading-count');
+                    if (pendingOverlay) {
+                        pendingOverlay.style.display = 'flex';
+                        pendingOverlay.style.position = 'fixed';
+                        pendingOverlay.style.top = '0';
+                        pendingOverlay.style.left = '0';
+                        pendingOverlay.style.right = '0';
+                        pendingOverlay.style.bottom = '0';
+                        pendingOverlay.style.zIndex = '9999';
+                        pendingOverlay.style.borderRadius = '0';
+                    }
+                    if (pendingCount) pendingCount.textContent = 'Rejected 0 of ' + filtered.length + '...';
+
                     let successCount = 0;
-                    for (const txn of filtered) {
+                    for (let i = 0; i < filtered.length; i++) {
+                        const txn = filtered[i];
+                        if (pendingCount) pendingCount.textContent = 'Rejected ' + (i + 1) + ' of ' + filtered.length + '...';
                         const code = txn.petty_cash_code || txn.petty_cash_id;
                         if (!code) continue;
                         try {
@@ -702,6 +743,9 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                             console.error('Reject filtered error:', err);
                         }
                     }
+
+                    if (pendingOverlay) pendingOverlay.style.display = 'none';
+
                     alert(`Rejected ${successCount} of ${filtered.length} transactions`);
                     loadPendingPettyCashTransactions();
                     loadPettyCashTransactions();
