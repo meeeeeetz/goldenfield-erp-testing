@@ -915,6 +915,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
                     const validRows = [];
                     const invalidRows = [];
+                    let skippedBlankRows = 0;
 
                     for (let i = 0; i < rows.length; i++) {
                         const row = rows[i];
@@ -922,6 +923,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         // Skip rows where Column A (Type) is empty - these are blank/trailing rows
                         const typeValue = row[0];
                         if (!typeValue || String(typeValue).trim() === '') {
+                            skippedBlankRows++;
                             continue;
                         }
 
@@ -963,19 +965,19 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         }
                     }
 
-                    const totalRows = rows.length;
+                    const totalRows = validRows.length + invalidRows.length;
                     const validCount = validRows.length;
                     const invalidCount = invalidRows.length;
 
-                    let validationMsg = 'Validation Summary\\n';
-                    validationMsg += 'Total: ' + totalRows + '\\n';
-                    validationMsg += 'Valid: ' + validCount + '\\n';
-                    validationMsg += 'Rejected: ' + invalidCount + '\\n';
+                    let validationMsg = 'Validation Summary\n';
+                    validationMsg += 'Total: ' + totalRows + '\n';
+                    validationMsg += 'Valid: ' + validCount + '\n';
+                    validationMsg += 'Rejected: ' + invalidCount + '\n';
 
                     if (invalidCount > 0) {
-                        validationMsg += '\\nRejected rows:\\n';
+                        validationMsg += '\nRejected rows:\n';
                         invalidRows.forEach(ir => {
-                            validationMsg += 'Row ' + ir.rowIndex + ': ' + ir.reasons.join(', ') + '\\n';
+                            validationMsg += 'Row ' + ir.rowIndex + ': ' + ir.reasons.join(', ') + '\n';
                         });
                     }
 
@@ -1004,7 +1006,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         }
                     }
 
-                    const proceedMsg = validationMsg.replace(/(\\n)+$/, '') + '\\nProceed to save ' + validCount + ' valid row(s)?';
+                    const proceedMsg = validationMsg.replace(/(\n)+$/, '') + '\nProceed to save ' + validCount + ' valid row(s)?';
 
                     if (!confirm(proceedMsg)) {
                         return;
@@ -1046,7 +1048,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         }
                     }
 
-                    alert('Bulk upload completed.\\nSaved: ' + savedCount + '\\nFailed: ' + failedCount);
+                    alert('Bulk upload completed.\nSaved: ' + savedCount + '\nFailed: ' + failedCount);
                     closeBulkModal();
                     loadPettyCashTransactions();
                     loadPettyCashStats();
