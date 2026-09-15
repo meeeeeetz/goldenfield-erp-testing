@@ -23,7 +23,7 @@ class PettyCashController {
         const client = await this.db.connect();
         try {
             await client.query('BEGIN');
-            await client.query("SELECT pg_advisory_lock(2001)");
+            await client.query("SELECT pg_advisory_xact_lock(2001)");
 
             const { date, source, replenish_amount, check_number, status } = replenishData;
             const nextId = await this._getNextPettyCashIdClient(client);
@@ -62,7 +62,6 @@ class PettyCashController {
                 status: 'Pending'
             });
 
-            await client.query("SELECT pg_advisory_unlock(2001)");
             await client.query('COMMIT');
             return savedTransaction;
         } catch (error) {
@@ -77,7 +76,7 @@ class PettyCashController {
         const client = await this.db.connect();
         try {
             await client.query('BEGIN');
-            await client.query("SELECT pg_advisory_lock(2001)");
+            await client.query("SELECT pg_advisory_xact_lock(2001)");
 
             const { date, pettycashcategory, item, remarks, store, amount, status, replenish_amount } = transactionData;
             const nextId = await this._getNextPettyCashIdClient(client);
@@ -116,7 +115,6 @@ class PettyCashController {
                 status: status || 'Pending'
             });
 
-            await client.query("SELECT pg_advisory_unlock(2001)");
             await client.query('COMMIT');
             return savedTransaction;
         } catch (error) {

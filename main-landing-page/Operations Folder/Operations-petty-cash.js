@@ -1,5 +1,12 @@
 ModuleComponents['operations-petty-cash'] = (container) => {
 
+        if (!document.getElementById('bulk-loading-spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'bulk-loading-spin-style';
+            style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+
         container.innerHTML = `
             <div class="petty-layout">
                 <div class="header-actions">
@@ -160,6 +167,11 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         <div class="modal-header-row">
                             <h3>Bulk Upload Transaction</h3>
                             <button id="close-bulk-upload-btn" class="modal-close-btn" title="Close">&times;</button>
+                        </div>
+                        <div id="bulk-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 100; border-radius: 8px; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+                            <div style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                            <div style="font-size: 15px; font-weight: 600; color: #1a1f2e;">Saving transactions...</div>
+                            <div id="bulk-loading-count" style="font-size: 13px; color: #64748b;"></div>
                         </div>
                         <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                             <div style="display: flex; gap: 16px; align-items: flex-start;">
@@ -760,6 +772,8 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             if (rejectedCount) rejectedCount.textContent = '';
             const rejectedDetails = document.getElementById('bulk-rejected-details');
             if (rejectedDetails) rejectedDetails.textContent = '';
+            const loadingOverlay = document.getElementById('bulk-loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
         };
         const bulkDropZone = document.getElementById('bulk-drop-zone');
         const bulkFileInput = document.getElementById('bulk-file-input');
@@ -1012,11 +1026,26 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         return;
                     }
 
+                    const loadingOverlay = document.getElementById('bulk-loading-overlay');
+                    const loadingCount = document.getElementById('bulk-loading-count');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'flex';
+                        loadingOverlay.style.position = 'fixed';
+                        loadingOverlay.style.top = '0';
+                        loadingOverlay.style.left = '0';
+                        loadingOverlay.style.right = '0';
+                        loadingOverlay.style.bottom = '0';
+                        loadingOverlay.style.zIndex = '9999';
+                        loadingOverlay.style.borderRadius = '0';
+                    }
+                    if (loadingCount) loadingCount.textContent = 'Saving 0 of ' + validRows.length + ' rows...';
+
                     let savedCount = 0;
                     let failedCount = 0;
 
                     for (let i = 0; i < validRows.length; i++) {
                         const vr = validRows[i];
+                        if (loadingCount) loadingCount.textContent = 'Saving ' + (i + 1) + ' of ' + validRows.length + ' rows...';
                         try {
                             if (vr.isReplenishment) {
                                 const res = await fetch('/api/petty-cash/replenish', {
@@ -1048,12 +1077,16 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         }
                     }
 
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+
                     alert('Bulk upload completed.\nSaved: ' + savedCount + '\nFailed: ' + failedCount);
                     closeBulkModal();
                     loadPettyCashTransactions();
                     loadPettyCashStats();
                     loadPendingPettyCashTransactions();
                 } catch (err) {
+                    const loadingOverlay = document.getElementById('bulk-loading-overlay');
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
                     console.error('Bulk upload error:', err);
                     alert(err.message || 'Failed to process file');
                 }
