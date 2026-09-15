@@ -49,9 +49,10 @@ ModuleComponents['finance-expenses'] = (container) => {
             </div>
         </div>
         <div class="card graph-placeholder expense-list-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 24px; flex-wrap: wrap;">
                 <h3 style="margin: 0;">Full List of Expenses</h3>
-                <input type="text" id="expense-list-search" placeholder="Search expenses..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 220px; margin-left: auto;" />
+                <input type="text" id="expense-list-search" placeholder="Search expenses..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 220px;" />
+                <input type="text" id="expense-list-total-filtered" placeholder="Total Filtered: P 0.00" readonly style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 320px; background: #f1f5f9; font-weight: 600; color: #1e293b;" />
             </div>
             <div class="table-wrap">
                 <table class="data-table product-table">
@@ -429,6 +430,14 @@ async function loadExpenses() {
         expenseListCurrentPage = 1;
         const searchInput = document.getElementById('expense-list-search');
         if (searchInput) searchInput.value = '';
+        
+        // Update filtered total amount (initially all expenses)
+        const totalAmount = expensesData.reduce((sum, exp) => sum + parseFloat(exp.total_amount || 0), 0);
+        const totalFilteredInput = document.getElementById('expense-list-total-filtered');
+        if (totalFilteredInput) {
+            totalFilteredInput.value = 'Total Filtered: P ' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
         renderExpenseListPage();
         updateSortIndicators();
         updateMonthlyExpenseCard();
@@ -551,6 +560,12 @@ function filterExpenses() {
                 return searchable.includes(term);
             });
         }
+        // Update filtered total amount
+        const filteredTotal = filtered.reduce((sum, exp) => sum + parseFloat(exp.total_amount || 0), 0);
+        const totalFilteredInput = document.getElementById('expense-list-total-filtered');
+        if (totalFilteredInput) {
+            totalFilteredInput.value = 'Total Filtered: P ' + filteredTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
         expenseListCurrentPage = 1;
         applyFilterAndSort(filtered);
     }
@@ -579,6 +594,13 @@ function filterExpenses() {
                 ].join(' ').toLowerCase();
                 return searchable.includes(term);
             });
+        }
+
+        // Update filtered total amount
+        const filteredTotal = filtered.reduce((sum, exp) => sum + parseFloat(exp.total_amount || 0), 0);
+        const totalFilteredInput = document.getElementById('expense-list-total-filtered');
+        if (totalFilteredInput) {
+            totalFilteredInput.value = 'Total Filtered: P ' + filteredTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         applyFilterAndSort(filtered);

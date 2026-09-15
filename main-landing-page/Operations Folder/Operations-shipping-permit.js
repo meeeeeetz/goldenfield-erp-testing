@@ -424,14 +424,14 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                   <div id="create-license-photo-zone" class="upload-drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: border-color 0.2s, background 0.2s; position: relative;">
                                       <div class="upload-zone-content" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                                           <div class="upload-placeholder" style="color: #64748b; font-size: 14px;">
-                                              <span>Drag & Drop or Click to Upload Picture (JPG only, max 5MB)</span>
+                                              <span>Drag & Drop or Click to Upload Picture (JPG/WebP only, max 5MB)</span>
                                           </div>
                                           <div class="upload-preview" style="display:none; flex-direction: column; align-items: center; gap: 8px; position: relative;">
                                               <img src="" alt="preview" style="max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0;" />
                                               <button type="button" class="remove-upload-btn" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;">&times;</button>
                                           </div>
                                       </div>
-                                      <input type="file" id="create-license-photo-input" accept="image/jpeg,image/jpg" style="display:none" />
+                                      <input type="file" id="create-license-photo-input" accept="image/jpeg,image/jpg,image/webp" style="display:none" />
                                   </div>
                               </div>
                               <div class="modal-tab-actions">
@@ -481,14 +481,14 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                   <div id="manage-license-photo-zone" class="upload-drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: border-color 0.2s, background 0.2s; position: relative;">
                                       <div class="upload-zone-content" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                                           <div class="upload-placeholder" style="color: #64748b; font-size: 14px;">
-                                              <span>Drag & Drop or Click to Upload Picture (JPG only, max 5MB)</span>
+                                              <span>Drag & Drop or Click to Upload Picture (JPG/WebP only, max 5MB)</span>
                                           </div>
                                           <div class="upload-preview" style="display:none; flex-direction: column; align-items: center; gap: 8px; position: relative;">
                                               <img src="" alt="preview" style="max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0;" />
                                               <button type="button" class="remove-upload-btn" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;">&times;</button>
                                           </div>
                                       </div>
-                                      <input type="file" id="manage-license-photo-input" accept="image/jpeg,image/jpg" style="display:none" />
+                                      <input type="file" id="manage-license-photo-input" accept="image/jpeg,image/jpg,image/webp" style="display:none" />
                                   </div>
                               </div>
                               <div class="modal-tab-actions">
