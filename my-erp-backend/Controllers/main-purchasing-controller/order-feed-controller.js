@@ -271,8 +271,8 @@ class OrderFeedController {
     }
 
     async settleOrders(orderIds) {
-        const query = 'UPDATE order_feeds SET status = $1, rebate_status = $2, updated_at = CURRENT_TIMESTAMP WHERE order_id = ANY($3::text[])';
-        const result = await this.db.query(query, ['Paid', 'Paid', orderIds]);
+        const query = 'UPDATE order_feeds SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE order_id = ANY($2::text[])';
+        const result = await this.db.query(query, ['Paid', orderIds]);
         return result.rowCount;
     }
 

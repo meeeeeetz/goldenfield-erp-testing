@@ -918,6 +918,13 @@ ModuleComponents['operations-petty-cash'] = (container) => {
 
                     for (let i = 0; i < rows.length; i++) {
                         const row = rows[i];
+                        
+                        // Skip rows where Column A (Type) is empty - these are blank/trailing rows
+                        const typeValue = row[0];
+                        if (!typeValue || String(typeValue).trim() === '') {
+                            continue;
+                        }
+
                         const date = row[dateIdx] || '';
                         const amount = row[amountIdx] || '';
                         const parsedAmount = parseFloat(String(amount).replace(/,/g, '')) || 0;
