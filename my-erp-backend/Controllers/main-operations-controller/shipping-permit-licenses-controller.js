@@ -142,9 +142,7 @@ class ShippingPermitLicensesController {
         if (license) {
             license.file_url = license.file_path ? getPublicUrl(license.file_path) : null;
         }
-        return license;
-    }
-        return result.rows[0];
+return license;
     }
 
     async deleteLicense(licenseId) {
