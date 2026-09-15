@@ -217,7 +217,9 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                     <div class="modal-field">
                         <label>Payment Source</label>
                         <select id="payment-source-input" class="modal-select">
-                            <option value="">Select Bank Account</option>
+                            <option value="">Select Payment Source</option>
+                            <optgroup label="Active Bank Accounts"></optgroup>
+                            <optgroup label="Petty Cash"></optgroup>
                         </select>
                     </div>
                     <div class="modal-field">
@@ -383,21 +385,29 @@ ModuleComponents['purchasing-electricity'] = (container) => {
             if (checkInput) checkInput.value = existingCheckNumber && existingCheckNumber !== '-' ? existingCheckNumber : '';
 
             if (sourceSelect) {
-                sourceSelect.innerHTML = '<option value="">Select Bank Account</option>';
+                sourceSelect.innerHTML = '<option value="">Select Payment Source</option><optgroup label="Active Bank Accounts"></optgroup><optgroup label="Petty Cash"></optgroup>';
                 try {
                     const res = await fetch('/api/bank-accounts', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                     });
                     if (res.ok) {
                         const accounts = await res.json();
+                        const bankOptgroup = sourceSelect.querySelector('optgroup[label="Active Bank Accounts"]');
                         accounts.forEach(acc => {
                             const option = document.createElement('option');
                             option.value = acc.bank_account_id;
                             option.textContent = `${acc.bank} - ${maskAccountNumber(acc.bank_account_number)}`;
                             if (acc.bank_account_id === existingPaymentSource) option.selected = true;
-                            sourceSelect.appendChild(option);
+                            bankOptgroup.appendChild(option);
                         });
                     }
+                    
+                    const pettyCashOptgroup = sourceSelect.querySelector('optgroup[label="Petty Cash"]');
+                    const pettyCashOption = document.createElement('option');
+                    pettyCashOption.value = 'petty-cash';
+                    pettyCashOption.textContent = 'Petty Cash';
+                    if ('petty-cash' === existingPaymentSource) pettyCashOption.selected = true;
+                    pettyCashOptgroup.appendChild(pettyCashOption);
                 } catch (err) {
                     console.error('Failed to load bank accounts', err);
                 }
