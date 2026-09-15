@@ -17,13 +17,22 @@ class ShippingPermitLicensesController {
 
         query += ' ORDER BY created_at DESC';
         const result = await this.db.query(query, values);
-        return result.rows;
+        const licenses = result.rows;
+        // Add public URL for each license
+        return licenses.map(l => ({
+            ...l,
+            file_url: l.file_path ? getPublicUrl(l.file_path) : null
+        }));
     }
 
     async getLicenseById(licenseId) {
         const query = 'SELECT * FROM shipping_permit_licenses WHERE license_id = $1';
         const result = await this.db.query(query, [licenseId]);
-        return result.rows[0];
+        const license = result.rows[0];
+        if (license) {
+            license.file_url = license.file_path ? getPublicUrl(license.file_path) : null;
+        }
+        return license;
     }
 
     async getNextLicenseId() {
@@ -85,7 +94,9 @@ class ShippingPermitLicensesController {
             filePath,
             created_by || null
         ]);
-        return result.rows[0];
+        const license = result.rows[0];
+        license.file_url = license.file_path ? getPublicUrl(license.file_path) : null;
+        return license;
     }
 
     async updateLicense(licenseId, licenseData, fileBuffer = null) {
@@ -127,6 +138,12 @@ class ShippingPermitLicensesController {
             created_by || null,
             licenseId
         ]);
+        const license = result.rows[0];
+        if (license) {
+            license.file_url = license.file_path ? getPublicUrl(license.file_path) : null;
+        }
+        return license;
+    }
         return result.rows[0];
     }
 

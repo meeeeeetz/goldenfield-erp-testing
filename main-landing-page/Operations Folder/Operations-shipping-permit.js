@@ -438,15 +438,35 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                   <button id="save-create-license-btn" class="btn-primary">Save</button>
                               </div>
                           </div>
-                          <div id="panel-manage-license" class="modal-tab-panel" style="display: none;">
-                              <div class="modal-field">
-                                  <label>Search License</label>
-                                  <input type="text" id="manage-license-search" placeholder="Search by license name, reg no..." />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Shipping Licenses ID (ShLiID-1 Start with)</label>
-                                  <input type="text" id="manage-license-id" readonly />
-                              </div>
+<div id="panel-manage-license" class="modal-tab-panel" style="display: none;">
+                               <div class="modal-field">
+                                   <label>Search License</label>
+                                   <input type="text" id="manage-license-search" placeholder="Search by license name, reg no..." />
+                               </div>
+                               <div class="table-wrap" style="max-height: 300px; overflow-y: auto; margin-bottom: 16px;">
+                                   <table class="data-table" style="min-width: 700px;">
+                                       <thead>
+                                           <tr>
+                                               <th>License ID</th>
+                                               <th>License Name</th>
+                                               <th>Reg No.</th>
+                                               <th>Issued Date</th>
+                                               <th>Expiration Date</th>
+                                               <th>Status</th>
+                                               <th>Photo</th>
+                                               <th>Created By</th>
+                                               <th>Action</th>
+                                           </tr>
+                                       </thead>
+                                       <tbody id="licenses-table-body">
+                                           <tr><td colspan="9" style="text-align:center; color: #94a3b8;">Loading licenses...</td></tr>
+                                       </tbody>
+                                   </table>
+                               </div>
+                               <div class="modal-field">
+                                   <label>Shipping Licenses ID (ShLiID-1 Start with)</label>
+                                   <input type="text" id="manage-license-id" readonly />
+                               </div>
                               <div class="modal-meta-row">
                                   <div class="modal-field">
                                       <label>License Name</label>
@@ -854,6 +874,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             modal.classList.remove('hidden');
 
             fetchNextLicenseId();
+            loadLicenses();
         }
 
         async function fetchNextLicenseId() {
@@ -879,6 +900,85 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             }
         }
 
+        async function loadLicenses(search = '') {
+            const tbody = document.getElementById('licenses-table-body');
+            if (!tbody) return;
+
+            try {
+                const url = API_BASE_SHIPPING_LICENSES + (search ? `?search=${encodeURIComponent(search)}` : '');
+                const res = await fetch(url, { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Failed to fetch licenses');
+                const licenses = await res.json();
+
+                if (!licenses.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #94a3b8;">No licenses found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = licenses.map(l => `
+                    <tr style="cursor: pointer;" data-license-id="${l.license_id}">
+                        <td>${l.license_id || ''}</td>
+                        <td>${l.license_name || ''}</td>
+                        <td>${l.reg_no || ''}</td>
+                        <td>${l.issued_date || ''}</td>
+                        <td>${l.expiration_date || ''}</td>
+                        <td>${l.status || ''}</td>
+                        <td>${l.file_path ? '<span style="color:#1a5e1a;">✓</span>' : ''}</td>
+                        <td>${l.created_by || ''}</td>
+                        <td><button class="btn-icon" onclick="event.stopPropagation(); editLicense('${l.license_id}')">✏️</button></td>
+                    </tr>
+                `).join('');
+
+                // Click to load license into form
+                tbody.querySelectorAll('tr[data-license-id]').forEach(tr => {
+                    tr.addEventListener('click', () => {
+                        const licenseId = tr.dataset.licenseId;
+                        loadLicenseForEdit(licenseId);
+                    });
+                });
+
+            } catch (err) {
+                console.error('Failed to load licenses:', err);
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #94a3b8;">Error loading licenses</td></tr>';
+            }
+        }
+
+        async function loadLicenseForEdit(licenseId) {
+            try {
+                const res = await fetch(API_BASE_SHIPPING_LICENSES + '/' + encodeURIComponent(licenseId), {
+                    headers: getAuthHeaders()
+                });
+                if (!res.ok) throw new Error('Failed to fetch license');
+                const license = await res.json();
+
+                document.getElementById('manage-license-id').value = license.license_id;
+                document.getElementById('manage-license-name').value = license.license_name || '';
+                document.getElementById('manage-license-reg-no').value = license.reg_no || '';
+                document.getElementById('manage-license-issued-date').value = license.issued_date || '';
+                document.getElementById('manage-license-expiration-date').value = license.expiration_date || '';
+                document.getElementById('manage-license-status').value = license.status || 'Active';
+
+                // Clear and load photo preview
+                const manageZone = document.getElementById('manage-license-photo-zone');
+                if (manageZone._clear) manageZone._clear();
+                if (license.file_path) {
+                    const img = manageZone.querySelector('.upload-preview img');
+                    if (img) {
+                        img.src = license.file_url || license.file_path;
+                        manageZone.querySelector('.upload-preview').style.display = 'flex';
+                        manageZone.querySelector('.upload-placeholder').style.display = 'none';
+                        manageZone.classList.add('file-selected');
+                    }
+                }
+
+                switchLicenseTab('manage');
+            } catch (err) {
+                alert('Error loading license: ' + err.message);
+            }
+        }
+
+        window.editLicense = loadLicenseForEdit;
+
         function closeShippingLicensesModal() {
             const modal = document.getElementById('shipping-licenses-modal');
             if (modal) modal.classList.add('hidden');
@@ -892,12 +992,40 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             const expirationDate = document.getElementById('create-license-expiration-date').value;
             const status = document.getElementById('create-license-status').value;
 
-            if (!licenseName) {
-                alert('License Name is required');
+            if (!licenseName || !regNo) {
+                alert('License Name and Reg No. are required');
                 return;
             }
 
-            alert(`License ${licenseId} (${licenseName}) saved successfully (design only - no backend)`);
+            const fileInput = document.getElementById('create-license-photo-input');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            const formData = new FormData();
+            formData.append('license_id', licenseId);
+            formData.append('license_name', licenseName);
+            formData.append('reg_no', regNo);
+            if (issuedDate) formData.append('issued_date', issuedDate);
+            if (expirationDate) formData.append('expiration_date', expirationDate);
+            formData.append('status', status || 'Active');
+            if (file) formData.append('photo', file);
+
+            fetch(API_BASE_SHIPPING_LICENSES, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => Promise.reject(err));
+                    return res.json();
+                })
+                .then(data => {
+                    alert('License created successfully');
+                    closeShippingLicensesModal();
+                    loadLicenses();
+                })
+                .catch(err => {
+                    alert('Error: ' + (err.error || err.message || 'Failed to create license'));
+                });
         }
 
         function saveManageLicense() {
@@ -908,12 +1036,39 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             const expirationDate = document.getElementById('manage-license-expiration-date').value;
             const status = document.getElementById('manage-license-status').value;
 
-            if (!licenseName) {
-                alert('License Name is required');
+            if (!licenseName || !regNo) {
+                alert('License Name and Reg No. are required');
                 return;
             }
 
-            alert(`License ${licenseId} (${licenseName}) updated successfully (design only - no backend)`);
+            const fileInput = document.getElementById('manage-license-photo-input');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            const formData = new FormData();
+            formData.append('license_name', licenseName);
+            formData.append('reg_no', regNo);
+            if (issuedDate) formData.append('issued_date', issuedDate);
+            if (expirationDate) formData.append('expiration_date', expirationDate);
+            formData.append('status', status || 'Active');
+            if (file) formData.append('photo', file);
+
+            fetch(API_BASE_SHIPPING_LICENSES + '/' + encodeURIComponent(licenseId), {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => Promise.reject(err));
+                    return res.json();
+                })
+                .then(data => {
+                    alert('License updated successfully');
+                    closeShippingLicensesModal();
+                    loadLicenses();
+                })
+                .catch(err => {
+                    alert('Error: ' + (err.error || err.message || 'Failed to update license'));
+                });
         }
 
         function setupLicensePhotoUploadZone(zoneId, fileInputId) {
@@ -931,13 +1086,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                 }
             };
 
-            zone.addEventListener('click', (e) => {
-                if (e.target.closest('.remove-upload-btn')) return;
-                fileInput.click();
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files && e.target.files[0];
+            const handleFile = (file) => {
                 if (!file) return;
                 currentFile = file;
                 const reader = new FileReader();
@@ -951,6 +1100,38 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                     updateZoneState(true);
                 };
                 reader.readAsDataURL(file);
+            };
+
+            zone.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-upload-btn')) return;
+                fileInput.click();
+            });
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (file) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileInput.files = dt.files;
+                    handleFile(file);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                handleFile(file);
             });
 
             const removeBtn = zone.querySelector('.remove-upload-btn');
@@ -1008,12 +1189,22 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
         setupLicensePhotoUploadZone('create-license-photo-zone', 'create-license-photo-input');
         setupLicensePhotoUploadZone('manage-license-photo-zone', 'manage-license-photo-input');
 
+        const manageLicenseSearch = document.getElementById('manage-license-search');
+        if (manageLicenseSearch) {
+            let searchTimeout;
+            manageLicenseSearch.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => loadLicenses(e.target.value.trim()), 300);
+            });
+        }
+
         window.switchLicenseTab = switchLicenseTab;
         window.openShippingLicensesModal = openShippingLicensesModal;
         window.closeShippingLicensesModal = closeShippingLicensesModal;
         window.saveCreateLicense = saveCreateLicense;
         window.saveManageLicense = saveManageLicense;
         window.setupLicensePhotoUploadZone = setupLicensePhotoUploadZone;
+        window.loadLicenses = loadLicenses;
 
         window.switchRecipientTab = switchRecipientTab;
         window.openRecipientDetailsModal = openRecipientDetailsModal;
