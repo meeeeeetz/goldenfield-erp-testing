@@ -110,12 +110,15 @@ ModuleComponents['purchasing-electricity'] = (container) => {
             </div>
                 </div>
                     <div class="card graph-placeholder electric-readings-card">
-                        <h3>Electric Readings</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 24px; flex-wrap: wrap;">
+                            <h3 style="margin: 0;">Electric Readings</h3>
+                            <input type="text" id="electric-bills-search" placeholder="Search electric bills..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px; width: 220px;" />
+                        </div>
                         <table class="data-table electric-readings-table">
                             <thead>
                                 <tr>
-                                    <th>Electric Bill ID</th>
-                                    <th>Date</th>
+                                    <th class="sortable" data-column="electric_bill_id">Electric Bill ID <span class="sort-arrow">&#8645;</span></th>
+                                    <th class="sortable" data-column="date">Date <span class="sort-arrow">&#8645;</span></th>
                                     <th>Billing Start</th>
                                     <th>Billing End</th>
                                     <th>Demand</th>
@@ -673,6 +676,8 @@ var API_BASE_ELECTRIC_BILLS = '/api/electric-bills';
 var electricBillsData = [];
 var electricBillsCurrentPage = 1;
 var ELECTRIC_BILLS_PER_PAGE = 10;
+var electricBillsSortColumn = null;
+var electricBillsSortDirection = 'asc';
 
 function formatDate(dateValue) {
     if (!dateValue) return '-';
@@ -720,9 +725,53 @@ function renderElectricBillsTable() {
     const tbody = document.getElementById('electric-bills-table-body');
     if (!tbody) return;
     
+    const searchInput = document.getElementById('electric-bills-search');
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    let filtered = electricBillsData;
+    if (term) {
+        filtered = electricBillsData.filter(bill => {
+            const searchable = [
+                bill.electric_bill_id,
+                bill.date,
+                bill.billing_start,
+                bill.billing_end,
+                bill.demand,
+                bill.kwh,
+                bill.rate_per_kwh,
+                bill.amount,
+                bill.status,
+                bill.created_by_name,
+                bill.payment_source,
+                bill.bank,
+                bill.check_number
+            ].map(v => String(v || '').toLowerCase()).join(' ');
+            return searchable.includes(term);
+        });
+    }
+
+    if (electricBillsSortColumn) {
+        filtered.sort((a, b) => {
+            let valA = a[electricBillsSortColumn];
+            let valB = b[electricBillsSortColumn];
+            if (electricBillsSortColumn === 'date') {
+                valA = valA ? new Date(valA).getTime() : 0;
+                valB = valB ? new Date(valB).getTime() : 0;
+            } else if (electricBillsSortColumn === 'amount' || electricBillsSortColumn === 'kwh' || electricBillsSortColumn === 'demand' || electricBillsSortColumn === 'rate_per_kwh') {
+                valA = parseFloat(valA || 0);
+                valB = parseFloat(valB || 0);
+            } else {
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+            }
+            if (valA < valB) return electricBillsSortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return electricBillsSortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
     const start = (electricBillsCurrentPage - 1) * ELECTRIC_BILLS_PER_PAGE;
     const end = start + ELECTRIC_BILLS_PER_PAGE;
-    const pageData = electricBillsData.slice(start, end);
+    const pageData = filtered.slice(start, end);
     
     let renderedRows = pageData.map(bill => `
         <tr>
@@ -755,8 +804,25 @@ function renderElectricBillsTable() {
     
     tbody.innerHTML = renderedRows;
     
-    const totalPages = Math.max(1, Math.ceil(electricBillsData.length / ELECTRIC_BILLS_PER_PAGE));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / ELECTRIC_BILLS_PER_PAGE));
     renderElectricBillsPagination(totalPages);
+    updateElectricSortIndicators();
+}
+
+function updateElectricSortIndicators() {
+    const headers = document.querySelectorAll('.electric-readings-table .sortable');
+    headers.forEach(th => {
+        const arrow = th.querySelector('.sort-arrow');
+        if (!arrow) return;
+        const column = th.dataset.column;
+        if (column === electricBillsSortColumn) {
+            arrow.innerHTML = electricBillsSortDirection === 'asc' ? '&#9650;' : '&#9660;';
+            th.style.color = '#1a1f2e';
+        } else {
+            arrow.innerHTML = '&#8645;';
+            th.style.color = '';
+        }
+    });
 }
 
 function renderElectricBillsPagination(totalPages) {
@@ -1166,7 +1232,7 @@ async function loadLatestComparison() {
         zone._clear = clearPreview;
     }
 
-    function initializeModule(contentArea) {
+function initializeModule(contentArea) {
     const currentTab = window.__currentTabId || 'purchasing';
     const render = ModuleComponents[currentTab] || ModuleComponents['purchasing'];
     render(contentArea);
@@ -1176,6 +1242,28 @@ async function loadLatestComparison() {
     setupElectricBillUploadZone();
     setupElectricPhotoModal();
     setupElectricPhotoUploadZone();
+
+    const searchInput = document.getElementById('electric-bills-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            electricBillsCurrentPage = 1;
+            renderElectricBillsTable();
+        });
+    }
+
+    document.querySelectorAll('.electric-readings-table .sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const column = th.dataset.column;
+            if (electricBillsSortColumn === column) {
+                electricBillsSortDirection = electricBillsSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                electricBillsSortColumn = column;
+                electricBillsSortDirection = 'asc';
+            }
+            electricBillsCurrentPage = 1;
+            renderElectricBillsTable();
+        });
+    });
 }
 
 window.initializeModule = initializeModule;

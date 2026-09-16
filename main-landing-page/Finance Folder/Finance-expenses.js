@@ -555,6 +555,8 @@ function filterExpenses() {
                     formatDateLocal(exp.date),
                     exp.accounting_code,
                     exp.expense_type,
+                    exp.description,
+                    exp.remarks,
                     Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 ].join(' ').toLowerCase();
                 return searchable.includes(term);
@@ -590,6 +592,8 @@ function filterExpenses() {
                     formatDateLocal(exp.date),
                     exp.accounting_code,
                     exp.expense_type,
+                    exp.description,
+                    exp.remarks,
                     Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 ].join(' ').toLowerCase();
                 return searchable.includes(term);
@@ -733,6 +737,8 @@ function renderExpenseListPagination(totalPages) {
                         formatDateLocal(exp.date),
                         exp.accounting_code,
                         exp.expense_type,
+                        exp.description,
+                        exp.remarks,
                         Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                     ].join(' ').toLowerCase();
                     return searchable.includes(term);

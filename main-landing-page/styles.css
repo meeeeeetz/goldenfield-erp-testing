@@ -1329,6 +1329,9 @@ body {
 .data-table th {
     background: #FFD000;
     font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 .data-table tbody tr:last-child td {
@@ -1357,10 +1360,11 @@ body {
     align-self: stretch;
     align-items: stretch;
 }
+
 .petty-transactions-card .data-table th,
 .petty-transactions-card .data-table td {
-    padding: 5px 10px;
-    font-size: 16px;
+    padding: 6px 10px;
+    font-size: 13px;
 }
 
 .petty-transactions-card .card-header-row {

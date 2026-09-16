@@ -131,6 +131,7 @@ async function loadCustomersForEdit() {
         const res = await fetch(`${API_BASE_CUSTOMERS}`, { headers: getAuthHeaders() });
         const customers = await res.json();
         const customerSelect = document.getElementById('edit-customer-name');
+        if (!customerSelect) return;
         customerSelect.innerHTML = '<option value="">Select customer...</option>';
         customers.forEach(c => {
             const option = document.createElement('option');
@@ -368,6 +369,7 @@ function initializeCustomerModal() {
 
 var CUSTOMERS_PER_PAGE = 5;
 var allCustomers = [];
+var customerCurrentPage = 1;
 
 async function loadCustomersTable() {
     const tbody = document.getElementById('customers-table-body');
@@ -382,7 +384,9 @@ async function loadCustomersTable() {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
         allCustomers = await res.json();
+        customerCurrentPage = 1;
         renderCustomerRows(allCustomers);
+        renderCustomerPagination();
     } catch (err) {
         console.error('Failed to load customers table', err);
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #e74c3c;">Error loading customers. Please refresh.</td></tr>';
@@ -392,7 +396,17 @@ async function loadCustomersTable() {
 function renderCustomerRows(customers) {
     const tbody = document.getElementById('customers-table-body');
     if (!tbody) return;
-    tbody.innerHTML = customers.map(c => `
+
+    const start = (customerCurrentPage - 1) * CUSTOMERS_PER_PAGE;
+    const end = start + CUSTOMERS_PER_PAGE;
+    const pageData = customers.slice(start, end);
+
+    if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No customers found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = pageData.map(c => `
         <tr>
             <td>${c.customer_id}</td>
             <td>${c.company || ''}</td>
@@ -403,10 +417,62 @@ function renderCustomerRows(customers) {
             <td>${c.status || ''}</td>
         </tr>
     `).join('');
-    
-    const emptyRows = CUSTOMERS_PER_PAGE - customers.length;
-    for (let i = 0; i < emptyRows; i++) {
-        tbody.innerHTML += `<tr><td colspan="7">&nbsp;</td></tr>`;
+}
+
+function renderCustomerPagination() {
+    const container = document.querySelector('.customer-directory-box .pagination');
+    if (!container) return;
+
+    const totalPages = Math.max(1, Math.ceil(allCustomers.length / CUSTOMERS_PER_PAGE));
+    let html = '';
+
+    html += `<button class="page-btn" id="customer-prev-btn" ${customerCurrentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+
+    if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn ${i === customerCurrentPage ? 'active' : ''}" id="customer-page-${i}">${i}</button>`;
+        }
+    } else {
+        const startPage = Math.max(1, customerCurrentPage - 3);
+        const endPage = Math.min(totalPages, startPage + 6);
+        const actualStart = Math.max(1, endPage - 6);
+        let currentPage = actualStart;
+        for (let i = 0; i < 7 && currentPage + i <= endPage; i++) {
+            const pageNum = currentPage + i;
+            html += `<button class="page-btn ${pageNum === customerCurrentPage ? 'active' : ''}" id="customer-page-${pageNum}">${pageNum}</button>`;
+        }
+    }
+
+    html += `<button class="page-btn" id="customer-next-btn" ${customerCurrentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+
+    container.innerHTML = html;
+
+    document.getElementById('customer-prev-btn')?.addEventListener('click', () => {
+        if (customerCurrentPage > 1) {
+            customerCurrentPage--;
+            renderCustomerRows(allCustomers);
+            renderCustomerPagination();
+        }
+    });
+
+    document.getElementById('customer-next-btn')?.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(allCustomers.length / CUSTOMERS_PER_PAGE));
+        if (customerCurrentPage < totalPages) {
+            customerCurrentPage++;
+            renderCustomerRows(allCustomers);
+            renderCustomerPagination();
+        }
+    });
+
+    for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+        const btn = document.getElementById('customer-page-' + i);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                customerCurrentPage = i;
+                renderCustomerRows(allCustomers);
+                renderCustomerPagination();
+            });
+        }
     }
 }
 
@@ -420,8 +486,10 @@ function initializeModule(contentArea) {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
+            customerCurrentPage = 1;
             if (!query) {
                 renderCustomerRows(allCustomers);
+                renderCustomerPagination();
                 return;
             }
             const filtered = allCustomers.filter(c => {
@@ -434,6 +502,7 @@ function initializeModule(contentArea) {
                        (c.status || '').toLowerCase().includes(query);
             });
             renderCustomerRows(filtered);
+            renderCustomerPagination();
         });
     }
 

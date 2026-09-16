@@ -152,16 +152,17 @@ class ElectricBillController {
             const expenseResult = await this.db.query('SELECT id FROM expenses WHERE tracking_id = $1', [electricBillId]);
             if (expenseResult.rows.length > 0) {
                 const expenseId = expenseResult.rows[0].id;
-                const expenseStatus = payment_date && payment_source ? 'Paid' : 'Pending';
-                
+                const expenseStatus = (payment_date && payment_source) ? 'Cleared' : (payment_date || payment_source ? 'Pending' : 'Pending');
+
                 await this.db.query(
                     `UPDATE expenses 
-                    SET account_source = $1, cleared_date = $2, status = $3, updated_at = CURRENT_TIMESTAMP 
-                    WHERE id = $4`,
+                    SET account_source = $1, cleared_date = $2, status = $3, total_amount = $4, updated_at = CURRENT_TIMESTAMP 
+                    WHERE id = $5`,
                     [
                         payment_source || null,
                         payment_date || null,
                         expenseStatus,
+                        amount || null,
                         expenseId
                     ]
                 );
