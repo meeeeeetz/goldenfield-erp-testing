@@ -206,19 +206,20 @@ class BatchPayrollController {
             };
             const expenseDescription = `From ${formatDate(payPeriodStart)} to ${formatDate(payPeriodEnd)} for ${payrollData.rows.length} Employees`;
             const expenseRemarks = `${totalGrossPay.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} minus ${totalGrossDeduction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            await this.expenseController.addExpense({
-                expense_list_id: nextExpenseId,
-                tracking_id: batchReference,
-                date: payPeriodEnd || new Date().toISOString().split('T')[0],
-                accounting_code: '5120',
-                expense_type: 'Direct Farm Labor & Overtime',
-                description: expenseDescription,
-                remarks: expenseRemarks,
-                total_amount: totalNetPay.toFixed(2),
-                account_source: null,
-                cleared_date: null,
-                status: 'Pending'
-            });
+
+            // Generate expense ID using the transaction client to avoid race conditions
+            const maxExpenseResult = await client.query(
+                "SELECT MAX(CAST(SUBSTRING(expense_list_id FROM '[0-9]+') AS INTEGER)) as max_num FROM expenses"
+            );
+            const maxNum = maxExpenseResult.rows[0]?.max_num || 0;
+            const transactionExpenseId = 'ExLiID-' + String(maxNum + 1).padStart(6, '0');
+
+            await client.query(
+                `INSERT INTO expenses 
+                (expense_list_id, tracking_id, date, accounting_code, expense_type, description, remarks, total_amount, account_source, cleared_date, status) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [transactionExpenseId, batchReference, payPeriodEnd || new Date().toISOString().split('T')[0], '5120', 'Direct Farm Labor & Overtime', expenseDescription, expenseRemarks, totalNetPay.toFixed(2), null, null, 'Pending']
+            );
 
             await client.query('COMMIT');
             return {

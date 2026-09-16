@@ -27,20 +27,20 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
             </div>
             <div style="padding: 0 15px 10px 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
                 <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
-                    <thead>
-                        <tr>
-                            <th style="width: 140px; padding: 2px; font-size: 15px;">Overtime ID</th>
-                            <th style="width: 100px; padding: 2px; font-size: 15px;">Employee ID</th>
-                            <th style="width: 120px; padding: 2px; font-size: 15px;">Date</th>
-                            <th style="width: 120px; padding: 2px; font-size: 15px;">Last Name</th>
-                            <th style="width: 120px; padding: 2px; font-size: 15px;">First Name</th>
-                            <th style="width: 120px; padding: 2px; font-size: 15px;">Total Hours</th>
-                            <th style="width: 150px; padding: 2px; font-size: 15px;">Remarks</th>
-                            <th style="width: 100px; padding: 2px; font-size: 15px;">Created by</th>
-                            <th style="width: 100px; padding: 2px; font-size: 15px;">Status</th>
-                            <th style="width: 100px; padding: 2px; font-size: 15px;">Action</th>
-                        </tr>
-                    </thead>
+<thead>
+                                <tr>
+                                    <th class="sortable" data-sort="overtime_id" style="width: 140px; padding: 2px; font-size: 15px; cursor: pointer;">Overtime ID <span class="sort-arrow">&#8645;</span></th>
+                                    <th class="sortable" data-sort="employee_id" style="width: 100px; padding: 2px; font-size: 15px; cursor: pointer;">Employee ID <span class="sort-arrow">&#8645;</span></th>
+                                    <th class="sortable" data-sort="date" style="width: 120px; padding: 2px; font-size: 15px; cursor: pointer;">Date <span class="sort-arrow">&#8645;</span></th>
+                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Last Name</th>
+                                    <th style="width: 120px; padding: 2px; font-size: 15px;">First Name</th>
+                                    <th style="width: 120px; padding: 2px; font-size: 15px;">Total Hours</th>
+                                    <th style="width: 150px; padding: 2px; font-size: 15px;">Remarks</th>
+                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Created by</th>
+                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Status</th>
+                                    <th style="width: 100px; padding: 2px; font-size: 15px;">Action</th>
+                                </tr>
+                            </thead>
                     <tbody id="pending-overtime-tbody">
                         <tr><td colspan="10" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
                     </tbody>
@@ -568,14 +568,17 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (!query) {
             renderPendingOvertimeLogs(allPendingOvertimeLogs);
+            applyOvertimeSort();
             return;
         }
         const filtered = allPendingOvertimeLogs.filter(log => {
             const fullName = `${log.last_name || ''} ${log.first_name || ''}`.toLowerCase();
             const formattedDate = formatDate(log.date).toLowerCase();
-            return fullName.includes(query) || formattedDate.includes(query);
+            const empId = String(log.employee_id || '').toLowerCase();
+            return fullName.includes(query) || formattedDate.includes(query) || empId.includes(query);
         });
         renderPendingOvertimeLogs(filtered);
+        applyOvertimeSort();
     }
 
     const getVisiblePendingOvertimeIds = () => {
@@ -710,29 +713,37 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
     loadOvertimeHistory();
 
     const overtimeSortState = { col: null, dir: 1 };
-    const applyOvertimeSort = () => {
-        const tbody = document.getElementById('overtime-history-tbody');
-        if (!tbody) return;
-        document.querySelectorAll('th.sortable .sort-arrow').forEach(a => a.textContent = '⇅');
+const applyOvertimeSort = () => {
+        const historyTbody = document.getElementById('overtime-history-tbody');
+        const pendingTbody = document.getElementById('pending-overtime-tbody');
+        document.querySelectorAll('th.sortable .sort-arrow').forEach(a => a.textContent = '↕');
         if (!overtimeSortState.col) return;
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const colMap = { overtime_id: 0, employee_id: 1, date: 2, last_name: 3 };
-        const colIndex = colMap[overtimeSortState.col];
-        if (colIndex === undefined) return;
-        rows.sort((a, b) => {
-            const va = a.children[colIndex].textContent.trim();
-            const vb = b.children[colIndex].textContent.trim();
-            if (overtimeSortState.col === 'overtime_id') {
-                return va.localeCompare(vb, undefined, { numeric: true }) * overtimeSortState.dir;
-            }
-            if (overtimeSortState.col === 'date') {
-                const da = new Date(va);
-                const db = new Date(vb);
-                return (da - db) * overtimeSortState.dir;
-            }
-            return va.localeCompare(vb) * overtimeSortState.dir;
-        });
-        rows.forEach(r => tbody.appendChild(r));
+
+        const sortRows = (tbodyEl) => {
+            if (!tbodyEl) return;
+            const rows = Array.from(tbodyEl.querySelectorAll('tr'));
+            const colMap = { overtime_id: 0, employee_id: 1, date: 2, last_name: 3 };
+            const colIndex = colMap[overtimeSortState.col];
+            if (colIndex === undefined) return;
+            rows.sort((a, b) => {
+                const va = a.children[colIndex].textContent.trim();
+                const vb = b.children[colIndex].textContent.trim();
+                if (overtimeSortState.col === 'overtime_id') {
+                    return va.localeCompare(vb, undefined, { numeric: true }) * overtimeSortState.dir;
+                }
+                if (overtimeSortState.col === 'date') {
+                    const da = new Date(va);
+                    const db = new Date(vb);
+                    return (da - db) * overtimeSortState.dir;
+                }
+                return va.localeCompare(vb) * overtimeSortState.dir;
+            });
+            rows.forEach(r => tbodyEl.appendChild(r));
+        };
+
+        sortRows(historyTbody);
+        sortRows(pendingTbody);
+
         const arrow = document.querySelector(`th.sortable[data-sort="${overtimeSortState.col}"] .sort-arrow`);
         if (arrow) arrow.textContent = overtimeSortState.dir === 1 ? '▲' : '▼';
     };

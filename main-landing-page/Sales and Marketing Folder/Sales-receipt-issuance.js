@@ -767,7 +767,7 @@ function initializeReceiptModal() {
         };
 
         const html = buildReceiptHtml(receipt, items);
-        const htmlWithClose = html.replace('</body>', `<button onclick="window.close()" style="position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:13px;">Close</button><script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
+        const htmlWithClose = html.replace('</body>', `<script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
         const previewWindow = window.open('', '_blank');
         if (!previewWindow) {
             alert('Popup blocked. Please allow popups for this site.');
@@ -1532,7 +1532,7 @@ function initializeReceiptModal() {
         }
 
         const html = buildReceiptHtml(receipt, items);
-        const htmlWithClose = html.replace('</body>', `<button onclick="window.close()" style="position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:13px;">Close</button><script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
+        const htmlWithClose = html.replace('</body>', `<script>window.addEventListener("afterprint", function(){ window.close(); });<\/script></body>`);
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert('Popup blocked. Please allow popups for this site.');

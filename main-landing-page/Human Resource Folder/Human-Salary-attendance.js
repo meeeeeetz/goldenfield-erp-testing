@@ -1,6 +1,13 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
-ModuleComponents['hr-salary-attendance'] = (container) => {
+    if (!document.getElementById('batch-attendance-spin-style')) {
+        const style = document.createElement('style');
+        style.id = 'batch-attendance-spin-style';
+        style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
+
+    ModuleComponents['hr-salary-attendance'] = (container) => {
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 16px;">
             <h2 style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1f2e;">Attendance Log</h2>
@@ -18,15 +25,19 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                     <span class="btn-label">Back to Salary</span>
                 </button>
             </div>
-        <div class="card" style="padding: 0; margin: 0;">
-            <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">Pending Approval Attendance Log</h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="text" id="pending-attendance-search" placeholder="Search name or date..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;">
-                    <button id="approve-filtered-btn" class="btn-primary" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Approve Filtered</button>
-                    <button id="reject-filtered-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
-                </div>
-            </div>
+<div class="card" style="padding: 0; margin: 0;">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">Pending Approval Attendance Log</h3>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 6px; background: #f0fdf4; padding: 6px 12px; border-radius: 6px; border: 1px solid #22c55e;">
+                                <label style="font-size: 13px; font-weight: 600; color: #15803d;">Total Days:</label>
+                                <input type="text" id="pending-attendance-total-days" readonly style="width: 80px; padding: 4px 8px; border: 1px solid #22c55e; border-radius: 4px; font-size: 13px; font-weight: 700; color: #15803d; background: #fff; text-align: center; box-sizing: border-box;">
+                            </div>
+                            <input type="text" id="pending-attendance-search" placeholder="Search name or date..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;">
+                            <button id="approve-filtered-btn" class="btn-primary" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Approve Filtered</button>
+                            <button id="reject-filtered-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
+                        </div>
+                    </div>
             <div style="overflow-x: auto; max-height: 50vh; overflow-y: auto;">
                 <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
                     <thead>
@@ -157,36 +168,65 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         </div>
         </div>
 
-        <div id="batch-upload-attendance-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
-            <div class="modal-content" style="max-width: 1200px; width: 95%;">
-                <div class="modal-header-row">
-                    <h3>Batch Upload Attendance</h3>
-                    <button class="modal-close-btn" id="close-batch-upload-attendance-modal">&times;</button>
-                </div>
-                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-                    <div style="display: flex; gap: 16px; align-items: flex-start;">
-                        <div id="batch-attendance-drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 40px 20px; text-align: center; background: #f8fafc; transition: border-color 0.2s, background 0.2s; cursor: pointer; flex: 0 0 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px;">
-                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                            <p style="margin: 12px 0 4px; font-size: 16px; font-weight: 600; color: #1a1f2e;">Drag and drop Excel/CSV file here</p>
-                            <p style="margin: 0; font-size: 13px; color: #64748b;">or click to browse</p>
-                            <input type="file" id="batch-attendance-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
-                            <p id="batch-attendance-file-name" style="margin-top: 12px; font-size: 14px; color: #2563eb; font-weight: 600;"></p>
+<div id="batch-upload-attendance-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+                    <div class="modal-content" style="max-width: 1200px; width: 95%;">
+                        <div class="modal-header-row">
+                            <h3>Batch Upload Attendance</h3>
+                            <button class="modal-close-btn" id="close-batch-upload-attendance-modal">&times;</button>
                         </div>
-                        <div id="batch-attendance-preview" style="flex: 1; overflow: auto; max-height: 420px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; display: none;">
-                            <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Preview</div>
-                            <div id="batch-attendance-preview-table" style="overflow-x: auto;"></div>
+                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative;">
+                            <div id="batch-attendance-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+                                <div style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                                <div style="font-size: 15px; font-weight: 600; color: #1a1f2e;">Saving attendance logs...</div>
+                                <div id="batch-attendance-loading-count" style="font-size: 13px; color: #64748b;"></div>
+                            </div>
+                            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                <div id="batch-attendance-drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 40px 20px; text-align: center; background: #f8fafc; transition: border-color 0.2s, background 0.2s; cursor: pointer; flex: 0 0 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px;">
+                                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                    <p style="margin: 12px 0 4px; font-size: 16px; font-weight: 600; color: #1a1f2e;">Drag and drop Excel/CSV file here</p>
+                                    <p style="margin: 0; font-size: 13px; color: #64748b;">or click to browse</p>
+                                    <input type="file" id="batch-attendance-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+                                    <p id="batch-attendance-file-name" style="margin-top: 12px; font-size: 14px; color: #2563eb; font-weight: 600;"></p>
+                                </div>
+                                <div id="batch-attendance-preview" style="flex: 1; overflow: auto; max-height: 420px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; display: none;">
+                                    <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Preview</div>
+                                    <div id="batch-attendance-preview-table" style="overflow-x: auto;"></div>
+                                </div>
+                            </div>
+                            <div id="batch-attendance-validation" style="display: none; gap: 12px;">
+                                <div style="display: flex; gap: 16px;">
+                                    <div style="flex: 1; padding: 12px; border-radius: 8px; background: #d4edda;">
+                                        <div style="font-size: 24px; font-weight: 700; color: #155724;" id="batch-attendance-ok-count">0</div>
+                                        <div style="font-size: 13px; color: #155724;">Rows OK</div>
+                                    </div>
+                                    <div style="flex: 1; padding: 12px; border-radius: 8px; background: #f8d7da;">
+                                        <div style="font-size: 24px; font-weight: 700; color: #721c24;" id="batch-attendance-missing-count">0</div>
+                                        <div style="font-size: 13px; color: #721c24;">Rows Missing</div>
+                                    </div>
+                                    <div style="flex: 1; padding: 12px; border-radius: 8px; background: #fff3cd;">
+                                        <div style="font-size: 24px; font-weight: 700; color: #856404;" id="batch-attendance-error-count">0</div>
+                                        <div style="font-size: 13px; color: #856404;">Errors</div>
+                                    </div>
+                                </div>
+                                <div id="batch-attendance-missing-details" style="display: none; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                                    <strong>Missing Rows (incomplete data):</strong>
+                                    <div id="batch-attendance-missing-list" style="margin-top: 8px; font-size: 13px; color: #856404;"></div>
+                                </div>
+                                <div id="batch-attendance-error-details" style="display: none; padding: 12px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px;">
+                                    <strong>Errors:</strong>
+                                    <div id="batch-attendance-error-list" style="margin-top: 8px; font-size: 13px; color: #721c24;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                <button id="download-attendance-template-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Download Template</button>
+                                <button id="download-attendance-template-admin-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Download Template admin</button>
+                                <button id="cancel-batch-upload-attendance-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                                <button id="save-batch-upload-attendance-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Save</button>
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button id="download-attendance-template-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Download Template</button>
-                        <button id="download-attendance-template-admin-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Download Template admin</button>
-                        <button id="cancel-batch-upload-attendance-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
-                        <button id="save-batch-upload-attendance-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Save</button>
-                    </div>
                 </div>
-            </div>
-        </div>
-        <div id="bulk-attendance-summary-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+                <div id="bulk-attendance-summary-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
             <div class="modal-content" style="max-width: 600px; width: 95%; display: flex; flex-direction: column; max-height: 80vh;">
                 <div class="modal-header-row" style="flex-shrink: 0;">
                     <h3>Bulk Upload Summary</h3>
@@ -556,6 +596,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
             const logs = await res.json();
             allPendingAttendanceLogs = logs;
             renderPendingLogs(logs);
+            updatePendingTotalDays(logs);
         } catch (err) {
             console.error('Pending logs error:', err);
             if (tbody) {
@@ -569,14 +610,29 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (!query) {
             renderPendingLogs(allPendingAttendanceLogs);
+            updatePendingTotalDays(allPendingAttendanceLogs);
             return;
         }
         const filtered = allPendingAttendanceLogs.filter(log => {
             const fullName = `${log.last_name || ''} ${log.first_name || ''}`.toLowerCase();
             const formattedDate = formatDate(log.date).toLowerCase();
-            return fullName.includes(query) || formattedDate.includes(query);
+            const empId = String(log.employee_id || '').toLowerCase();
+            return fullName.includes(query) || formattedDate.includes(query) || empId.includes(query);
         });
         renderPendingLogs(filtered);
+        updatePendingTotalDays(filtered);
+    }
+
+    function updatePendingTotalDays(logs) {
+        const totalDaysInput = document.getElementById('pending-attendance-total-days');
+        if (!totalDaysInput) return;
+        if (!logs || logs.length === 0) {
+            totalDaysInput.value = '0.00';
+            return;
+        }
+        const totalHours = logs.reduce((sum, log) => sum + (parseFloat(log.actual_payable_hours) || 0), 0);
+        const totalDays = totalHours / 8;
+        totalDaysInput.value = totalDays.toFixed(2);
     }
 
     const pendingSearchInput = document.getElementById('pending-attendance-search');
@@ -1166,6 +1222,7 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                 const headers = jsonData[0];
                 const rows = jsonData.slice(1);
                 const empIdx = headers.findIndex(h => String(h).toLowerCase().includes('employee'));
+                const dateIdx = headers.findIndex(h => String(h).toLowerCase().includes('date'));
                 const timeInIdx = headers.findIndex(h => String(h).toLowerCase().includes('time in'));
                 const timeOutIdx = headers.findIndex(h => String(h).toLowerCase().includes('time out'));
                 const firstCoffeeInIdx = headers.findIndex(h => String(h).toLowerCase().includes('1st coffee break in'));
@@ -1221,6 +1278,41 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
 
                 previewTable.innerHTML = html;
                 previewContainer.style.display = 'block';
+
+// Auto-validate rows and show counts (matches save handler logic)
+                const okCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    const ti = timeInIdx >= 0 ? String(row[timeInIdx] || '').trim() : '';
+                    const to = timeOutIdx >= 0 ? String(row[timeOutIdx] || '').trim() : '';
+                    return emp && d && ti && to;
+                }).length;
+                const missingCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    if (!emp && !d) return false;
+                    if (!d) return false;
+                    return !emp;
+                }).length;
+                const errorCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    const ti = timeInIdx >= 0 ? String(row[timeInIdx] || '').trim() : '';
+                    const to = timeOutIdx >= 0 ? String(row[timeOutIdx] || '').trim() : '';
+                    if (!emp && !d) return false;
+                    if (!d) return false;
+                    if (!emp) return false;
+                    return !ti || !to;
+                }).length;
+
+                const okEl = document.getElementById('batch-attendance-ok-count');
+                const missEl = document.getElementById('batch-attendance-missing-count');
+                const errEl = document.getElementById('batch-attendance-error-count');
+                const validationBox = document.getElementById('batch-attendance-validation');
+                if (okEl) okEl.textContent = okCount;
+                if (missEl) missEl.textContent = missingCount;
+                if (errEl) errEl.textContent = errorCount;
+                if (validationBox) validationBox.style.display = 'flex';
             } catch (err) {
                 console.error('Failed to parse file:', err);
                 previewTable.innerHTML = '<div style="padding: 20px; color: #dc2626;">Failed to parse file. Please ensure it is a valid Excel/CSV file.</div>';
@@ -1427,11 +1519,26 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                     const second_coffee_break_out = secondCoffeeOutIdx >= 0 ? String(row[secondCoffeeOutIdx] || '').trim() : '';
                     const status = statusIdx >= 0 ? String(row[statusIdx] || '').trim() : 'Pending';
 
-                    const requiredFields = [employee_id, date, time_in, time_out];
-                    const allFilled = requiredFields.every(field => field !== '');
+                    // Skip completely empty rows (no employee ID and no date)
+                    if (!employee_id && !date) {
+                        return;
+                    }
 
-                    if (!allFilled) {
+                    // Skip instruction/header rows (date is always empty for these)
+                    if (!date) {
+                        return;
+                    }
+
+                    // Missing employee ID = incomplete
+                    if (!employee_id) {
                         skippedRows.push(index + 2);
+                        return;
+                    }
+
+                    // Missing time in or time out = error (must have actual times)
+                    if (!time_in || !time_out) {
+                        missingShiftPolicyRows.push(index + 2);
+                        missingShiftPolicy.add('Row ' + (index + 2) + ': missing time in/out');
                         return;
                     }
 
@@ -1512,23 +1619,41 @@ ModuleComponents['hr-salary-attendance'] = (container) => {
                         return;
                     }
 
+                    const loadingOverlay = document.getElementById('batch-attendance-loading-overlay');
+                    const loadingCount = document.getElementById('batch-attendance-loading-count');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'flex';
+                        loadingOverlay.style.position = 'fixed';
+                        loadingOverlay.style.top = '0';
+                        loadingOverlay.style.left = '0';
+                        loadingOverlay.style.right = '0';
+                        loadingOverlay.style.bottom = '0';
+                        loadingOverlay.style.zIndex = '9999';
+                        loadingOverlay.style.borderRadius = '0';
+                    }
+                    if (loadingCount) loadingCount.textContent = 'Saving 0 of ' + logs.length + ' rows...';
+
                     saveBatchUploadAttendanceBtn.disabled = true;
                     saveBatchUploadAttendanceBtn.innerText = 'Saving...';
 
-                    const res = await fetch('/api/attendance-logs/save', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ logs })
-                    });
-
-                    if (!res.ok) {
-                        const errorData = await res.json().catch(() => ({}));
-                        throw new Error(errorData.error || 'Failed to save attendance logs');
+                    let savedCount = 0;
+                    for (let i = 0; i < logs.length; i++) {
+                        if (loadingCount) loadingCount.textContent = 'Saving ' + (i + 1) + ' of ' + logs.length + ' rows...';
+                        try {
+                            const res = await fetch('/api/attendance-logs/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ logs: [logs[i]] })
+                            });
+                            if (res.ok) savedCount++;
+                        } catch (err) {
+                            console.error('Save error for row', i, err);
+                        }
                     }
 
-                    const result = await res.json();
-                    const savedIds = (result.data || []).map(row => row.attendance_id).filter(Boolean);
-                    alert(`Saved ${logs.length} row(s) successfully\nIDs: ${savedIds.join(', ')}`);
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+                    alert(`Saved ${savedCount} of ${logs.length} row(s) successfully`);
                     await loadPendingAttendanceLogs();
                     await loadAttendanceHistory();
                     closeBatchUploadAttendanceModalFn();

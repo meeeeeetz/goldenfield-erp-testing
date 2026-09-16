@@ -306,16 +306,16 @@ ModuleComponents['hr-salary'] = (container) => {
                 <table class="data-table product-table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Pay period start</th>
-                            <th>Pay period end</th>
-                            <th>Batch Payroll ID</th>
-                            <th>Payroll count</th>
-                            <th>Total Gross Pay</th>
-                            <th>Total Gross Deduction</th>
-                            <th>Total Net Pay</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th style="text-align: center;">Date</th>
+                            <th style="text-align: center;">Pay period start</th>
+                            <th style="text-align: center;">Pay period end</th>
+                            <th style="text-align: center;">Batch Payroll ID</th>
+                            <th style="text-align: center;">Payroll count</th>
+                            <th style="text-align: center;">Total Gross Pay</th>
+                            <th style="text-align: center;">Total Gross Deduction</th>
+                            <th style="text-align: center;">Total Net Pay</th>
+                            <th style="text-align: center;">Status</th>
+                            <th style="text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="batch-payroll-tbody">
@@ -2776,18 +2776,23 @@ function initializeModule(contentArea) {
                 return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             };
 
-            tbody.innerHTML = batches.map(batch => `
+            const formatCurrency = (val) => {
+            const n = Number(val || 0);
+            return 'P ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        tbody.innerHTML = batches.map(batch => `
                 <tr>
-                    <td>${formatDate(batch.created_at)}</td>
-                    <td>${formatDate(batch.pay_period_start)}</td>
-                    <td>${formatDate(batch.pay_period_end)}</td>
-                    <td>${batch.batch_reference || ''}</td>
-                    <td>${batch.payroll_count || 0}</td>
-                    <td>${Number(batch.total_gross_pay).toFixed(2)}</td>
-                    <td>${Number(batch.total_gross_deduction).toFixed(2)}</td>
-                    <td>${Number(batch.total_net_pay).toFixed(2)}</td>
-                    <td><span style="background: ${batch.status === 'Paid' ? '#d4edda' : '#FFF3CD'}; color: ${batch.status === 'Paid' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${batch.status || 'Pending'}</span></td>
-                    <td style="padding: 2px; margin: 0; white-space: nowrap;">
+                    <td style="text-align: center;">${formatDate(batch.created_at)}</td>
+                    <td style="text-align: center;">${formatDate(batch.pay_period_start)}</td>
+                    <td style="text-align: center;">${formatDate(batch.pay_period_end)}</td>
+                    <td style="text-align: center;">${batch.batch_reference || ''}</td>
+                    <td style="text-align: center;">${batch.payroll_count || 0}</td>
+                    <td style="text-align: center; font-weight: 600;">${formatCurrency(batch.total_gross_pay)}</td>
+                    <td style="text-align: center; font-weight: 600;">${formatCurrency(batch.total_gross_deduction)}</td>
+                    <td style="text-align: center; font-weight: 600; color: #16a34a;">${formatCurrency(batch.total_net_pay)}</td>
+                    <td style="text-align: center;"><span style="background: ${batch.status === 'Paid' ? '#d4edda' : '#FFF3CD'}; color: ${batch.status === 'Paid' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${batch.status || 'Pending'}</span></td>
+                    <td style="text-align: center; white-space: nowrap;">
                         <button class="btn-primary print-payroll-btn" data-batch-id="${batch.batch_payroll_id}" style="padding: 4px 10px; font-size: 12px; cursor: pointer; flex: 1; min-width: 70px; text-align: center;">Print</button>
                         <button class="btn-reject disburse-payroll-btn" data-batch-id="${batch.batch_payroll_id}" style="padding: 4px 10px; font-size: 12px; cursor: pointer; margin-left: 6px; background: #dc3545; color: white; border: none; border-radius: 4px; flex: 1; min-width: 70px; text-align: center;">Disburse</button>
                     </td>
