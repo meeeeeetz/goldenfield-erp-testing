@@ -189,7 +189,7 @@ class ProductListController {
                     product,
                     new_price AS price
                 FROM price_changes
-                ORDER BY customer, product, date DESC
+                ORDER BY customer, product, date DESC, id DESC
             )
             INSERT INTO customer_price_today (customer, product, price, last_updated)
             SELECT customer, product, price, CURRENT_TIMESTAMP
