@@ -226,11 +226,13 @@ class ReceiptIssueController {
                 pl.egg_category,
                 pl.no_of_eggs
             FROM receipt_issues ri
+            LEFT JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
             LEFT JOIN product_list pl 
                 ON pl.product = TRIM(ri.product)
                 OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
                 OR TRIM(ri.product) LIKE pl.product || '%'
             WHERE ri.date = CURRENT_DATE
+            AND COALESCE(ris.status, 'Pending') IN ('Pending', 'Paid')
         `;
         const result = await this.db.query(query);
         const totals = {};

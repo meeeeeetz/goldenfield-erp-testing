@@ -5,7 +5,7 @@ var receiptCurrentPage = 1;
 var receiptRowsPerPage = 12;
 var tempReceiptData = null;
 var receiptSortColumn = 'si_number';
-var receiptSortDirection = 'asc';
+var receiptSortDirection = 'desc';
 var receiptSearchQuery = '';
 
 function formatDateForDisplay(dateStr) {
