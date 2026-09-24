@@ -488,15 +488,16 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                             <table class="data-table product-table">
                                 <thead>
                                     <tr>
-                                        <th>Order ID</th>
-                                        <th>Supplier</th>
-                                        <th>Invoice</th>
-                                        <th>Quantity</th>
-                                        <th>Rebate</th>
+                                    <th>Order ID</th>
+                                    <th>Supplier</th>
+                                    <th>Invoice</th>
+                                    <th>Quantity</th>
+                                    <th>Rebate</th>
+                                    <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="rebate-search-results">
-                                    <tr class="empty-row"><td colspan="5" style="height: 48px; background: #fff;">&nbsp;</td></tr>
+<tr class="empty-row"><td colspan="6" style="height: 48px; background: #fff;">&nbsp;</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1318,7 +1319,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
             document.getElementById('rebate-price-input').value = '';
             const tbody = document.getElementById('rebate-search-results');
             if (tbody) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="5" style="height: 48px; background: #fff;">&nbsp;</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="6" style="height: 48px; background: #fff;">&nbsp;</td></tr>';
             }
             updateRebateGrandTotal();
 
@@ -1341,17 +1342,7 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 if (res.ok) {
                     const orders = await res.json();
                     unclaimedOrderFeeds = orders.filter(o => o.rebate_status === 'Unclaimed');
-                    unclaimedOrderFeeds.forEach(order => {
-                        const option = document.createElement('option');
-                        option.value = order.order_id;
-                        option.dataset.orderId = order.order_id || '';
-                        option.dataset.supplier = order.company_name || '';
-                        option.dataset.invoice = order.sales_invoice || '';
-                        option.dataset.quantity = order.quantity || '';
-                        option.dataset.price = order.price || '';
-                        option.textContent = `${order.order_id} - ${order.company_name || 'Unknown'}`;
-                        select.appendChild(option);
-                    });
+                    refreshRebateDropdown();
                 }
             } catch (err) {
                 console.error('Failed to load unclaimed order feeds', err);
@@ -1385,12 +1376,13 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                         <td>${order.sales_invoice || '-'}</td>
                         <td>${formatNumber(quantity)}</td>
                         <td>P ${formatNumber(rebateTotal)}</td>
+                        <td style="text-align: center;"><button type="button" class="delete-rebate-row" style="background: none; border: none; cursor: pointer; color: #dc3545; font-size: 18px; padding: 4px 8px; line-height: 1;">&times;</button></td>
                     `;
                     tbody.appendChild(row);
                 });
 
                 updateRebateGrandTotal();
-                e.target.value = '';
+                refreshRebateDropdown();
                 return;
             }
 
@@ -1421,13 +1413,61 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 <td>${selected.dataset.invoice || '-'}</td>
                 <td>${formatNumber(quantity)}</td>
                 <td>P ${formatNumber(rebateTotal)}</td>
+                <td style="text-align: center;"><button type="button" class="delete-rebate-row" style="background: none; border: none; cursor: pointer; color: #dc3545; font-size: 18px; padding: 4px 8px; line-height: 1;">&times;</button></td>
             `;
             tbody.appendChild(row);
 
             updateRebateGrandTotal();
-
-            e.target.value = '';
+            refreshRebateDropdown();
         });
+
+        function refreshRebateDropdown() {
+            const select = document.getElementById('rebate-search');
+            if (!select) return;
+            const tbody = document.getElementById('rebate-search-results');
+
+            const selectedOrderIds = new Set();
+            if (tbody) {
+                tbody.querySelectorAll('tr:not(.empty-row)').forEach(row => {
+                    const firstCell = row.querySelector('td');
+                    if (firstCell) {
+                        const orderId = firstCell.textContent.trim();
+                        if (orderId) selectedOrderIds.add(orderId);
+                    }
+                });
+            }
+
+            select.innerHTML = '';
+
+            const placeholderOption = document.createElement('option');
+            placeholderOption.value = '';
+            placeholderOption.textContent = '-- Select Order Feed --';
+            select.appendChild(placeholderOption);
+
+            let hasUnselected = false;
+            unclaimedOrderFeeds.forEach(order => {
+                if (selectedOrderIds.has(order.order_id)) return;
+                hasUnselected = true;
+
+                const option = document.createElement('option');
+                option.value = order.order_id;
+                option.dataset.orderId = order.order_id || '';
+                option.dataset.supplier = order.company_name || '';
+                option.dataset.invoice = order.sales_invoice || '';
+                option.dataset.quantity = order.quantity || '';
+                option.dataset.price = order.price || '';
+                option.textContent = `${order.order_id} - ${order.company_name || 'Unknown'}`;
+                select.appendChild(option);
+            });
+
+            const selectAllOption = document.createElement('option');
+            selectAllOption.value = '__SELECT_ALL__';
+            selectAllOption.textContent = 'SELECT ALL';
+            selectAllOption.disabled = !hasUnselected;
+            select.appendChild(selectAllOption);
+
+            select.value = '';
+        }
 
         function updateRebateGrandTotal() {
             const tbody = document.getElementById('rebate-search-results');
@@ -1466,6 +1506,24 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
             updateRebateGrandTotal();
         });
+
+        const rebateTbody = document.getElementById('rebate-search-results');
+        if (rebateTbody) {
+            rebateTbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('.delete-rebate-row');
+                if (!btn) return;
+                const row = btn.closest('tr');
+                if (row) {
+                    row.remove();
+                    const remainingRows = rebateTbody.querySelectorAll('tr:not(.empty-row)');
+                    if (remainingRows.length === 0) {
+                        rebateTbody.innerHTML = '<tr class="empty-row"><td colspan="6" style="height: 48px; background: #fff;">&nbsp;</td></tr>';
+                    }
+                    updateRebateGrandTotal();
+                    refreshRebateDropdown();
+                }
+            });
+        }
 
         document.getElementById('close-rebate-modal').onclick = () => {
             document.getElementById('rebate-modal').classList.add('hidden');
