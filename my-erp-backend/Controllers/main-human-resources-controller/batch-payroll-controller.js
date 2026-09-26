@@ -165,8 +165,8 @@ class BatchPayrollController {
             }
 
             const batchResult = await client.query(
-                `INSERT INTO batch_payroll (batch_id, batch_reference, date_start, date_end, pay_period_start, pay_period_end, payroll_count, total_gross_pay, total_gross_deduction, total_net_pay, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Pending') RETURNING *`,
-                [batchReference, batchReference, payPeriodStart, payPeriodEnd, payPeriodStart, payPeriodEnd, payrollData.rows.length, totalGrossPay.toFixed(2), totalGrossDeduction.toFixed(2), totalNetPay.toFixed(2)]
+                `INSERT INTO batch_payroll (batch_reference, date_start, date_end, pay_period_start, pay_period_end, payroll_count, total_gross_pay, total_gross_deduction, total_net_pay, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending') RETURNING *`,
+                [batchReference, payPeriodStart, payPeriodEnd, payPeriodStart, payPeriodEnd, payrollData.rows.length, totalGrossPay.toFixed(2), totalGrossDeduction.toFixed(2), totalNetPay.toFixed(2)]
             );
             const batch = batchResult.rows[0];
 
@@ -175,8 +175,8 @@ class BatchPayrollController {
                 await client.query("UPDATE payroll SET status = 'Paid', updated_at = CURRENT_TIMESTAMP WHERE payroll_id = $1", [payroll.payroll_id]);
 
                 await client.query(
-                    'INSERT INTO batch_payroll_items (batch_id, batch_payroll_id, payroll_id, employee_id) VALUES ($1, $2, $3, $4)',
-                    [batchReference, batch.batch_payroll_id, payroll.payroll_id, payroll.employee_id]
+                    'INSERT INTO batch_payroll_items (batch_payroll_id, payroll_id, employee_id) VALUES ($1, $2, $3)',
+                    [batch.batch_payroll_id, payroll.payroll_id, payroll.employee_id]
                 );
 
                 if (Number(payroll.total_cash_loan_deductions) > 0) {

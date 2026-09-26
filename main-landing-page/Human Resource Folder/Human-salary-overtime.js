@@ -1,6 +1,13 @@
 if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
-ModuleComponents['hr-salary-overtime'] = (container) => {
+    if (!document.getElementById('batch-overtime-spin-style')) {
+        const style = document.createElement('style');
+        style.id = 'batch-overtime-spin-style';
+        style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
+
+    ModuleComponents['hr-salary-overtime'] = (container) => {
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 16px;">
             <h2 style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1f2e;">Overtime logs</h2>
@@ -8,6 +15,10 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
                 <button id="add-overtime-log-btn" class="btn-icon-circle">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                     <span class="btn-label">Add Overtime Logs</span>
+                </button>
+                <button id="batch-upload-overtime-btn" class="btn-icon-circle" style="margin-left: 8px;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span class="btn-label">Bulk Upload Overtime</span>
                 </button>
                 <button id="back-to-salary-btn" class="btn-icon-circle" style="margin-left: auto;">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -19,7 +30,11 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         <div class="card" style="margin-top: 20px; padding: 0; overflow: visible;">
             <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">Pending Approval Overtime Log</h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 6px; background: #f0fdf4; padding: 6px 12px; border-radius: 6px; border: 1px solid #22c55e;">
+                        <label style="font-size: 13px; font-weight: 600; color: #15803d;">Total Hours:</label>
+                        <input type="text" id="pending-overtime-total-hours" readonly style="width: 80px; padding: 4px 8px; border: 1px solid #22c55e; border-radius: 4px; font-size: 13px; font-weight: 700; color: #15803d; background: #fff; text-align: center; box-sizing: border-box;">
+                    </div>
                     <input type="text" id="pending-overtime-search" placeholder="Search name or date..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;">
                     <button id="approve-filtered-overtime-btn" class="btn-primary" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Approve Filtered</button>
                     <button id="reject-filtered-overtime-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
@@ -112,6 +127,102 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
                         <button id="cancel-overtime-log-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 14px; margin: 0;">Cancel</button>
                         <button id="save-overtime-log-btn" class="btn-primary" type="button" style="padding: 6px 12px; font-size: 14px; margin: 0;">Save</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="batch-upload-overtime-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+            <div class="modal-content" style="max-width: 1200px; width: 95%;">
+                <div class="modal-header-row">
+                    <h3>Batch Upload Overtime</h3>
+                    <button class="modal-close-btn" id="close-batch-upload-overtime-modal">&times;</button>
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative;">
+                    <div id="batch-overtime-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+                        <div style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                        <div style="font-size: 15px; font-weight: 600; color: #1a1f2e;">Saving overtime logs...</div>
+                        <div id="batch-overtime-loading-count" style="font-size: 13px; color: #64748b;"></div>
+                    </div>
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div id="batch-overtime-drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 40px 20px; text-align: center; background: #f8fafc; transition: border-color 0.2s, background 0.2s; cursor: pointer; flex: 0 0 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px;">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <p style="margin: 12px 0 4px; font-size: 16px; font-weight: 600; color: #1a1f2e;">Drag and drop Excel/CSV file here</p>
+                            <p style="margin: 0; font-size: 13px; color: #64748b;">or click to browse</p>
+                            <input type="file" id="batch-overtime-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+                            <p id="batch-overtime-file-name" style="margin-top: 12px; font-size: 14px; color: #2563eb; font-weight: 600;"></p>
+                        </div>
+                        <div id="batch-overtime-preview" style="flex: 1; overflow: auto; max-height: 420px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; display: none;">
+                            <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Preview</div>
+                            <div id="batch-overtime-preview-table" style="overflow-x: auto;"></div>
+                        </div>
+                    </div>
+                    <div id="batch-overtime-validation" style="display: none; gap: 12px;">
+                        <div style="display: flex; gap: 16px;">
+                            <div style="flex: 1; padding: 12px; border-radius: 8px; background: #d4edda;">
+                                <div style="font-size: 24px; font-weight: 700; color: #155724;" id="batch-overtime-ok-count">0</div>
+                                <div style="font-size: 13px; color: #155724;">Rows OK</div>
+                            </div>
+                            <div style="flex: 1; padding: 12px; border-radius: 8px; background: #fff3cd;">
+                                <div style="font-size: 24px; font-weight: 700; color: #856404;" id="batch-overtime-missing-count">0</div>
+                                <div style="font-size: 13px; color: #856404;">Rows Missing</div>
+                            </div>
+                            <div style="flex: 1; padding: 12px; border-radius: 8px; background: #f8d7da;">
+                                <div style="font-size: 24px; font-weight: 700; color: #721c24;" id="batch-overtime-error-count">0</div>
+                                <div style="font-size: 13px; color: #721c24;">Errors</div>
+                            </div>
+                        </div>
+                        <div id="batch-overtime-missing-details" style="display: none; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                            <strong>Missing Rows (incomplete data):</strong>
+                            <div id="batch-overtime-missing-list" style="margin-top: 8px; font-size: 13px; color: #856404;"></div>
+                        </div>
+                        <div id="batch-overtime-error-details" style="display: none; padding: 12px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px;">
+                            <strong>Errors:</strong>
+                            <div id="batch-overtime-error-list" style="margin-top: 8px; font-size: 13px; color: #721c24;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button id="download-overtime-template-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Download Template</button>
+                        <button id="download-overtime-template-admin-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Download Template admin</button>
+                        <button id="cancel-batch-upload-overtime-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                        <button id="save-batch-upload-overtime-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulk-overtime-summary-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
+            <div class="modal-content" style="max-width: 600px; width: 95%; display: flex; flex-direction: column; max-height: 80vh;">
+                <div class="modal-header-row" style="flex-shrink: 0;">
+                    <h3>Bulk Upload Summary</h3>
+                    <button class="modal-close-btn" id="close-bulk-overtime-summary-modal">&times;</button>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 16px; justify-content: space-around; text-align: center;">
+                        <div style="flex: 1; padding: 12px; border-radius: 8px; background: #d4edda;">
+                            <div style="font-size: 24px; font-weight: 700; color: #155724;" id="bulk-overtime-ok-count">0</div>
+                            <div style="font-size: 13px; color: #155724;">Rows OK</div>
+                        </div>
+                        <div style="flex: 1; padding: 12px; border-radius: 8px; background: #fff3cd;">
+                            <div style="font-size: 24px; font-weight: 700; color: #856404;" id="bulk-overtime-missing-count">0</div>
+                            <div style="font-size: 13px; color: #856404;">Rows Missing</div>
+                        </div>
+                        <div style="flex: 1; padding: 12px; border-radius: 8px; background: #f8d7da;">
+                            <div style="font-size: 24px; font-weight: 700; color: #721c24;" id="bulk-overtime-error-count">0</div>
+                            <div style="font-size: 13px; color: #721c24;">Errors</div>
+                        </div>
+                    </div>
+                    <div id="bulk-overtime-missing-details" style="display: none; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                        <strong>Missing Rows (incomplete data):</strong>
+                        <div id="bulk-overtime-missing-list" style="margin-top: 8px; font-size: 13px; color: #856404;"></div>
+                    </div>
+                    <div id="bulk-overtime-error-details" style="display: none; padding: 12px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px;">
+                        <strong>Errors:</strong>
+                        <div id="bulk-overtime-error-list" style="margin-top: 8px; font-size: 13px; color: #721c24;"></div>
+                    </div>
+                </div>
+                <div style="flex-shrink: 0; padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button id="cancel-bulk-overtime-summary-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                    <button id="proceed-bulk-overtime-summary-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Proceed</button>
                 </div>
             </div>
         </div>
@@ -441,6 +552,582 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
         });
     }
 
+    const batchUploadOvertimeBtn = document.getElementById('batch-upload-overtime-btn');
+    const batchUploadOvertimeModal = document.getElementById('batch-upload-overtime-modal');
+    const closeBatchUploadOvertimeModal = document.getElementById('close-batch-upload-overtime-modal');
+    const cancelBatchUploadOvertimeBtn = document.getElementById('cancel-batch-upload-overtime-btn');
+    const saveBatchUploadOvertimeBtn = document.getElementById('save-batch-upload-overtime-btn');
+    const downloadOvertimeTemplateBtn = document.getElementById('download-overtime-template-btn');
+    const downloadOvertimeTemplateAdminBtn = document.getElementById('download-overtime-template-admin-btn');
+    const batchOvertimeDropZone = document.getElementById('batch-overtime-drop-zone');
+    const batchOvertimeFileInput = document.getElementById('batch-overtime-file-input');
+    const batchOvertimeFileName = document.getElementById('batch-overtime-file-name');
+
+    const openBatchUploadOvertimeModal = async () => {
+        if (batchUploadOvertimeModal) batchUploadOvertimeModal.style.display = 'flex';
+        const previewContainer = document.getElementById('batch-overtime-preview');
+        const previewTable = document.getElementById('batch-overtime-preview-table');
+        if (previewContainer) previewContainer.style.display = 'none';
+        if (previewTable) previewTable.innerHTML = '';
+        if (batchOvertimeFileName) batchOvertimeFileName.textContent = '';
+        if (batchOvertimeFileInput) batchOvertimeFileInput.value = '';
+        if (saveBatchUploadOvertimeBtn) {
+            saveBatchUploadOvertimeBtn.disabled = false;
+            saveBatchUploadOvertimeBtn.innerText = 'Save';
+        }
+    };
+
+    const closeBatchUploadOvertimeModalFn = () => {
+        if (batchUploadOvertimeModal) batchUploadOvertimeModal.style.display = 'none';
+        if (batchOvertimeFileName) batchOvertimeFileName.textContent = '';
+        if (batchOvertimeFileInput) batchOvertimeFileInput.value = '';
+    };
+
+    if (batchUploadOvertimeBtn) {
+        batchUploadOvertimeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openBatchUploadOvertimeModal();
+        });
+    }
+
+    if (closeBatchUploadOvertimeModal) {
+        closeBatchUploadOvertimeModal.addEventListener('click', closeBatchUploadOvertimeModalFn);
+    }
+
+    if (cancelBatchUploadOvertimeBtn) {
+        cancelBatchUploadOvertimeBtn.addEventListener('click', closeBatchUploadOvertimeModalFn);
+    }
+
+    if (batchOvertimeDropZone) {
+        batchOvertimeDropZone.addEventListener('click', () => {
+            batchOvertimeFileInput?.click();
+        });
+
+        batchOvertimeDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            batchOvertimeDropZone.style.borderColor = '#2563eb';
+            batchOvertimeDropZone.style.background = '#eff6ff';
+        });
+
+        batchOvertimeDropZone.addEventListener('dragleave', () => {
+            batchOvertimeDropZone.style.borderColor = '#cbd5e1';
+            batchOvertimeDropZone.style.background = '#f8fafc';
+        });
+
+        batchOvertimeDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            batchOvertimeDropZone.style.borderColor = '#cbd5e1';
+            batchOvertimeDropZone.style.background = '#f8fafc';
+            const files = e.dataTransfer?.files;
+            if (files && files.length > 0) {
+                batchOvertimeFileInput.files = files;
+                if (batchOvertimeFileName) batchOvertimeFileName.textContent = files[0].name;
+                renderBatchOvertimePreview(files[0]);
+            }
+        });
+    }
+
+    if (batchOvertimeFileInput) {
+        batchOvertimeFileInput.addEventListener('change', () => {
+            if (batchOvertimeFileInput.files && batchOvertimeFileInput.files.length > 0) {
+                if (batchOvertimeFileName) batchOvertimeFileName.textContent = batchOvertimeFileInput.files[0].name;
+                renderBatchOvertimePreview(batchOvertimeFileInput.files[0]);
+            }
+        });
+    }
+
+    const renderBatchOvertimePreview = (file) => {
+        const previewContainer = document.getElementById('batch-overtime-preview');
+        const previewTable = document.getElementById('batch-overtime-preview-table');
+        if (!previewContainer || !previewTable || !file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+
+                if (!jsonData.length) {
+                    previewTable.innerHTML = '<div style="padding: 20px; color: #999;">No data found in file</div>';
+                    previewContainer.style.display = 'block';
+                    return;
+                }
+
+                const headers = jsonData[0];
+                const rows = jsonData.slice(1);
+                const empIdx = headers.findIndex(h => String(h).toLowerCase().includes('employee'));
+                const dateIdx = headers.findIndex(h => String(h).toLowerCase().includes('date'));
+                const timeInIdx = headers.findIndex(h => String(h).toLowerCase().includes('time in'));
+                const timeOutIdx = headers.findIndex(h => String(h).toLowerCase().includes('time out'));
+                const remarksIdx = headers.findIndex(h => String(h).toLowerCase().includes('remark'));
+
+                const computeRow = (row) => {
+                    const timeIn = timeInIdx >= 0 ? row[timeInIdx] : null;
+                    const timeOut = timeOutIdx >= 0 ? row[timeOutIdx] : null;
+                    const employeeId = empIdx >= 0 ? row[empIdx] : null;
+                    return computeOvertimeRow(employeeId, timeIn, timeOut);
+                };
+
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+                html += '<thead><tr>';
+                headers.forEach(h => {
+                    html += `<th style="border: 1px solid #ddd; padding: 6px; background: #f4f4f4; font-weight: 600; text-align: left; white-space: nowrap;">${h || ''}</th>`;
+                });
+                html += '<th style="border: 1px solid #ddd; padding: 6px; background: #f4f4f4; font-weight: 600; text-align: right; white-space: nowrap;">Total Hours</th>';
+                html += '</tr></thead><tbody>';
+
+                rows.forEach(row => {
+                    html += '<tr>';
+                    headers.forEach((_, i) => {
+                        let val = row[i] != null ? row[i] : '';
+                        if (val && typeof val === 'string') {
+                            val = val.trim();
+                        }
+                        html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${val}</td>`;
+                    });
+
+                    const computed = computeRow(row);
+                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${computed.totalHours}</td>`;
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+
+                previewTable.innerHTML = html;
+                previewContainer.style.display = 'block';
+
+                // Auto-validate rows and show counts
+                const okCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    const ti = timeInIdx >= 0 ? String(row[timeInIdx] || '').trim() : '';
+                    const to = timeOutIdx >= 0 ? String(row[timeOutIdx] || '').trim() : '';
+                    return emp && d && ti && to;
+                }).length;
+                const missingCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    if (!emp && !d) return false;
+                    if (!d) return false;
+                    return !emp;
+                }).length;
+                const errorCount = rows.filter(row => {
+                    const emp = String(row[empIdx] || '').trim();
+                    const d = String(row[dateIdx] || '').trim();
+                    const ti = timeInIdx >= 0 ? String(row[timeInIdx] || '').trim() : '';
+                    const to = timeOutIdx >= 0 ? String(row[timeOutIdx] || '').trim() : '';
+                    if (!emp && !d) return false;
+                    if (!d) return false;
+                    if (!emp) return false;
+                    return !ti || !to;
+                }).length;
+
+                const okEl = document.getElementById('batch-overtime-ok-count');
+                const missEl = document.getElementById('batch-overtime-missing-count');
+                const errEl = document.getElementById('batch-overtime-error-count');
+                const validationBox = document.getElementById('batch-overtime-validation');
+                if (okEl) okEl.textContent = okCount;
+                if (missEl) missEl.textContent = missingCount;
+                if (errEl) errEl.textContent = errorCount;
+                if (validationBox) validationBox.style.display = 'flex';
+            } catch (err) {
+                console.error('Failed to parse file:', err);
+                previewTable.innerHTML = '<div style="padding: 20px; color: #dc2626;">Failed to parse file. Please ensure it is a valid Excel/CSV file.</div>';
+                previewContainer.style.display = 'block';
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    };
+
+    const computeOvertimeRow = (employeeId, timeIn, timeOut) => {
+        const timeInMin = toMinutes(timeIn);
+        const timeOutMin = toMinutes(timeOut);
+        let totalHours = 0;
+        if (timeInMin != null && timeOutMin != null && timeOutMin > timeInMin) {
+            totalHours = +((timeOutMin - timeInMin) / 60).toFixed(2);
+        }
+        return { totalHours };
+    };
+
+    const toMinutes = (val) => {
+        if (val === null || val === undefined || val === '') return null;
+        
+        if (val instanceof Date) {
+            if (isNaN(val.getTime())) return null;
+            return val.getHours() * 60 + val.getMinutes() + val.getSeconds() / 60;
+        }
+        
+        const str = String(val).trim();
+        
+        if (str.includes('T')) {
+            const datePart = new Date(str);
+            if (!isNaN(datePart.getTime())) {
+                return datePart.getHours() * 60 + datePart.getMinutes() + datePart.getSeconds() / 60;
+            }
+        }
+        
+        const num = Number(str);
+        if (!isNaN(num) && num > 0 && num < 1) {
+            return Math.round(num * 24 * 60);
+        }
+        
+        const m = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (m) {
+            const h = parseInt(m[1], 10);
+            const min = parseInt(m[2], 10);
+            const sec = m[3] ? parseInt(m[3], 10) : 0;
+            return h * 60 + min + sec / 60;
+        }
+        
+        const m2 = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (m2) {
+            let h = parseInt(m2[1], 10);
+            const min = parseInt(m2[2], 10);
+            const period = m2[3].toUpperCase();
+            if (period === 'PM' && h < 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+            return h * 60 + min;
+        }
+        
+        return null;
+    };
+
+    if (downloadOvertimeTemplateBtn) {
+        downloadOvertimeTemplateBtn.addEventListener('click', async () => {
+            try {
+                const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
+                const employees = employeesRes.ok ? await employeesRes.json() : [];
+
+                const overtimeHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', 'Time Out', 'Remarks'];
+                const instructionRow = ['Auto-filled from Employees tab (do not edit)', 'Auto-filled from Employees tab (do not edit)', 'Enter Employee ID here', '', '', '', ''];
+                const overtimeData = [overtimeHeaders, instructionRow];
+
+                const employeeHeaders = ['Employee ID', 'Last Name', 'First Name', 'Department', 'Role'];
+                const employeeData = [employeeHeaders];
+
+                if (Array.isArray(employees)) {
+                    employees.forEach(emp => {
+                        employeeData.push([
+                            emp.employee_id || '',
+                            emp.last_name || '',
+                            emp.first_name || '',
+                            emp.department || '',
+                            emp.role || ''
+                        ]);
+                    });
+                }
+
+                const workbook = XLSX.utils.book_new();
+                const overtimeSheet = XLSX.utils.aoa_to_sheet(overtimeData);
+                const employeeSheet = XLSX.utils.aoa_to_sheet(employeeData);
+
+                overtimeSheet['!merges'] = [
+                    { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }
+                ];
+
+                for (let row = 2; row < 102; row++) {
+                    const rowNum = row + 1;
+                    const lastNameAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
+                    overtimeSheet[lastNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
+
+                    const firstNameAddr = XLSX.utils.encode_cell({ r: row, c: 1 });
+                    overtimeSheet[firstNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
+                }
+
+                overtimeSheet['!cols'] = [
+                    { wch: 18 },
+                    { wch: 18 },
+                    { wch: 16 },
+                    { wch: 12, z: 'MM/DD/YYYY' },
+                    { wch: 10 },
+                    { wch: 10 },
+                    { wch: 20 }
+                ];
+
+                XLSX.utils.book_append_sheet(workbook, overtimeSheet, 'Overtime');
+                XLSX.utils.book_append_sheet(workbook, employeeSheet, 'Employees');
+
+                XLSX.writeFile(workbook, 'overtime_template.xlsx');
+            } catch (err) {
+                console.error('Failed to download template:', err);
+                alert('Failed to download template');
+            }
+        });
+    }
+
+    if (downloadOvertimeTemplateAdminBtn) {
+        downloadOvertimeTemplateAdminBtn.addEventListener('click', async () => {
+            try {
+                const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
+                const employees = employeesRes.ok ? await employeesRes.json() : [];
+
+                const overtimeHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', 'Time Out', 'Remarks', 'Status'];
+                const instructionRow = ['Auto-filled from Employees tab (do not edit)', 'Auto-filled from Employees tab (do not edit)', 'Enter Employee ID here', '', '', '', '', ''];
+                const overtimeData = [overtimeHeaders, instructionRow];
+
+                const employeeHeaders = ['Employee ID', 'Last Name', 'First Name', 'Department', 'Role'];
+                const employeeData = [employeeHeaders];
+
+                if (Array.isArray(employees)) {
+                    employees.forEach(emp => {
+                        employeeData.push([
+                            emp.employee_id || '',
+                            emp.last_name || '',
+                            emp.first_name || '',
+                            emp.department || '',
+                            emp.role || ''
+                        ]);
+                    });
+                }
+
+                const workbook = XLSX.utils.book_new();
+                const overtimeSheet = XLSX.utils.aoa_to_sheet(overtimeData);
+                const employeeSheet = XLSX.utils.aoa_to_sheet(employeeData);
+
+                overtimeSheet['!merges'] = [
+                    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }
+                ];
+
+                for (let row = 2; row < 102; row++) {
+                    const rowNum = row + 1;
+                    const lastNameAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
+                    overtimeSheet[lastNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
+
+                    const firstNameAddr = XLSX.utils.encode_cell({ r: row, c: 1 });
+                    overtimeSheet[firstNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
+                }
+
+                overtimeSheet['!cols'] = [
+                    { wch: 18 },
+                    { wch: 18 },
+                    { wch: 16 },
+                    { wch: 12, z: 'MM/DD/YYYY' },
+                    { wch: 10 },
+                    { wch: 10 },
+                    { wch: 20 },
+                    { wch: 12 }
+                ];
+
+                XLSX.utils.book_append_sheet(workbook, overtimeSheet, 'Overtime');
+                XLSX.utils.book_append_sheet(workbook, employeeSheet, 'Employees');
+
+                XLSX.writeFile(workbook, 'overtime_template_admin.xlsx');
+            } catch (err) {
+                console.error('Failed to download admin template:', err);
+                alert('Failed to download admin template');
+            }
+        });
+    }
+
+    if (saveBatchUploadOvertimeBtn) {
+        saveBatchUploadOvertimeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const file = batchOvertimeFileInput?.files?.[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            try {
+                const data = new Uint8Array(await file.arrayBuffer());
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+
+                if (!jsonData.length) {
+                    alert('No data found in file');
+                    return;
+                }
+
+                const headers = jsonData[0];
+                const rows = jsonData.slice(1);
+                const empIdx = headers.findIndex(h => String(h).toLowerCase().includes('employee'));
+                const dateIdx = headers.findIndex(h => String(h).toLowerCase().includes('date'));
+                const timeInIdx = headers.findIndex(h => String(h).toLowerCase().includes('time in'));
+                const timeOutIdx = headers.findIndex(h => String(h).toLowerCase().includes('time out'));
+                const remarksIdx = headers.findIndex(h => String(h).toLowerCase().includes('remark'));
+                const statusIdx = headers.findIndex(h => String(h).toLowerCase().includes('status'));
+
+                if (empIdx < 0 || dateIdx < 0 || timeInIdx < 0 || timeOutIdx < 0) {
+                    alert('File must contain Employee ID, Date, Time In, and Time Out columns');
+                    return;
+                }
+
+                const logs = [];
+                const skippedRows = [];
+                const missingTimeRows = [];
+
+                rows.forEach((row, index) => {
+                    const employee_id = String(row[empIdx] || '').trim();
+                    const date = String(row[dateIdx] || '').trim();
+                    const time_in = String(row[timeInIdx] || '').trim();
+                    const time_out = String(row[timeOutIdx] || '').trim();
+                    const remarks = remarksIdx >= 0 ? String(row[remarksIdx] || '').trim() : '';
+                    const status = statusIdx >= 0 ? String(row[statusIdx] || '').trim() : 'Pending';
+
+                    // Skip completely empty rows (no employee ID and no date)
+                    if (!employee_id && !date) {
+                        return;
+                    }
+
+                    // Skip instruction/header rows (date is always empty for these)
+                    if (!date) {
+                        return;
+                    }
+
+                    // Missing employee ID = incomplete
+                    if (!employee_id) {
+                        skippedRows.push(index + 2);
+                        return;
+                    }
+
+                    // Missing time in or time out = error
+                    if (!time_in || !time_out) {
+                        missingTimeRows.push(index + 2);
+                        return;
+                    }
+
+                    const computed = computeOvertimeRow(employee_id, time_in, time_out);
+
+                    logs.push({
+                        employee_id,
+                        date,
+                        time_in,
+                        time_out,
+                        remarks,
+                        status,
+                        total_hours: computed.totalHours,
+                        created_by: (() => { try { const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}'); return `${u.first_name || ''} ${u.last_name || ''}`.trim() || null; } catch(e) { return null; } })()
+                    });
+                });
+
+                const okCount = logs.length;
+                const missingCount = skippedRows.length;
+                const errorCount = missingTimeRows.length;
+
+                const summaryModal = document.getElementById('bulk-overtime-summary-modal');
+                const okCountEl = document.getElementById('bulk-overtime-ok-count');
+                const missingCountEl = document.getElementById('bulk-overtime-missing-count');
+                const errorCountEl = document.getElementById('bulk-overtime-error-count');
+                const missingDetails = document.getElementById('bulk-overtime-missing-details');
+                const missingList = document.getElementById('bulk-overtime-missing-list');
+                const errorDetails = document.getElementById('bulk-overtime-error-details');
+                const errorList = document.getElementById('bulk-overtime-error-list');
+                const proceedBtn = document.getElementById('proceed-bulk-overtime-summary-btn');
+
+                if (okCountEl) okCountEl.textContent = okCount;
+                if (missingCountEl) missingCountEl.textContent = missingCount;
+                if (errorCountEl) errorCountEl.textContent = errorCount;
+
+                if (missingDetails && missingList) {
+                    if (skippedRows.length > 0) {
+                        missingDetails.style.display = 'block';
+                        missingList.textContent = `Rows ${skippedRows.join(', ')} have incomplete data and will be skipped.`;
+                    } else {
+                        missingDetails.style.display = 'none';
+                    }
+                }
+
+                if (errorDetails && errorList) {
+                    if (missingTimeRows.length > 0) {
+                        errorDetails.style.display = 'block';
+                        errorList.textContent = `Rows ${missingTimeRows.join(', ')} are missing Time In or Time Out.`;
+                    } else {
+                        errorDetails.style.display = 'none';
+                    }
+                }
+
+                if (proceedBtn) {
+                    proceedBtn.disabled = errorCount > 0;
+                    proceedBtn.style.opacity = errorCount > 0 ? '0.5' : '1';
+                }
+
+                if (summaryModal) summaryModal.style.display = 'flex';
+
+                const proceedSave = async () => {
+                    if (summaryModal) summaryModal.style.display = 'none';
+
+                    if (logs.length === 0) {
+                        alert('No valid rows to save');
+                        return;
+                    }
+
+                    const loadingOverlay = document.getElementById('batch-overtime-loading-overlay');
+                    const loadingCount = document.getElementById('batch-overtime-loading-count');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'flex';
+                        loadingOverlay.style.position = 'fixed';
+                        loadingOverlay.style.top = '0';
+                        loadingOverlay.style.left = '0';
+                        loadingOverlay.style.right = '0';
+                        loadingOverlay.style.bottom = '0';
+                        loadingOverlay.style.zIndex = '9999';
+                        loadingOverlay.style.borderRadius = '0';
+                    }
+                    if (loadingCount) loadingCount.textContent = 'Saving 0 of ' + logs.length + ' rows...';
+
+                    saveBatchUploadOvertimeBtn.disabled = true;
+                    saveBatchUploadOvertimeBtn.innerText = 'Saving...';
+
+                    let savedCount = 0;
+                    for (let i = 0; i < logs.length; i++) {
+                        if (loadingCount) loadingCount.textContent = 'Saving ' + (i + 1) + ' of ' + logs.length + ' rows...';
+                        try {
+                            const res = await fetch('/api/overtime-logs/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ logs: [logs[i]] })
+                            });
+                            if (res.ok) savedCount++;
+                        } catch (err) {
+                            console.error('Save error for row', i, err);
+                        }
+                    }
+
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+                    alert(`Saved ${savedCount} of ${logs.length} row(s) successfully`);
+                    await loadPendingOvertimeLogs();
+                    await loadOvertimeHistory();
+                    closeBatchUploadOvertimeModalFn();
+                };
+
+                const cancelSummary = () => {
+                    if (summaryModal) summaryModal.style.display = 'none';
+                };
+
+                const proceedBtnEl = document.getElementById('proceed-bulk-overtime-summary-btn');
+                const cancelBtnEl = document.getElementById('cancel-bulk-overtime-summary-btn');
+                const closeBtnEl = document.getElementById('close-bulk-overtime-summary-modal');
+
+                if (proceedBtnEl) {
+                    proceedBtnEl.onclick = proceedSave;
+                }
+                if (cancelBtnEl) {
+                    cancelBtnEl.onclick = cancelSummary;
+                }
+                if (closeBtnEl) {
+                    closeBtnEl.onclick = cancelSummary;
+                }
+
+            } catch (err) {
+                console.error('Failed to save batch overtime:', err);
+                alert('Failed to save batch upload: ' + err.message);
+            } finally {
+                if (saveBatchUploadOvertimeBtn) {
+                    saveBatchUploadOvertimeBtn.disabled = false;
+                    saveBatchUploadOvertimeBtn.innerText = 'Save';
+                }
+            }
+        });
+    }
+
     const backToSalaryBtn = document.getElementById('back-to-salary-btn');
     if (backToSalaryBtn) {
         backToSalaryBtn.addEventListener('click', (e) => {
@@ -559,6 +1246,7 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
                 }
             });
         });
+        updatePendingOvertimeTotalHours(logs);
     }
 
     let allPendingOvertimeLogs = [];
@@ -577,8 +1265,20 @@ ModuleComponents['hr-salary-overtime'] = (container) => {
             const empId = String(log.employee_id || '').toLowerCase();
             return fullName.includes(query) || formattedDate.includes(query) || empId.includes(query);
         });
-        renderPendingOvertimeLogs(filtered);
-        applyOvertimeSort();
+renderPendingOvertimeLogs(filtered);
+            applyOvertimeSort();
+            updatePendingOvertimeTotalHours(filtered);
+    }
+
+    function updatePendingOvertimeTotalHours(logs) {
+        const totalHoursInput = document.getElementById('pending-overtime-total-hours');
+        if (!totalHoursInput) return;
+        if (!logs || logs.length === 0) {
+            totalHoursInput.value = '0.00';
+            return;
+        }
+        const totalHours = logs.reduce((sum, log) => sum + (parseFloat(log.total_hours) || 0), 0);
+        totalHoursInput.value = totalHours.toFixed(2);
     }
 
     const getVisiblePendingOvertimeIds = () => {
