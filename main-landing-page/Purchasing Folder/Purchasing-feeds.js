@@ -3147,9 +3147,9 @@ ModuleComponents['purchasing-feeds'] = (container) => {
 
             let html = '';
             if (totalPages > 1) {
-                html += `<button class="page-btn" id="feeds-transaction-first-btn" ${feedsTransactionCurrentPage === 1 ? 'disabled' : ''}>&#120992; 1st</button>`;
+                html += `<button class="page-btn" id="feeds-transaction-first-btn" ${feedsTransactionCurrentPage === 1 ? 'disabled' : ''}>&laquo;&laquo; First</button>`;
             }
-            html += `<button class="page-btn" id="feeds-transaction-prev-btn" ${feedsTransactionCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+            html += `<button class="page-btn" id="feeds-transaction-prev-btn" ${feedsTransactionCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
 
             if (totalPages <= 7) {
                 for (let i = 1; i <= totalPages; i++) {
@@ -3165,10 +3165,10 @@ ModuleComponents['purchasing-feeds'] = (container) => {
                 }
             }
 
-            html += `<button class="page-btn" id="feeds-transaction-next-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &#8594;</button>`;
+            html += `<button class="page-btn" id="feeds-transaction-next-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &raquo;</button>`;
             
             if (totalPages > 1) {
-                html += `<button class="page-btn" id="feeds-transaction-last-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>&#120993; Last</button>`;
+                html += `<button class="page-btn" id="feeds-transaction-last-btn" ${feedsTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Last &raquo;&raquo;</button>`;
             }
 
             container.innerHTML = html;

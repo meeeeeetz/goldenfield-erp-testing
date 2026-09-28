@@ -146,12 +146,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                                     <th>Efficiency</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr><td>July 1</td><td>5:30</td><td>100,000</td><td>97%</td></tr>
-                                <tr><td>July 2</td><td>5:45</td><td>102,500</td><td>96%</td></tr>
-                                <tr><td>July 3</td><td>5:15</td><td>98,000</td><td>98%</td></tr>
-                                <tr><td>July 4</td><td>6:00</td><td>105,000</td><td>95%</td></tr>
-                                <tr><td>July 5</td><td>5:30</td><td>100,000</td><td>97%</td></tr>
+                            <tbody id="machine-efficiency-body">
                             </tbody>
                         </table>
                     </div>
@@ -188,19 +183,20 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                         <table class="data-table product-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Beginning Inventory</th>
-                                    <th>Egg Sold</th>
-                                    <th>Egg Waste</th>
-                                    <th>Ending Inventory</th>
-                                    <th>Egg Production</th>
-                                    <th>Created by</th>
+                                    <th class="sortable" data-sort="date">Date <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="beginningInventory">Beginning Inventory <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="eggSold">Egg Sold <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="eggWaste">Egg Waste <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="endingInventory">Ending Inventory <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="eggProduction">Egg Production <span class="sort-arrow">⇅</span></th>
+                                    <th class="sortable" data-sort="createdBy">Created by <span class="sort-arrow">⇅</span></th>
                                 </tr>
                             </thead>
                             <tbody id="egg-transactions-body">
                             </tbody>
                         </table>
                     </div>
+                    <div class="pagination" id="egg-transaction-pagination"></div>
                 </div>
             </div>
             
@@ -1133,7 +1129,12 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     };
 
     let eggProductCurrentPage = 1;
-    const EGG_PRODUCTS_PER_PAGE = 5;
+    const EGG_PRODUCTS_PER_PAGE = 10;
+
+    let eggTransactionCurrentPage = 1;
+    const EGG_TRANSACTIONS_PER_PAGE = 18;
+    let eggTransactionData = [];
+    let eggTransactionSortState = { col: null, dir: 1 };
 
     const renderEggProductPagination = (totalItems) => {
         const pagination = container.querySelector('#egg-product-pagination');
@@ -1739,7 +1740,7 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 (record.e_broken || 0) + (record.e_dirty || 0) + (record.e_unweighed || 0)
             );
 
-            const transactions = sorted.map((record, index) => {
+            eggTransactionData = sorted.map((record, index) => {
                 const dateKey = toLocalDateKey(record.date);
                 const prevRecord = index > 0 ? sorted[index - 1] : null;
 
@@ -1761,22 +1762,201 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
                 };
             });
 
-            const reversed = [...transactions].reverse();
-
-            tbody.innerHTML = reversed.map(t => `
-                <tr>
-                    <td>${t.date}</td>
-                    <td>${t.beginningInventory.toLocaleString('en-US')}</td>
-                    <td>${t.eggSold.toLocaleString('en-US')}</td>
-                    <td>${t.eggWaste.toLocaleString('en-US')}</td>
-                    <td>${t.endingInventory.toLocaleString('en-US')}</td>
-                    <td>${t.eggProduction.toLocaleString('en-US')}</td>
-                    <td>${t.createdBy}</td>
-                </tr>
-            `).join('');
+            // Reverse to show newest first
+            eggTransactionData.reverse();
+            eggTransactionCurrentPage = 1;
+            renderEggTransactionPage();
         } catch (err) {
             console.error('Failed to load daily egg transactions', err);
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+        }
+    };
+
+    const renderEggTransactionPage = () => {
+        const tbody = document.getElementById('egg-transactions-body');
+        if (!tbody) return;
+
+        if (eggTransactionSortState.col) {
+            eggTransactionData = [...eggTransactionData].sort((a, b) => {
+                let va = a[eggTransactionSortState.col];
+                let vb = b[eggTransactionSortState.col];
+                if (typeof va === 'number' && typeof vb === 'number') {
+                    // already numbers
+                } else {
+                    va = (va || '').toString().toLowerCase();
+                    vb = (vb || '').toString().toLowerCase();
+                }
+                if (va < vb) return -1 * eggTransactionSortState.dir;
+                if (va > vb) return 1 * eggTransactionSortState.dir;
+                return 0;
+            });
+        }
+
+        const totalPages = Math.max(1, Math.ceil(eggTransactionData.length / EGG_TRANSACTIONS_PER_PAGE));
+        if (eggTransactionCurrentPage > totalPages) {
+            eggTransactionCurrentPage = totalPages;
+        }
+
+        const start = (eggTransactionCurrentPage - 1) * EGG_TRANSACTIONS_PER_PAGE;
+        const end = start + EGG_TRANSACTIONS_PER_PAGE;
+        const pageData = eggTransactionData.slice(start, end);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No transactions found</td></tr>';
+            renderEggTransactionPagination(totalPages);
+            return;
+        }
+
+        tbody.innerHTML = pageData.map(t => `
+            <tr>
+                <td>${t.date}</td>
+                <td>${t.beginningInventory.toLocaleString('en-US')}</td>
+                <td>${t.eggSold.toLocaleString('en-US')}</td>
+                <td>${t.eggWaste.toLocaleString('en-US')}</td>
+                <td>${t.endingInventory.toLocaleString('en-US')}</td>
+                <td>${t.eggProduction.toLocaleString('en-US')}</td>
+                <td>${t.createdBy}</td>
+            </tr>
+        `).join('');
+
+        // Add empty rows to maintain consistent height
+        const emptyRows = EGG_TRANSACTIONS_PER_PAGE - pageData.length;
+        for (let i = 0; i < emptyRows; i++) {
+            tbody.innerHTML += `<tr><td colspan="7" style="height: 48px; background: rgba(0,0,0,0.03);">&nbsp;</td></tr>`;
+        }
+
+        renderEggTransactionPagination(totalPages);
+    };
+
+    const renderEggTransactionPagination = (totalPages) => {
+        const container = document.getElementById('egg-transaction-pagination');
+        if (!container) return;
+
+        let html = '';
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="egg-transaction-first-btn" ${eggTransactionCurrentPage === 1 ? 'disabled' : ''}>&laquo;&laquo; First</button>`;
+        }
+        html += `<button class="page-btn" id="egg-transaction-prev-btn" ${eggTransactionCurrentPage === 1 || totalPages <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === eggTransactionCurrentPage ? 'active' : ''}" id="egg-transaction-page-${i}">${i}</button>`;
+            }
+        } else {
+            let startPage = Math.max(1, eggTransactionCurrentPage - 3);
+            let endPage = Math.min(totalPages, startPage + 6);
+            const actualStart = Math.max(1, endPage - 6);
+            
+            for (let i = actualStart; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === eggTransactionCurrentPage ? 'active' : ''}" id="egg-transaction-page-${i}">${i}</button>`;
+            }
+        }
+
+        html += `<button class="page-btn" id="egg-transaction-next-btn" ${eggTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Next &raquo;</button>`;
+        
+        if (totalPages > 1) {
+            html += `<button class="page-btn" id="egg-transaction-last-btn" ${eggTransactionCurrentPage >= totalPages || totalPages <= 1 ? 'disabled' : ''}>Last &raquo;&raquo;</button>`;
+        }
+
+        container.innerHTML = html;
+
+        document.getElementById('egg-transaction-first-btn')?.addEventListener('click', () => {
+            if (eggTransactionCurrentPage !== 1 && totalPages > 1) {
+                eggTransactionCurrentPage = 1;
+                renderEggTransactionPage();
+            }
+        });
+
+        document.getElementById('egg-transaction-prev-btn')?.addEventListener('click', () => {
+            if (eggTransactionCurrentPage > 1 && totalPages > 1) {
+                eggTransactionCurrentPage--;
+                renderEggTransactionPage();
+            }
+        });
+
+        document.getElementById('egg-transaction-next-btn')?.addEventListener('click', () => {
+            if (eggTransactionCurrentPage < totalPages && totalPages > 1) {
+                eggTransactionCurrentPage++;
+                renderEggTransactionPage();
+            }
+        });
+
+        document.getElementById('egg-transaction-last-btn')?.addEventListener('click', () => {
+            if (eggTransactionCurrentPage !== totalPages && totalPages > 1) {
+                eggTransactionCurrentPage = totalPages;
+                renderEggTransactionPage();
+            }
+        });
+
+        const pageCount = totalPages <= 7 ? totalPages : 7;
+        const startPage = totalPages <= 7 ? 1 : Math.max(1, eggTransactionCurrentPage - 3);
+        const endPage = totalPages <= 7 ? totalPages : Math.min(totalPages, startPage + 6);
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.getElementById(`egg-transaction-page-${i}`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    eggTransactionCurrentPage = i;
+                    renderEggTransactionPage();
+                });
+            }
+        }
+    };
+
+    const loadMachineEfficiencyTable = async () => {
+        const tbody = document.getElementById('machine-efficiency-body');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(`${API_BASE_DAILY_EGG_PRODUCTION}`, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('Failed to fetch daily egg production');
+            const records = await res.json();
+
+            const sorted = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const last5Days = sorted.slice(0, 5);
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                const month = d.toLocaleString('default', { month: 'short' });
+                const day = d.getDate();
+                return `${month} ${day}`;
+            };
+
+            const formatHours = (hours) => {
+                if (!hours || hours === 0) return '0:00';
+                const h = Math.floor(hours);
+                const m = Math.round((hours - h) * 60);
+                return `${h}:${String(m).padStart(2, '0')}`;
+            };
+
+            const calculateEfficiency = (eggProduction, hoursOperated) => {
+                if (!hoursOperated || hoursOperated === 0) return '0%';
+                const expectedProduction = hoursOperated * 25000;
+                const efficiency = (eggProduction / expectedProduction) * 100;
+                return `${Math.min(Math.round(efficiency), 100)}%`;
+            };
+
+            tbody.innerHTML = last5Days.map(record => {
+                const date = formatDate(record.date);
+                const machineTime = formatHours(record.total_hours_operated);
+                const eggQuantity = (record.egg_production || 0).toLocaleString('en-US');
+                const efficiency = calculateEfficiency(record.egg_production, record.total_hours_operated);
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${machineTime}</td>
+                        <td>${eggQuantity}</td>
+                        <td>${efficiency}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (last5Days.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data available</td></tr>';
+            }
+        } catch (err) {
+            console.error('Failed to load machine efficiency table', err);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
         }
     };
 
@@ -1801,6 +1981,21 @@ ModuleComponents['operations-egg-inventory'] = (container) => {
     loadGoodBrokenCard();
     loadEggDistributionChart();
     loadDailyEggTransactions();
+    loadMachineEfficiencyTable();
+
+    document.querySelectorAll('.daily-egg-card th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.dataset.sort;
+            if (!col) return;
+            if (eggTransactionSortState.col === col) {
+                eggTransactionSortState.dir *= -1;
+            } else {
+                eggTransactionSortState.col = col;
+                eggTransactionSortState.dir = 1;
+            }
+            renderEggTransactionPage();
+        });
+    });
 };
 
 // Global Initialization Routine
