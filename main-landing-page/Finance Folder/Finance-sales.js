@@ -10,25 +10,25 @@ ModuleComponents['finance-sales'] = (container) => {
                 <h3>Total Revenue</h3>
                 <p class="card-sub-label">Gross Sales amount over a selected period</p>
                 <div class="card-value-row">
-                    <div class="card-value">P234,500</div>
-                    <span class="trend-up">▲ 3%</span>
+                    <div class="card-value" id="total-revenue-value">Loading...</div>
+                    <span class="trend" id="total-revenue-trend"></span>
                 </div>
-                <p class="vs-last-month">VS last selected period</p>
+                <p class="vs-last-month">VS last month</p>
             </div>
             <div class="card tracking-card">
                 <h3>Total Volume Sold</h3>
-                <p class="card-sub-label">Total Number of Pcs sold for the selected period</p>
+                <p class="card-sub-label">Total Number of Eggs sold for the selected period</p>
                 <div class="card-value-row">
-                    <div class="card-value">234,500 pcs</div>
-                    <span class="trend-up">▲ 1%</span>
+                    <div class="card-value" id="total-volume-value">Loading...</div>
+                    <span class="trend" id="total-volume-trend"></span>
                 </div>
-                <p class="vs-last-month">VS last selected period</p>
+                <p class="vs-last-month">VS last month</p>
             </div>
             <div class="card tracking-card">
                 <h3>Average Order Value</h3>
                 <p class="card-sub-label">the mean spend amount per customer Invoices</p>
                 <div class="card-value-row">
-                    <div class="card-value">P87,500.00</div>
+                    <div class="card-value" id="avg-order-value">Loading...</div>
                 </div>
             </div>
             <div class="card tracking-card">
@@ -150,6 +150,104 @@ ModuleComponents['finance-sales'] = (container) => {
         </div>
         </div>
     `;
+
+    // Fetch sales comparison data
+    async function loadSalesComparison() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/sales-comparison', { headers });
+            if (!res.ok) throw new Error('Failed to fetch sales data');
+            const data = await res.json();
+
+            const valueEl = document.getElementById('total-revenue-value');
+            const trendEl = document.getElementById('total-revenue-trend');
+
+            if (valueEl) {
+                valueEl.textContent = 'P' + Number(data.current_month_sales).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            if (trendEl) {
+                const pct = data.percentage_difference || '0.0';
+                const trend = data.trend || 'neutral';
+                if (trend === 'up') {
+                    trendEl.textContent = '▲ ' + pct + '%';
+                    trendEl.className = 'trend trend-up';
+                } else if (trend === 'down') {
+                    trendEl.textContent = '▼ ' + pct + '%';
+                    trendEl.className = 'trend trend-down';
+                } else {
+                    trendEl.textContent = '—';
+                    trendEl.className = 'trend';
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load sales comparison:', err);
+            const valueEl = document.getElementById('total-revenue-value');
+            if (valueEl) valueEl.textContent = 'Error';
+        }
+    }
+
+    loadSalesComparison();
+
+    async function loadEggsComparison() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/eggs-comparison', { headers });
+            if (!res.ok) throw new Error('Failed to fetch eggs data');
+            const data = await res.json();
+
+            const valueEl = document.getElementById('total-volume-value');
+            const trendEl = document.getElementById('total-volume-trend');
+
+            if (valueEl) {
+                valueEl.textContent = Number(data.current_month_eggs).toLocaleString() + ' pcs';
+            }
+
+            if (trendEl) {
+                const pct = data.percentage_difference || '0.0';
+                const trend = data.trend || 'neutral';
+                if (trend === 'up') {
+                    trendEl.textContent = '▲ ' + pct + '%';
+                    trendEl.className = 'trend trend-up';
+                } else if (trend === 'down') {
+                    trendEl.textContent = '▼ ' + pct + '%';
+                    trendEl.className = 'trend trend-down';
+                } else {
+                    trendEl.textContent = '—';
+                    trendEl.className = 'trend';
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load eggs comparison:', err);
+            const valueEl = document.getElementById('total-volume-value');
+            if (valueEl) valueEl.textContent = 'Error';
+        }
+    }
+
+    loadEggsComparison();
+
+    async function loadAvgOrderValue() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/avg-order-value', { headers });
+            if (!res.ok) throw new Error('Failed to fetch avg order value');
+            const data = await res.json();
+
+            const valueEl = document.getElementById('avg-order-value');
+            if (valueEl) {
+                valueEl.textContent = 'P' + Number(data.avg_order_value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        } catch (err) {
+            console.error('Failed to load avg order value:', err);
+            const valueEl = document.getElementById('avg-order-value');
+            if (valueEl) valueEl.textContent = 'Error';
+        }
+    }
+
+    loadAvgOrderValue();
 };
 
 function initializeModule(contentArea) {

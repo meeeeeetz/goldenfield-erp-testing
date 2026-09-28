@@ -218,6 +218,129 @@ class ReceiptIssueController {
         return result.rows[0];
     }
 
+    async getLastMonthSales() {
+        const query = `
+            SELECT COALESCE(SUM(actual_total), 0) as total_sales
+            FROM (
+                SELECT si_number, SUM(total) as actual_total, MAX(date) as date
+                FROM receipt_issues
+                GROUP BY si_number
+            ) sub
+            JOIN receipt_issue_summaries ris ON sub.si_number = ris.si_number
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND sub.date >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1 MONTH')
+              AND sub.date < DATE_TRUNC('MONTH', CURRENT_DATE)
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0];
+    }
+
+    async getSalesComparison() {
+        const [currentMonth, lastMonth] = await Promise.all([
+            this.getMonthlySales(),
+            this.getLastMonthSales()
+        ]);
+
+        const current = parseFloat(currentMonth.total_sales) || 0;
+        const last = parseFloat(lastMonth.total_sales) || 0;
+        let percentageDiff = 0;
+        let trend = 'neutral';
+
+        if (last > 0) {
+            percentageDiff = ((current - last) / last * 100);
+            trend = percentageDiff >= 0 ? 'up' : 'down';
+        } else if (current > 0) {
+            percentageDiff = 100;
+            trend = 'up';
+        }
+
+        return {
+            current_month_sales: current,
+            last_month_sales: last,
+            percentage_difference: Math.abs(percentageDiff).toFixed(1),
+            trend: trend
+        };
+    }
+
+    async getMonthlyEggsSold() {
+        const query = `
+            SELECT COALESCE(SUM(ri.qty * pl.no_of_eggs), 0) as total_eggs
+            FROM receipt_issues ri
+            JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
+            LEFT JOIN product_list pl
+                ON pl.product = TRIM(ri.product)
+                OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
+                OR TRIM(ri.product) LIKE pl.product || '%'
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND pl.no_of_eggs > 0
+              AND EXTRACT(YEAR FROM ri.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM ri.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0];
+    }
+
+    async getLastMonthEggsSold() {
+        const query = `
+            SELECT COALESCE(SUM(ri.qty * pl.no_of_eggs), 0) as total_eggs
+            FROM receipt_issues ri
+            JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
+            LEFT JOIN product_list pl
+                ON pl.product = TRIM(ri.product)
+                OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
+                OR TRIM(ri.product) LIKE pl.product || '%'
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND pl.no_of_eggs > 0
+              AND ri.date >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1 MONTH')
+              AND ri.date < DATE_TRUNC('MONTH', CURRENT_DATE)
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0];
+    }
+
+    async getEggsComparison() {
+        const [currentMonth, lastMonth] = await Promise.all([
+            this.getMonthlyEggsSold(),
+            this.getLastMonthEggsSold()
+        ]);
+
+        const current = parseFloat(currentMonth.total_eggs) || 0;
+        const last = parseFloat(lastMonth.total_eggs) || 0;
+        let percentageDiff = 0;
+        let trend = 'neutral';
+
+        if (last > 0) {
+            percentageDiff = ((current - last) / last * 100);
+            trend = percentageDiff >= 0 ? 'up' : 'down';
+        } else if (current > 0) {
+            percentageDiff = 100;
+            trend = 'up';
+        }
+
+        return {
+            current_month_eggs: current,
+            last_month_eggs: last,
+            percentage_difference: Math.abs(percentageDiff).toFixed(1),
+            trend: trend
+        };
+    }
+
+    async getMonthlyAverageOrderValue() {
+        const query = `
+            SELECT COALESCE(AVG(ris.grand_total), 0) as avg_order_value
+            FROM receipt_issue_summaries ris
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND EXTRACT(YEAR FROM ris.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM ris.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0];
+    }
+
     async getTodayEggsSold() {
         const query = `
             SELECT 

@@ -101,6 +101,33 @@ router.get('/monthly-sales', async (req, res) => {
   }
 });
 
+router.get('/sales-comparison', async (req, res) => {
+  try {
+    const comparison = await controller.getSalesComparison();
+    res.json(comparison);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/eggs-comparison', async (req, res) => {
+  try {
+    const comparison = await controller.getEggsComparison();
+    res.json(comparison);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/avg-order-value', async (req, res) => {
+  try {
+    const result = await controller.getMonthlyAverageOrderValue();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/weekly-schedule', async (req, res) => {
   try {
     const schedule = await controller.getWeeklySchedule();
