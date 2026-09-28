@@ -128,6 +128,42 @@ router.get('/avg-order-value', async (req, res) => {
   }
 });
 
+router.get('/active-customers', async (req, res) => {
+  try {
+    const result = await controller.getMonthlyActiveCustomers();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/sales-trends', async (req, res) => {
+  try {
+    const result = await controller.getLast6MonthsSalesTrends();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/top-products', async (req, res) => {
+  try {
+    const result = await controller.getTopProductsCurrentMonth();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/top-customers', async (req, res) => {
+  try {
+    const result = await controller.getTopCustomersCurrentMonth();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/weekly-schedule', async (req, res) => {
   try {
     const schedule = await controller.getWeeklySchedule();

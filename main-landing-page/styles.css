@@ -589,7 +589,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    min-height: 260px;
+    min-height: 460px;
     flex-shrink: 0;
     font-size: 18px;
     overflow-x: auto;
@@ -2911,8 +2911,9 @@ input[type="date"].modal-select {
 
 .chart-wrap {
     width: 100%;
-    height: 220px;
+    height: 360px;
     position: relative;
+    padding-bottom: 40px;
 }
 
 .egg-price-chart {
@@ -3023,8 +3024,19 @@ input[type="date"].modal-select {
 }
 
 .finance-sales-row .graph-placeholder {
-    flex: 1 1 0;
+    flex: 1 1 300px;
     min-width: 0;
+}
+
+.sales-trends-card {
+    min-width: 400px;
+}
+
+.sales-trends-card .chart-wrap {
+    width: 100%;
+    height: 360px;
+    position: relative;
+    padding-bottom: 40px;
 }
 
 .payment-mix-wrap {

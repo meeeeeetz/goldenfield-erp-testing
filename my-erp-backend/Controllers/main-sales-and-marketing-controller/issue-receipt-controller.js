@@ -341,6 +341,103 @@ class ReceiptIssueController {
         return result.rows[0];
     }
 
+    async getMonthlyActiveCustomers() {
+        const query = `
+            SELECT COUNT(DISTINCT customer) as active_customers
+            FROM receipt_issue_summaries ris
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND EXTRACT(YEAR FROM ris.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM ris.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        `;
+        const result = await this.db.query(query);
+        return result.rows[0];
+    }
+
+    async getLast6MonthsSalesTrends() {
+        const query = `
+            WITH months AS (
+                SELECT generate_series(
+                    DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '5 MONTHS'),
+                    DATE_TRUNC('MONTH', CURRENT_DATE),
+                    INTERVAL '1 MONTH'
+                )::date as month_start
+            ),
+            sales AS (
+                SELECT 
+                    DATE_TRUNC('MONTH', ris.date)::date as month_start,
+                    COALESCE(SUM(ris.grand_total), 0) as grand_total,
+                    COALESCE(SUM(ri.qty * pl.no_of_eggs), 0) as eggs_sold
+                FROM receipt_issue_summaries ris
+                JOIN receipt_issues ri ON ri.si_number = ris.si_number
+                LEFT JOIN product_list pl
+                    ON pl.product = TRIM(ri.product)
+                    OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
+                    OR TRIM(ri.product) LIKE pl.product || '%'
+                WHERE ris.status != 'Voided'
+                  AND ris.posted = TRUE
+                  AND pl.no_of_eggs > 0
+                  AND ris.date >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '5 MONTHS')
+                  AND ris.date < DATE_TRUNC('MONTH', CURRENT_DATE) + INTERVAL '1 MONTH'
+                GROUP BY DATE_TRUNC('MONTH', ris.date)
+            )
+            SELECT 
+                to_char(m.month_start, 'YYYY-MM') as month,
+                to_char(m.month_start, 'Mon YYYY') as month_label,
+                COALESCE(s.grand_total, 0) as grand_total,
+                COALESCE(s.eggs_sold, 0) as eggs_sold
+            FROM months m
+            LEFT JOIN sales s ON m.month_start = s.month_start
+            ORDER BY m.month_start
+        `;
+        const result = await this.db.query(query);
+        return result.rows;
+    }
+
+    async getTopProductsCurrentMonth() {
+        const query = `
+            SELECT 
+                COALESCE(pl.product, TRIM(ri.product)) as product,
+                COALESCE(SUM(ri.total), 0) as amount,
+                COALESCE(SUM(ri.qty), 0) as qty
+            FROM receipt_issues ri
+            JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
+            LEFT JOIN product_list pl
+                ON pl.product = TRIM(ri.product)
+                OR pl.product = TRIM(SPLIT_PART(ri.product, ' - ', 1))
+                OR TRIM(ri.product) LIKE pl.product || '%'
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND EXTRACT(YEAR FROM ris.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM ris.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+            GROUP BY COALESCE(pl.product, TRIM(ri.product))
+            ORDER BY amount DESC
+            LIMIT 8
+        `;
+        const result = await this.db.query(query);
+        return result.rows;
+    }
+
+    async getTopCustomersCurrentMonth() {
+        const query = `
+            SELECT 
+                ri.customer,
+                COALESCE(SUM(ri.total), 0) as accumulated_amount,
+                COUNT(DISTINCT ri.si_number) as receipt_count
+            FROM receipt_issues ri
+            JOIN receipt_issue_summaries ris ON ri.si_number = ris.si_number
+            WHERE ris.status != 'Voided'
+              AND ris.posted = TRUE
+              AND EXTRACT(YEAR FROM ris.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM ris.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+            GROUP BY ri.customer
+            ORDER BY accumulated_amount DESC
+            LIMIT 5
+        `;
+        const result = await this.db.query(query);
+        return result.rows;
+    }
+
     async getTodayEggsSold() {
         const query = `
             SELECT 

@@ -35,68 +35,27 @@ ModuleComponents['finance-sales'] = (container) => {
                 <h3>Active Customer Count</h3>
                 <p class="card-sub-label">Number of unique customer purchasing in the period</p>
                 <div class="card-value-row">
-                    <div class="card-value">5 customers</div>
+                    <div class="card-value" id="active-customers-value">Loading...</div>
                 </div>
             </div>
         </div>
-        <div class="finance-sales-row">
+<div class="finance-sales-row">
         <div class="card graph-placeholder sales-trends-card">
             <h3>Sales trends over time</h3>
             <div class="chart-wrap">
-                <svg viewBox="0 0 760 360" class="egg-price-chart sales-line-chart" preserveAspectRatio="xMidYMid meet">
-                    <line x1="70" y1="20" x2="70" y2="310" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="310" x2="730" y2="310" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="252" x2="730" y2="252" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="194" x2="730" y2="194" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="136" x2="730" y2="136" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="78" x2="730" y2="78" stroke="#D6D6D6" stroke-width="1"></line>
-                    <line x1="70" y1="20" x2="730" y2="20" stroke="#D6D6D6" stroke-width="1"></line>
-                    <text x="60" y="315" text-anchor="end" font-size="11" fill="#555">0</text>
-                    <text x="60" y="256" text-anchor="end" font-size="11" fill="#555">50k</text>
-                    <text x="60" y="198" text-anchor="end" font-size="11" fill="#555">100k</text>
-                    <text x="60" y="140" text-anchor="end" font-size="11" fill="#555">150k</text>
-                    <text x="60" y="82" text-anchor="end" font-size="11" fill="#555">200k</text>
-                    <text x="60" y="24" text-anchor="end" font-size="11" fill="#555">250k</text>
-                    <text x="114" y="335" text-anchor="middle" font-size="11" fill="#555">Feb</text>
-                    <text x="234" y="335" text-anchor="middle" font-size="11" fill="#555">Mar</text>
-                    <text x="354" y="335" text-anchor="middle" font-size="11" fill="#555">Apr</text>
-                    <text x="474" y="335" text-anchor="middle" font-size="11" fill="#555">May</text>
-                    <text x="594" y="335" text-anchor="middle" font-size="11" fill="#555">Jun</text>
-                    <text x="714" y="335" text-anchor="middle" font-size="11" fill="#555">Jul</text>
-                    <polyline points="114,199 234,96 334,140 466,108 598,250 730,180" fill="none" stroke="#a88805" stroke-width="3"></polyline>
-                    <circle cx="114" cy="199" r="5" fill="#a88805"></circle>
-                    <circle cx="234" cy="96" r="5" fill="#a88805"></circle>
-                    <circle cx="334" cy="140" r="5" fill="#a88805"></circle>
-                    <circle cx="466" cy="108" r="5" fill="#a88805"></circle>
-                    <circle cx="598" cy="250" r="5" fill="#a88805"></circle>
-                    <circle cx="730" cy="180" r="5" fill="#a88805"></circle>
-                    <polyline points="114,280 234,250 334,210 466,170 598,130 730,95" fill="none" stroke="#2ecc71" stroke-width="3"></polyline>
-                    <circle cx="114" cy="280" r="5" fill="#2ecc71"></circle>
-                    <circle cx="234" cy="250" r="5" fill="#2ecc71"></circle>
-                    <circle cx="334" cy="210" r="5" fill="#2ecc71"></circle>
-                    <circle cx="466" cy="170" r="5" fill="#2ecc71"></circle>
-                    <circle cx="598" cy="130" r="5" fill="#2ecc71"></circle>
-                    <circle cx="730" cy="95" r="5" fill="#2ecc71"></circle>
-                </svg>
+                <svg viewBox="0 0 760 360" class="egg-price-chart sales-line-chart" preserveAspectRatio="xMidYMid meet" id="sales-trends-chart"></svg>
             </div>
             <div class="chart-legend">
                 <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#a88805"></span>Revenue</span>
-                <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#2ecc71"></span>Volume</span>
+                <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#2ecc71"></span>Volume (Eggs)</span>
             </div>
         </div>
         <div class="card graph-placeholder product-performance-card">
             <h3>Product Performance Break down</h3>
             <p class="card-sub-label">Top 8 Products Sales for the Period</p>
             <div class="egg-distribution-chart">
-                <div class="egg-chart-bars">
-                    <div class="egg-chart-row"><span class="egg-size-label">NW</span><div class="egg-bar-track"><div class="egg-bar" style="width:75%;background:#a88805;"></div></div><span class="bar-total">P45,200</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">PW</span><div class="egg-bar-track"><div class="egg-bar" style="width:87%;background:#e67e22;"></div></div><span class="bar-total">P52,800</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">XS</span><div class="egg-bar-track"><div class="egg-bar" style="width:63%;background:#2ecc71;"></div></div><span class="bar-total">P38,300</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">S</span><div class="egg-bar-track"><div class="egg-bar" style="width:97%;background:#3498db;"></div></div><span class="bar-total">P58,900</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">M</span><div class="egg-bar-track"><div class="egg-bar" style="width:92%;background:#9b59b6;"></div></div><span class="bar-total">P55,400</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">L</span><div class="egg-bar-track"><div class="egg-bar" style="width:70%;background:#e74c3c;"></div></div><span class="bar-total">P42,100</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">XL</span><div class="egg-bar-track"><div class="egg-bar" style="width:47%;background:#1abc9c;"></div></div><span class="bar-total">P28,700</span></div>
-                    <div class="egg-chart-row"><span class="egg-size-label">J</span><div class="egg-bar-track"><div class="egg-bar" style="width:25%;background:#34495e;"></div></div><span class="bar-total">P15,300</span></div>
+                <div class="egg-chart-bars" id="top-products-bars">
+                    <div class="egg-chart-row"><span class="egg-size-label">Loading...</span></div>
                 </div>
             </div>
         </div>
@@ -111,12 +70,8 @@ ModuleComponents['finance-sales'] = (container) => {
                             <th>Overall Accumulated Amount</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr><td>1</td><td>Egg works Distribution</td><td>P125,400.00</td></tr>
-                        <tr><td>2</td><td>Charlene Ortega</td><td>P78,900.00</td></tr>
-                        <tr><td>3</td><td>Ermilan Ignalig</td><td>P54,300.00</td></tr>
-                        <tr><td>4</td><td>Ana Garcia</td><td>P31,200.00</td></tr>
-                        <tr><td>5</td><td>Others</td><td>P12,750.00</td></tr>
+                    <tbody id="top-customers-body">
+                        <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -248,6 +203,245 @@ ModuleComponents['finance-sales'] = (container) => {
     }
 
     loadAvgOrderValue();
+
+    async function loadActiveCustomers() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/active-customers', { headers });
+            if (!res.ok) throw new Error('Failed to fetch active customers');
+            const data = await res.json();
+
+            const valueEl = document.getElementById('active-customers-value');
+            if (valueEl) {
+                valueEl.textContent = data.active_customers + ' customers';
+            }
+        } catch (err) {
+            console.error('Failed to load active customers:', err);
+            const valueEl = document.getElementById('active-customers-value');
+            if (valueEl) valueEl.textContent = 'Error';
+        }
+    }
+
+    loadActiveCustomers();
+
+    async function loadSalesTrends() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/sales-trends', { headers });
+            if (!res.ok) throw new Error('Failed to fetch sales trends');
+            const data = await res.json();
+
+            const svg = document.getElementById('sales-trends-chart');
+            if (!svg) return;
+
+            // Clear existing content
+            svg.innerHTML = '';
+
+            const months = data.map(d => d.month_label);
+            const grandTotals = data.map(d => Number(d.grand_total));
+            const eggsSold = data.map(d => Number(d.eggs_sold));
+
+            const maxGrandTotal = Math.max(...grandTotals, 1);
+            const maxEggsSold = Math.max(...eggsSold, 1);
+
+            // Chart dimensions
+            const marginLeft = 70;
+            const marginBottom = 50;
+            const marginTop = 20;
+            const marginRight = 40;
+            const chartWidth = 760 - marginLeft - marginRight;
+            const chartHeight = 360 - marginTop - marginBottom;
+            const chartBottom = 360 - marginBottom;
+            const chartTop = marginTop;
+
+            // Helper functions to map values to Y coordinates
+            const yRevenue = (val) => chartBottom - (val / maxGrandTotal) * chartHeight;
+            const yEggs = (val) => chartBottom - (val / maxEggsSold) * chartHeight;
+
+            // X positions for 6 months
+            const xPositions = months.map((_, i) => marginLeft + (i / (months.length - 1)) * chartWidth);
+
+            // Draw Y-axis grid lines and labels (Revenue - left axis)
+            const revenueSteps = 5;
+            for (let i = 0; i <= revenueSteps; i++) {
+                const y = chartBottom - (i / revenueSteps) * chartHeight;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', marginLeft);
+                line.setAttribute('y1', y);
+                line.setAttribute('x2', marginLeft + chartWidth);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#D6D6D6');
+                line.setAttribute('stroke-width', '1');
+                svg.appendChild(line);
+
+                const val = (maxGrandTotal * i / revenueSteps);
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', marginLeft - 10);
+                text.setAttribute('y', y + 4);
+                text.setAttribute('text-anchor', 'end');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('fill', '#555');
+                text.textContent = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
+                svg.appendChild(text);
+            }
+
+            // Draw X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', marginLeft);
+            xAxis.setAttribute('y1', chartBottom);
+            xAxis.setAttribute('x2', marginLeft + chartWidth);
+            xAxis.setAttribute('y2', chartBottom);
+            xAxis.setAttribute('stroke', '#D6D6D6');
+            xAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(xAxis);
+
+            // Y-axis line
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', marginLeft);
+            yAxis.setAttribute('y1', marginTop);
+            yAxis.setAttribute('x2', marginLeft);
+            yAxis.setAttribute('y2', chartBottom);
+            yAxis.setAttribute('stroke', '#D6D6D6');
+            yAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(yAxis);
+
+            // Draw X-axis month labels
+            months.forEach((month, i) => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', xPositions[i]);
+                text.setAttribute('y', chartBottom + 25);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('fill', '#555');
+                text.textContent = month;
+                svg.appendChild(text);
+            });
+
+            // Draw Revenue line (Gold - #a88805)
+            if (grandTotals.length > 1) {
+                const revenuePoints = grandTotals.map((val, i) => `${xPositions[i]},${yRevenue(val)}`).join(' ');
+                const revenueLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                revenueLine.setAttribute('points', revenuePoints);
+                revenueLine.setAttribute('fill', 'none');
+                revenueLine.setAttribute('stroke', '#a88805');
+                revenueLine.setAttribute('stroke-width', '3');
+                svg.appendChild(revenueLine);
+
+                // Revenue circles
+                grandTotals.forEach((val, i) => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', xPositions[i]);
+                    circle.setAttribute('cy', yRevenue(val));
+                    circle.setAttribute('r', '5');
+                    circle.setAttribute('fill', '#a88805');
+                    svg.appendChild(circle);
+                });
+            }
+
+            // Draw Eggs Sold line (Green - #2ecc71)
+            if (eggsSold.length > 1) {
+                const eggsPoints = eggsSold.map((val, i) => `${xPositions[i]},${yEggs(val)}`).join(' ');
+                const eggsLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                eggsLine.setAttribute('points', eggsPoints);
+                eggsLine.setAttribute('fill', 'none');
+                eggsLine.setAttribute('stroke', '#2ecc71');
+                eggsLine.setAttribute('stroke-width', '3');
+                svg.appendChild(eggsLine);
+
+                // Eggs circles
+                eggsSold.forEach((val, i) => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', xPositions[i]);
+                    circle.setAttribute('cy', yEggs(val));
+                    circle.setAttribute('r', '5');
+                    circle.setAttribute('fill', '#2ecc71');
+                    svg.appendChild(circle);
+                });
+            }
+
+        } catch (err) {
+            console.error('Failed to load sales trends:', err);
+        }
+    }
+
+    loadSalesTrends();
+
+    async function loadTopProducts() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/top-products', { headers });
+            if (!res.ok) throw new Error('Failed to fetch top products');
+            const data = await res.json();
+
+            const container = document.getElementById('top-products-bars');
+            if (!container) return;
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="egg-chart-row"><span class="egg-size-label">No data</span></div>';
+                return;
+            }
+
+            const maxAmount = Math.max(...data.map(d => Number(d.amount)), 1);
+            const colors = ['#a88805', '#e67e22', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#1abc9c', '#34495e'];
+
+            container.innerHTML = data.map((item, i) => {
+                const pct = (Number(item.amount) / maxAmount) * 100;
+                const color = colors[i % colors.length];
+                return `
+                    <div class="egg-chart-row">
+                        <span class="egg-size-label">${item.product}</span>
+                        <div class="egg-bar-track">
+                            <div class="egg-bar" style="width:${pct.toFixed(1)}%;background:${color};"></div>
+                        </div>
+                        <span class="bar-total">P${Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (err) {
+            console.error('Failed to load top products:', err);
+            const container = document.getElementById('top-products-bars');
+            if (container) container.innerHTML = '<div class="egg-chart-row"><span class="egg-size-label">Error loading</span></div>';
+        }
+    }
+
+    loadTopProducts();
+
+    async function loadTopCustomers() {
+        try {
+            const token = localStorage.getItem('goldenfield_auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/receipt-issues/top-customers', { headers });
+            if (!res.ok) throw new Error('Failed to fetch top customers');
+            const data = await res.json();
+
+            const tbody = document.getElementById('top-customers-body');
+            if (!tbody) return;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${item.customer}</td>
+                    <td>P${Number(item.accumulated_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+            `).join('');
+
+        } catch (err) {
+            console.error('Failed to load top customers:', err);
+            const tbody = document.getElementById('top-customers-body');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Error loading</td></tr>';
+        }
+    }
+
+    loadTopCustomers();
 };
 
 function initializeModule(contentArea) {
