@@ -87,8 +87,16 @@
             </nav>
             <a href="#logout" class="nav-item nav-item-logout" data-tab="logout">Log out</a>
         </aside>
+        <div class="sidebar-backdrop" data-sidebar-backdrop></div>
         <main class="main-content">
             <header class="top-bar">
+                <button class="hamburger-btn" aria-label="Toggle navigation" data-sidebar-toggle>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
                 <div class="header-text">
                     <h1 id="page-title">Welcome back Username!</h1>
                     <div id="breadcrumb" class="breadcrumb"></div>
@@ -125,5 +133,68 @@
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="Script.js"></script>
+    <script>
+        (function() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            const toggleBtn = document.querySelector('[data-sidebar-toggle]');
+            const navLinks = document.querySelectorAll('.nav-item, .subnav-item');
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                backdrop.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                toggleBtn.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('open');
+                document.body.style.overflow = '';
+                toggleBtn.setAttribute('aria-expanded', 'false');
+            }
+
+            function toggleSidebar() {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+
+            // Toggle button click
+            toggleBtn.addEventListener('click', toggleSidebar);
+
+            // Backdrop click
+            backdrop.addEventListener('click', closeSidebar);
+
+            // Nav link clicks - close sidebar on mobile
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+
+            // Handle resize - close sidebar when going to desktop
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (window.innerWidth >= 768 && sidebar.classList.contains('open')) {
+                        closeSidebar();
+                    }
+                }, 100);
+            });
+        })();
+    </script>
 </body>
 </html>
