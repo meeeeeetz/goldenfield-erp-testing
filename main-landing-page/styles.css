@@ -2866,15 +2866,96 @@ input[type="date"].modal-select {
     margin: 0 0 12px;
 }
 
+.active-licenses-carousel {
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    padding: 10px 44px;
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+    user-select: none;
+}
+
+.active-licenses-track {
+    display: flex;
+    gap: 16px;
+    width: max-content;
+    transition: transform 0.3s ease;
+    will-change: transform;
+}
+
+.active-license-card {
+    flex: 0 0 auto;
+    width: 312px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.active-license-card h4 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: #1a1f2e;
+}
+
+.al-regno,
+.al-date,
+.al-status {
+    margin: 2px 0;
+    font-size: 13px;
+    color: #334155;
+}
+
+.al-photo {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.active-licenses-nav {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.active-licenses-prev,
+.active-licenses-next {
+    pointer-events: auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1a1f2e;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.active-licenses-prev:hover,
+.active-licenses-next:hover {
+    background: #f1f5f9;
+}
+
 .permit-boxes-row {
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-top: 12px;
+    width: 100%;
 }
 
 .shipping-box {
     padding: 18px 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .shipping-box h3 {

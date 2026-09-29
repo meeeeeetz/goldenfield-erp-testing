@@ -28,24 +28,21 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                         <span class="btn-label">Add Recipient Details</span>
                     </button>
                 </div>
-                <div class="tracking-cards-row" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="card tracking-card">
-                        <h3>License to Operate ( BAI )</h3>
-                        <p class="card-sub-label">Reg No. : PLT - L - 1496</p>
-                        <p class="vs-last-month">Expiration Date: August 28, 2026</p>
-                    </div>
-                    <div class="card tracking-card">
-                        <h3>Animal Disease Monitoring Compliance Certificate</h3>
-                        <p class="card-sub-label">ADMC No. : 2511-2603-PO-20517</p>
-                        <p class="vs-last-month">Expiration Date: August 28, 2026</p>
-                    </div>
-                    <div class="card tracking-card">
-                        <h3>Certifiicate of Free Status AI Type A subtype H5 and H7</h3>
-                        <p class="card-sub-label">CC No. : R3-2026-17-03-4577</p>
-                        <p class="vs-last-month">Expiration Date: August 28, 2026</p>
-                    </div>
-                </div>
                 <div class="permit-boxes-row">
+                    <div class="card shipping-box">
+                        <h3>Active Licenses</h3>
+                        <div class="active-licenses-carousel" id="active-licenses-carousel">
+                            <div class="active-licenses-track" id="active-licenses-track">
+                                <div class="active-license-card">
+                                    <div style="text-align:center; color: #94a3b8; padding: 40px 0;">Loading licenses...</div>
+                                </div>
+                            </div>
+                            <div class="active-licenses-nav">
+                                <button class="active-licenses-prev" id="active-licenses-prev">&#10094;</button>
+                                <button class="active-licenses-next" id="active-licenses-next">&#10095;</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card shipping-box">
                         <h3>Pending Shipping Permits</h3>
                         <div class="table-wrap permit-table-wrap">
@@ -1000,6 +997,13 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             const fileInput = document.getElementById('create-license-photo-input');
             const file = fileInput && fileInput.files && fileInput.files[0];
 
+            const createdBy = (() => {
+                try {
+                    const u = JSON.parse(localStorage.getItem('goldenfield_user') || '{}');
+                    return `${u.first_name || ''} ${u.last_name || ''}`.trim() || null;
+                } catch (e) { return null; }
+            })();
+
             const formData = new FormData();
             formData.append('license_id', licenseId);
             formData.append('license_name', licenseName);
@@ -1007,6 +1011,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             if (issuedDate) formData.append('issued_date', issuedDate);
             if (expirationDate) formData.append('expiration_date', expirationDate);
             formData.append('status', status || 'Active');
+            formData.append('created_by', createdBy || 'Super admin');
             if (file) formData.append('photo', file);
 
             fetch(API_BASE_SHIPPING_LICENSES, {
@@ -1022,6 +1027,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                     alert('License created successfully');
                     closeShippingLicensesModal();
                     loadLicenses();
+                    loadActiveLicensesCarousel();
                 })
                 .catch(err => {
                     alert('Error: ' + (err.error || err.message || 'Failed to create license'));
@@ -1065,6 +1071,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                     alert('License updated successfully');
                     closeShippingLicensesModal();
                     loadLicenses();
+                    loadActiveLicensesCarousel();
                 })
                 .catch(err => {
                     alert('Error: ' + (err.error || err.message || 'Failed to update license'));
@@ -1181,6 +1188,42 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             saveCreateLicenseBtn.onclick = saveCreateLicense;
         }
 
+        const photoTooltip = document.createElement('div');
+        photoTooltip.className = 'photo-preview-tooltip';
+        photoTooltip.style.display = 'none';
+        document.body.appendChild(photoTooltip);
+
+        document.addEventListener('mouseover', (e) => {
+            const wrap = e.target.closest('.photo-icon-wrap');
+            if (!wrap) return;
+            const src = wrap.getAttribute('data-license-photo') || wrap.getAttribute('data-receipt-path');
+            if (!src) return;
+            const fullSrc = src.startsWith('http') ? src : src;
+            photoTooltip.innerHTML = `<img src="${fullSrc}" alt="license preview">`;
+            photoTooltip.style.display = 'block';
+            positionTooltip();
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const wrap = e.target.closest('.photo-icon-wrap');
+            if (!wrap) return;
+            photoTooltip.style.display = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (photoTooltip.style.display === 'block') {
+                positionTooltip();
+            }
+        });
+
+        function positionTooltip() {
+            const rect = photoTooltip.getBoundingClientRect();
+            const left = Math.max(8, (window.innerWidth - rect.width) / 2);
+            const top = Math.max(8, (window.innerHeight - rect.height) / 2);
+            photoTooltip.style.left = left + 'px';
+            photoTooltip.style.top = top + 'px';
+        }
+
         const saveManageLicenseBtn = document.getElementById('save-manage-license-btn');
         if (saveManageLicenseBtn) {
             saveManageLicenseBtn.onclick = saveManageLicense;
@@ -1214,7 +1257,107 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
         window.loadRecipients = loadRecipients;
 
         loadRecipients();
-    };
+            loadActiveLicensesCarousel();
+        };
+
+        function loadActiveLicensesCarousel() {
+            const track = document.getElementById('active-licenses-track');
+            if (!track) return;
+
+            let activeLicensesCarouselOffset = 0;
+
+            fetch(API_BASE_SHIPPING_LICENSES, { headers: getAuthHeaders() })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(licenses => {
+                    const active = (licenses || []).filter(l => (l.status || '').toLowerCase() === 'active');
+                    if (!active.length) {
+                        track.innerHTML = '<div class="active-license-card"><div style="text-align:center; color: #94a3b8; padding: 40px 0;">No active licenses</div></div>';
+                        return;
+                    }
+                    const fmtDate = (d) => {
+                        if (!d) return '-';
+                        const str = String(d);
+                        if (str.length >= 10) return str.slice(0, 10);
+                        return str;
+                    };
+
+                    track.innerHTML = active.map(l => {
+                        const fileUrl = l.file_url || (l.file_path ? (l.file_path.startsWith('http') ? l.file_path : l.file_path) : null);
+                        const photoHtml = fileUrl
+                            ? `<span class="photo-icon-wrap" data-license-photo="${fileUrl}"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>`
+                            : `<span class="photo-icon-wrap"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#800000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>`;
+                        return `
+                            <div class="active-license-card">
+                                <h4>${l.license_name || ''}</h4>
+                                <p class="al-regno">Reg No.: ${l.reg_no || ''}</p>
+                                <p class="al-date">Issued: ${fmtDate(l.issued_date)}</p>
+                                <p class="al-date">Expires: ${fmtDate(l.expiration_date)}</p>
+                                <p class="al-status">Status: ${l.status || ''}</p>
+                                <div class="al-photo">${photoHtml}</div>
+                            </div>`;
+                    }).join('');
+
+                    // Horizontal scroll
+                    const carousel = document.getElementById('active-licenses-carousel');
+                    const prevBtn = document.getElementById('active-licenses-prev');
+                    const nextBtn = document.getElementById('active-licenses-next');
+                    const cardWidth = 312;
+
+                    const scrollByCards = (dir) => {
+                        if (!carousel) return;
+                        carousel.scrollBy({ left: dir * cardWidth, behavior: 'smooth' });
+                    };
+
+                    const updateButtons = () => {
+                        if (!carousel) return;
+                        const atStart = carousel.scrollLeft <= 0;
+                        const atEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 1;
+                        if (prevBtn) prevBtn.disabled = atStart;
+                        if (nextBtn) nextBtn.disabled = atEnd;
+                    };
+
+                    if (prevBtn) prevBtn.onclick = () => scrollByCards(-1);
+                    if (nextBtn) nextBtn.onclick = () => scrollByCards(1);
+                    if (carousel) {
+                        carousel.addEventListener('scroll', updateButtons);
+                        setTimeout(updateButtons, 50);
+
+                        // Drag to scroll
+                        let isDragging = false;
+                        let startX = 0;
+                        let scrollStart = 0;
+
+                        carousel.addEventListener('pointerdown', (e) => {
+                            isDragging = true;
+                            startX = e.clientX;
+                            scrollStart = carousel.scrollLeft;
+                            carousel.setPointerCapture(e.pointerId);
+                            carousel.style.cursor = 'grabbing';
+                        });
+
+                        carousel.addEventListener('pointermove', (e) => {
+                            if (!isDragging) return;
+                            const dx = startX - e.clientX;
+                            carousel.scrollLeft = scrollStart + dx;
+                        });
+
+                        carousel.addEventListener('pointerup', () => {
+                            isDragging = false;
+                            carousel.style.cursor = 'grab';
+                        });
+
+                        carousel.addEventListener('pointercancel', () => {
+                            isDragging = false;
+                        });
+
+                        carousel.style.cursor = 'grab';
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to load active licenses carousel:', err);
+                    track.innerHTML = '<div class="active-license-card"><div style="text-align:center; color: #94a3b8; padding: 40px 0;">Error loading licenses</div></div>';
+                });
+        }
 
 function initializeModule(contentArea) {
     const currentTab = window.__currentTabId || 'operations';
