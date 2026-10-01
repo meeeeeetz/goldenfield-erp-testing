@@ -35,7 +35,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                 <h3>Pending Cash Loans</h3>
                 <p class="card-sub-label">awaiting approval</p>
                 <div class="card-value-row">
-                    <div class="card-value">3 pending</div>
+                    <div class="card-value" id="pending-cash-loans-count">0 pending</div>
                 </div>
             </div>
             <div class="card tracking-card">
@@ -267,6 +267,12 @@ ModuleComponents['hr-cash-loans'] = (container) => {
         const tbody = document.getElementById('pending-cash-loan-tbody');
         if (!tbody) return;
 
+        const pendingCountEl = document.getElementById('pending-cash-loans-count');
+        if (pendingCountEl) {
+            const count = logs && logs.length ? logs.length : 0;
+            pendingCountEl.textContent = `${count} pending`;
+        }
+
         if (!logs || logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #999;">No pending cash loans</td></tr>';
             return;
@@ -461,12 +467,38 @@ ModuleComponents['hr-cash-loans'] = (container) => {
     const searchResults = document.getElementById('cash-advance-search-results');
     let searchDebounce = null;
 
+    const resetApplyCashAdvanceForm = () => {
+        const fields = {
+            'cash-advance-search-name': '',
+            'cash-advance-emp-id': '',
+            'cash-advance-last-name': '',
+            'cash-advance-first-name': '',
+            'cash-advance-outstanding': '',
+            'cash-advance-amount': '',
+            'cash-advance-reason': '',
+            'cash-advance-payroll-cycle': '',
+            'cash-advance-per-payroll': ''
+        };
+        Object.entries(fields).forEach(([id, value]) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        });
+        if (searchInput) searchInput.value = '';
+        if (searchResults) {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+        }
+        clearTimeout(searchDebounce);
+    };
+
     const openApplyCashAdvanceModal = () => {
+        resetApplyCashAdvanceForm();
         if (applyCashAdvanceModal) applyCashAdvanceModal.style.display = 'flex';
     };
 
     const closeApplyCashAdvanceModalFn = () => {
         if (applyCashAdvanceModal) applyCashAdvanceModal.style.display = 'none';
+        resetApplyCashAdvanceForm();
     };
 
     if (applyCashAdvanceBtn) {
@@ -604,7 +636,7 @@ ModuleComponents['hr-cash-loans'] = (container) => {
                 }
 
                 alert('Cash advance applied successfully');
-                if (applyCashAdvanceModal) applyCashAdvanceModal.style.display = 'none';
+                closeApplyCashAdvanceModalFn();
                 loadPendingCashLoans();
                 loadCashLoanHistory();
             } catch (err) {

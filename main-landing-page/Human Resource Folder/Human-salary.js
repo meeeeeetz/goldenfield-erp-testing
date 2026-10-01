@@ -247,23 +247,12 @@ ModuleComponents['hr-salary'] = (container) => {
         <div class="bottom-cards-row">
             <div class="card graph-placeholder salary-chart-card">
                 <h3>Salary by department</h3>
+                <p id="salary-dept-chart-period" class="card-sub-label" style="margin: 0 0 8px 0;"></p>
                 <div class="salary-chart-wrap">
-                    <svg viewBox="0 0 220 220" class="salary-donut-chart">
-                        <circle cx="110" cy="110" r="80" fill="none" stroke="#e74c3c" stroke-width="30" stroke-dasharray="174.82 327.83" stroke-dashoffset="0" transform="rotate(-90 110 110)"></circle>
-                        <circle cx="110" cy="110" r="80" fill="none" stroke="#e67e22" stroke-width="30" stroke-dasharray="131.12 371.53" stroke-dashoffset="-174.82" transform="rotate(-90 110 110)"></circle>
-                        <circle cx="110" cy="110" r="80" fill="none" stroke="#2ecc71" stroke-width="30" stroke-dasharray="87.41 415.24" stroke-dashoffset="-305.94" transform="rotate(-90 110 110)"></circle>
-                        <circle cx="110" cy="110" r="80" fill="none" stroke="#3498db" stroke-width="30" stroke-dasharray="65.56 437.09" stroke-dashoffset="-393.35" transform="rotate(-90 110 110)"></circle>
-                        <circle cx="110" cy="110" r="80" fill="none" stroke="#9b59b6" stroke-width="30" stroke-dasharray="43.70 459.00" stroke-dashoffset="-458.91" transform="rotate(-90 110 110)"></circle>
-                        <text x="110" y="102" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1f2e">Total</text>
-                        <text x="110" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#1a1f2e">P 345,000</text>
+                    <svg viewBox="0 0 220 220" class="salary-donut-chart" id="salary-dept-donut">
+                        <text x="110" y="116" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1f2e">No salary data</text>
                     </svg>
-                    <div class="chart-legend">
-                        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#e74c3c"></span>Egg Room</span>
-                        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#e67e22"></span>Poultry</span>
-                        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#2ecc71"></span>Maintenance</span>
-                        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#3498db"></span>Guardhouse</span>
-                        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#9b59b6"></span>Construction</span>
-                    </div>
+                    <div class="chart-legend" id="salary-dept-legend"></div>
                 </div>
             </div>
             <div class="card graph-placeholder salary-history-card">
@@ -2542,10 +2531,80 @@ function initializeModule(contentArea) {
         }
     }
 
+    const SALARY_DEPT_COLORS = ['#e74c3c', '#e67e22', '#2ecc71', '#3498db', '#9b59b6', '#1abc9c', '#f39c12', '#34495e', '#16a085', '#c0392b'];
+
+    const loadSalaryByDepartment = async () => {
+        const donut = document.getElementById('salary-dept-donut');
+        const legend = document.getElementById('salary-dept-legend');
+        const periodLabel = document.getElementById('salary-dept-chart-period');
+        if (!donut || !legend) return;
+
+        const now = new Date();
+        const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
+        const dateTo = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const from = iso(dateFrom);
+        const to = iso(dateTo);
+
+        if (periodLabel) {
+            periodLabel.textContent = `${dateFrom.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} gross pay`;
+        }
+
+        const showEmpty = () => {
+            donut.innerHTML = '<text x="110" y="116" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1f2e">No salary data</text>';
+            legend.innerHTML = '';
+        };
+
+        try {
+            const res = await fetch(`/api/salary-computation/totals/by-department?date_from=${from}&date_to=${to}`);
+            if (!res.ok) throw new Error('Failed to load salary by department');
+            const data = await res.json();
+            const departments = Array.isArray(data?.departments) ? data.departments : [];
+            const total = Number(data?.total_gross_pay) || 0;
+
+            if (departments.length === 0 || total <= 0) {
+                showEmpty();
+                return;
+            }
+
+            const circumference = 2 * Math.PI * 80;
+            let offset = 0;
+            let segments = '';
+
+            departments.forEach((row, index) => {
+                const amount = Number(row.gross_pay) || 0;
+                if (amount <= 0) return;
+                const fraction = amount / total;
+                const dash = circumference * fraction;
+                const color = SALARY_DEPT_COLORS[index % SALARY_DEPT_COLORS.length];
+                segments += `<circle cx="110" cy="110" r="80" fill="none" stroke="${color}" stroke-width="30" stroke-dasharray="${dash.toFixed(2)} ${(circumference - dash).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 110 110)"></circle>`;
+                offset += dash;
+            });
+
+            const totalLabel = `P ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            donut.innerHTML = `${segments}
+                <text x="110" y="102" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1f2e">Total</text>
+                <text x="110" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1f2e">${totalLabel}</text>`;
+
+            legend.innerHTML = departments.map((row, index) => {
+                const amount = Number(row.gross_pay) || 0;
+                const color = SALARY_DEPT_COLORS[index % SALARY_DEPT_COLORS.length];
+                const percent = total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0';
+                return `<span class="chart-legend-item" title="${row.employee_count || 0} employee(s)">
+                    <span class="chart-legend-swatch" style="background:${color}"></span>${row.department} - P ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${percent}%)
+                </span>`;
+            }).join('');
+        } catch (err) {
+            console.error('Failed to load salary by department:', err);
+            showEmpty();
+        }
+    };
+
     loadPendingPayrolls();
     loadSalaryHistory();
     loadYearlyHolidays();
     loadMonthlySalaryComparison();
+    loadSalaryByDepartment();
 
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.view-payslip-btn');
@@ -2809,6 +2868,7 @@ function initializeModule(contentArea) {
     loadYearlyHolidays();
     loadMonthlySalaryComparison();
     loadBatchPayrolls();
+    loadSalaryByDepartment();
 
     const batchPayrollTbody = document.getElementById('batch-payroll-tbody');
     if (batchPayrollTbody) {

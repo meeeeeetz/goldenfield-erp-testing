@@ -446,6 +446,15 @@ ModuleComponents['operations-layer-print-monthly'] = (container) => {
                 const buildingVal = selectedOption ? selectedOption.textContent.trim() : '';
                 buildingNameEl.textContent = buildingVal || 'Select Building...';
             }
+
+            let printStyle = document.getElementById('landscape-print-style');
+            if (!printStyle) {
+                printStyle = document.createElement('style');
+                printStyle.id = 'landscape-print-style';
+                printStyle.textContent = '@media print { @page { size: landscape; } }';
+                document.head.appendChild(printStyle);
+            }
+
             window.print();
         };
 

@@ -237,6 +237,70 @@ class SalaryComputationController {
         };
     }
 
+    async getSalaryTotalsByDepartment(dateFrom, dateTo) {
+        const query = `
+            SELECT ep.employee_id,
+                   COALESCE(NULLIF(ec.department, ''), NULLIF(ep.department, ''), 'Unassigned') AS department
+            FROM employee_profile ep
+            LEFT JOIN LATERAL (
+                SELECT department
+                FROM employee_compensation
+                WHERE employee_id = ep.employee_id
+                ORDER BY created_at DESC
+                LIMIT 1
+            ) ec ON true
+            WHERE ep.employment_status = 'Active'
+        `;
+
+        const result = await this.db.query(query);
+        const employees = result.rows || [];
+
+        const totals = new Map();
+
+        for (const employee of employees) {
+            let salaryTotals;
+            try {
+                salaryTotals = await this.getSalaryTotals(employee.employee_id, dateFrom, dateTo);
+            } catch (err) {
+                console.error(`Salary computation error for ${employee.employee_id}:`, err);
+                continue;
+            }
+
+            const grossPay =
+                (Number(salaryTotals.base_amount) || 0) +
+                (Number(salaryTotals.total_overtime) || 0) +
+                (Number(salaryTotals.total_allowance) || 0) +
+                (Number(salaryTotals.total_leaves) || 0) +
+                (Number(salaryTotals.regular_holiday) || 0) +
+                (Number(salaryTotals.special_holiday) || 0);
+
+            if (grossPay <= 0) continue;
+
+            const department = employee.department || 'Unassigned';
+            const existing = totals.get(department) || { department, gross_pay: 0, employee_count: 0 };
+            existing.gross_pay += grossPay;
+            existing.employee_count += 1;
+            totals.set(department, existing);
+        }
+
+        const departments = [...totals.values()]
+            .map(row => ({
+                department: row.department,
+                gross_pay: parseFloat(row.gross_pay.toFixed(2)),
+                employee_count: row.employee_count
+            }))
+            .sort((a, b) => b.gross_pay - a.gross_pay);
+
+        const totalGrossPay = departments.reduce((sum, row) => sum + row.gross_pay, 0);
+
+        return {
+            date_from: dateFrom,
+            date_to: dateTo,
+            total_gross_pay: parseFloat(totalGrossPay.toFixed(2)),
+            departments
+        };
+    }
+
     shouldShowContribution(payFrequency, dateFrom, dateTo) {
         if (!payFrequency || !dateFrom || !dateTo) return false;
 

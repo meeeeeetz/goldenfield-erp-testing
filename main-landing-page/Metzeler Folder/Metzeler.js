@@ -74,12 +74,8 @@ function initializeModule(contentArea) {
             </div>
             <div class="card tracking-card">
                 <h3>Upcoming Birthdays</h3>
-                <ul class="birthday-list">
-                    <li><span class="bday-name">Juan Dela Cruz</span><span class="bday-date">Jul 18</span></li>
-                    <li><span class="bday-name">Maria Santos</span><span class="bday-date">Jul 25</span></li>
-                    <li><span class="bday-name">Pedro Reyes</span><span class="bday-date">Aug 02</span></li>
-                    <li><span class="bday-name">Ana Garcia</span><span class="bday-date">Aug 10</span></li>
-                    <li><span class="bday-name">Carlos Mendoza</span><span class="bday-date">Aug 14</span></li>
+                <ul class="birthday-list" id="upcoming-birthday-list">
+                    <li><span class="bday-name" style="color: #999;">Loading...</span></li>
                 </ul>
             </div>
         </div>
@@ -121,4 +117,63 @@ function initializeModule(contentArea) {
             </div>
         </div>
     `;
+
+    loadUpcomingBirthdays();
+}
+
+async function loadUpcomingBirthdays() {
+    const list = document.getElementById('upcoming-birthday-list');
+    if (!list) return;
+
+    const renderMessage = (text) => {
+        list.innerHTML = `<li><span class="bday-name" style="color: #999;">${text}</span></li>`;
+    };
+
+    try {
+        const res = await fetch('/api/employee-profiles/active');
+        if (!res.ok) throw new Error('Failed to load active employees');
+        const employees = await res.json();
+        if (!Array.isArray(employees) || employees.length === 0) {
+            renderMessage('No active employees');
+            return;
+        }
+
+        const today = new Date();
+        const todayMonth = today.getMonth();
+        const todayDay = today.getDate();
+
+        const upcoming = employees
+            .filter(emp => emp.birthdate)
+            .map(emp => {
+                const bday = new Date(emp.birthdate);
+                if (isNaN(bday.getTime())) return null;
+                let month = bday.getMonth();
+                let day = bday.getDate();
+                let year = today.getFullYear();
+                if (month < todayMonth || (month === todayMonth && day < todayDay)) {
+                    year += 1;
+                }
+                const nextBirthday = new Date(year, month, day);
+                const daysAway = Math.round((nextBirthday - new Date(today.getFullYear(), todayMonth, todayDay)) / 86400000);
+                return { emp, bday, month, day, year, daysAway };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.daysAway - b.daysAway)
+            .slice(0, 5);
+
+        if (upcoming.length === 0) {
+            renderMessage('No upcoming birthdays');
+            return;
+        }
+
+        list.innerHTML = upcoming.map(item => {
+            const name = `${item.emp.last_name || ''}, ${item.emp.first_name || ''}`.replace(/^,\s*|\s*,\s*$/g, '').trim() || item.emp.employee_id || '';
+            const dateLabel = item.bday.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+            const relative = item.daysAway === 0 ? 'Today' : item.daysAway === 1 ? 'Tomorrow' : `in ${item.daysAway} days`;
+            return `<li><span class="bday-name">${name}</span><span class="bday-date" title="${relative}">${dateLabel}</span></li>`;
+        }).join('');
+    } catch (err) {
+        console.error('Failed to load upcoming birthdays:', err);
+        renderMessage('Failed to load birthdays');
+    }
 }

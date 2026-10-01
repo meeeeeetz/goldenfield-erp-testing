@@ -1125,6 +1125,25 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
     const batchAttendanceFileInput = document.getElementById('batch-attendance-file-input');
     const batchAttendanceFileName = document.getElementById('batch-attendance-file-name');
 
+    const resetBatchUploadAttendanceValidation = () => {
+        const okEl = document.getElementById('batch-attendance-ok-count');
+        const missEl = document.getElementById('batch-attendance-missing-count');
+        const errEl = document.getElementById('batch-attendance-error-count');
+        const validationBox = document.getElementById('batch-attendance-validation');
+        const missingDetails = document.getElementById('batch-attendance-missing-details');
+        const missingList = document.getElementById('batch-attendance-missing-list');
+        const errorDetails = document.getElementById('batch-attendance-error-details');
+        const errorList = document.getElementById('batch-attendance-error-list');
+        if (okEl) okEl.textContent = '0';
+        if (missEl) missEl.textContent = '0';
+        if (errEl) errEl.textContent = '0';
+        if (validationBox) validationBox.style.display = 'none';
+        if (missingDetails) missingDetails.style.display = 'none';
+        if (missingList) missingList.innerHTML = '';
+        if (errorDetails) errorDetails.style.display = 'none';
+        if (errorList) errorList.innerHTML = '';
+    };
+
     const openBatchUploadAttendanceModal = async () => {
         await fetchShiftData();
         if (batchUploadAttendanceModal) batchUploadAttendanceModal.style.display = 'flex';
@@ -1134,6 +1153,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
         if (previewTable) previewTable.innerHTML = '';
         if (batchAttendanceFileName) batchAttendanceFileName.textContent = '';
         if (batchAttendanceFileInput) batchAttendanceFileInput.value = '';
+        resetBatchUploadAttendanceValidation();
         if (saveBatchUploadAttendanceBtn) {
             saveBatchUploadAttendanceBtn.disabled = false;
             saveBatchUploadAttendanceBtn.innerText = 'Save';
@@ -1144,6 +1164,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
         if (batchUploadAttendanceModal) batchUploadAttendanceModal.style.display = 'none';
         if (batchAttendanceFileName) batchAttendanceFileName.textContent = '';
         if (batchAttendanceFileInput) batchAttendanceFileInput.value = '';
+        resetBatchUploadAttendanceValidation();
     };
 
     if (batchUploadAttendanceBtn) {
@@ -1257,20 +1278,29 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
                 html += '</tr></thead><tbody>';
 
                 rows.forEach(row => {
-                    html += '<tr>';
+                    const emp = String(row[empIdx] || '').trim();
+                    const dateVal = String(row[dateIdx] || '').trim();
+                    const tIn = timeInIdx >= 0 ? String(row[timeInIdx] || '').trim() : '';
+                    const tOut = timeOutIdx >= 0 ? String(row[timeOutIdx] || '').trim() : '';
+                    const isBlankRow = !emp && !dateVal && !tIn && !tOut;
+                    const isIncomplete = !isBlankRow && (!emp || !dateVal || !tIn || !tOut);
+                    const computed = computeRow(row);
+                    const isOvertime = Number(computed.actualPayableHours) > 8;
+                    const rowBg = isIncomplete ? 'background: #fde2e2;' : (isOvertime ? 'background: #ffe0b2;' : '');
+
+                    html += `<tr${rowBg ? ` style="${rowBg}"` : ''}>`;
                     headers.forEach((_, i) => {
                         let val = row[i] != null ? row[i] : '';
                         if (val && typeof val === 'string') {
                             val = val.trim();
                         }
-                        html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${val}</td>`;
+                        html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: left;${rowBg}">${val}</td>`;
                     });
 
-                    const computed = computeRow(row);
-                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${computed.totalLateMinutes}</td>`;
-                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${computed.totalEarlyOutMinutes}</td>`;
-                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${computed.totalDeductableTime}</td>`;
-                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${computed.actualPayableHours}</td>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;${rowBg}">${computed.totalLateMinutes}</td>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;${rowBg}">${computed.totalEarlyOutMinutes}</td>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;${rowBg}">${computed.totalDeductableTime}</td>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 6px; text-align: right;${rowBg}">${computed.actualPayableHours}</td>`;
                     html += '</tr>';
                 });
 

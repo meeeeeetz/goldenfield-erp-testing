@@ -77,6 +77,20 @@ router.get('/totals/salary', async (req, res) => {
     }
 });
 
+router.get('/totals/by-department', async (req, res) => {
+    try {
+        const dateFrom = req.query.date_from;
+        const dateTo = req.query.date_to;
+        if (!dateFrom || !dateTo) {
+            return res.status(400).json({ error: 'date_from and date_to are required' });
+        }
+        const result = await controller.getSalaryTotalsByDepartment(dateFrom, dateTo);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/outstanding/losses-damages/:employeeId', async (req, res) => {
     try {
         const result = await controller.getOutstandingLossesDamages(req.params.employeeId);

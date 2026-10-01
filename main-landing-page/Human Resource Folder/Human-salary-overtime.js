@@ -63,8 +63,9 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             </div>
         </div>
         <div class="card" style="margin-top: 20px; padding: 0; overflow: visible;">
-            <div style="padding: 16px 20px; border-bottom: 1px solid #ddd;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">History of Overtime Log</h3>
+                <input type="text" id="overtime-history-search" placeholder="Search history..." autocomplete="off" style="margin-left: auto; width: 240px; max-width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #D6D6D6; border-radius: 4px; font-size: 13px;">
             </div>
             <div style="padding: 10px 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
                 <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
@@ -1376,6 +1377,68 @@ renderPendingOvertimeLogs(filtered);
         rejectFilteredOvertimeBtn.addEventListener('click', bulkRejectFilteredOvertime);
     }
 
+    let overtimeHistoryLogs = [];
+    let overtimeHistorySearch = '';
+
+    const getSortedOvertimeHistory = () => {
+        const rows = [...overtimeHistoryLogs];
+        const col = overtimeSortState.col;
+        if (!col) return rows;
+        const dir = overtimeSortState.dir;
+        return rows.sort((a, b) => {
+            if (col === 'overtime_id') {
+                return String(a.overtime_id || '').localeCompare(String(b.overtime_id || ''), undefined, { numeric: true }) * dir;
+            }
+            if (col === 'date') {
+                const da = new Date(formatDate(a.date));
+                const db = new Date(formatDate(b.date));
+                return (da - db) * dir;
+            }
+            if (col === 'employee_id') {
+                return String(a.employee_id || '').localeCompare(String(b.employee_id || ''), undefined, { numeric: true }) * dir;
+            }
+            if (col === 'last_name') {
+                return String(a.last_name || '').localeCompare(String(b.last_name || '')) * dir;
+            }
+            return 0;
+        });
+    };
+
+    const renderOvertimeHistory = () => {
+        const tbody = document.getElementById('overtime-history-tbody');
+        if (!tbody) return;
+
+        const query = overtimeHistorySearch.trim().toLowerCase();
+        const logs = getSortedOvertimeHistory().filter(log => {
+            if (!query) return true;
+            const haystack = [
+                log.overtime_id, log.employee_id, log.last_name, log.first_name,
+                log.remarks, log.created_by, log.status, log.total_hours,
+                log.date ? formatDate(log.date) : ''
+            ].map(v => String(v == null ? '' : v)).join(' ').toLowerCase();
+            return haystack.includes(query);
+        });
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px; color: #999;">${query ? 'No overtime history matches your search' : 'No overtime history'}</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => `
+            <tr style="height: 32px;">
+                <td style="padding: 2px; margin: 0;">${log.overtime_id || ''}</td>
+                <td style="padding: 2px; margin: 0;">${log.employee_id || ''}</td>
+                <td style="padding: 2px; margin: 0;">${formatDate(log.date)}</td>
+                <td style="padding: 2px; margin: 0;">${log.last_name || ''}</td>
+                <td style="padding: 2px; margin: 0;">${log.first_name || ''}</td>
+                <td style="padding: 2px; margin: 0;">${log.total_hours != null ? Number(log.total_hours).toFixed(2) : ''}</td>
+                <td style="padding: 2px; margin: 0;">${log.remarks || ''}</td>
+                <td style="padding: 2px; margin: 0;">${log.created_by || ''}</td>
+                <td style="padding: 2px; margin: 0;"><span style="background: ${log.status === 'Approved' ? '#d4edda' : '#FFF3CD'}; color: ${log.status === 'Approved' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${log.status || 'Pending'}</span></td>
+            </tr>
+        `).join('');
+    };
+
     async function loadOvertimeHistory() {
         const tbody = document.getElementById('overtime-history-tbody');
         if (!tbody) return;
@@ -1384,29 +1447,20 @@ renderPendingOvertimeLogs(filtered);
             const res = await fetch('/api/overtime-logs/all');
             if (!res.ok) throw new Error('Failed to load overtime history');
             const logs = await res.json();
-
-            if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #999;">No overtime history</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = logs.map(log => `
-                <tr style="height: 32px;">
-                    <td style="padding: 2px; margin: 0;">${log.overtime_id || ''}</td>
-                    <td style="padding: 2px; margin: 0;">${log.employee_id || ''}</td>
-                    <td style="padding: 2px; margin: 0;">${formatDate(log.date)}</td>
-                    <td style="padding: 2px; margin: 0;">${log.last_name || ''}</td>
-                    <td style="padding: 2px; margin: 0;">${log.first_name || ''}</td>
-                    <td style="padding: 2px; margin: 0;">${log.total_hours != null ? Number(log.total_hours).toFixed(2) : ''}</td>
-                    <td style="padding: 2px; margin: 0;">${log.remarks || ''}</td>
-                    <td style="padding: 2px; margin: 0;">${log.created_by || ''}</td>
-                    <td style="padding: 2px; margin: 0;"><span style="background: ${log.status === 'Approved' ? '#d4edda' : '#FFF3CD'}; color: ${log.status === 'Approved' ? '#155724' : '#856404'}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${log.status || 'Pending'}</span></td>
-                </tr>
-            `).join('');
+            overtimeHistoryLogs = Array.isArray(logs) ? logs : [];
+            renderOvertimeHistory();
         } catch (err) {
             console.error('Failed to load overtime history:', err);
             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #999;">Failed to load overtime history</td></tr>';
         }
+    }
+
+    const overtimeHistorySearchInput = document.getElementById('overtime-history-search');
+    if (overtimeHistorySearchInput) {
+        overtimeHistorySearchInput.addEventListener('input', (e) => {
+            overtimeHistorySearch = e.target.value || '';
+            renderOvertimeHistory();
+        });
     }
 
     loadPendingOvertimeLogs();
@@ -1414,10 +1468,11 @@ renderPendingOvertimeLogs(filtered);
 
     const overtimeSortState = { col: null, dir: 1 };
 const applyOvertimeSort = () => {
-        const historyTbody = document.getElementById('overtime-history-tbody');
         const pendingTbody = document.getElementById('pending-overtime-tbody');
         document.querySelectorAll('th.sortable .sort-arrow').forEach(a => a.textContent = '↕');
         if (!overtimeSortState.col) return;
+
+        renderOvertimeHistory();
 
         const sortRows = (tbodyEl) => {
             if (!tbodyEl) return;
@@ -1441,7 +1496,6 @@ const applyOvertimeSort = () => {
             rows.forEach(r => tbodyEl.appendChild(r));
         };
 
-        sortRows(historyTbody);
         sortRows(pendingTbody);
 
         const arrow = document.querySelector(`th.sortable[data-sort="${overtimeSortState.col}"] .sort-arrow`);
