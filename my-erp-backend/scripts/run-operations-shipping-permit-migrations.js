@@ -15,7 +15,8 @@ const pool = new Pool({
 async function runMigration() {
     const sqlFiles = [
         path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients.sql'),
-        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-add-columns.sql')
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-add-columns.sql'),
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-drop-columns.sql')
     ];
 
     for (const sqlFile of sqlFiles) {

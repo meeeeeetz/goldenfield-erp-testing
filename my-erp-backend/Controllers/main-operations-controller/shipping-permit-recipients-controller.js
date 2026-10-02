@@ -44,20 +44,14 @@ class ShippingPermitRecipientsController {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status,
             created_by
         } = recipientData;
 
         const query = `
             INSERT INTO shipping_permit_recipients
-            (recipient_id, customer_name, province, city, barangay, transport_type, plate_number, contact, contact_number, handlers_license, handlers_issued_date, handlers_expiration, transport_carrier, transport_issued_date, transport_expiration, status, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            (recipient_id, customer_name, province, city, barangay, transport_type, plate_number, contact, contact_number, status, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -70,12 +64,6 @@ class ShippingPermitRecipientsController {
             plate_number || null,
             contact || null,
             contact_number || null,
-            handlers_license || null,
-            handlers_issued_date || null,
-            handlers_expiration || null,
-            transport_carrier || null,
-            transport_issued_date || null,
-            transport_expiration || null,
             status || 'Active',
             created_by || null
         ]);
@@ -92,20 +80,14 @@ class ShippingPermitRecipientsController {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status,
             created_by
         } = recipientData;
 
         const query = `
             UPDATE shipping_permit_recipients
-            SET customer_name = $1, province = $2, city = $3, barangay = $4, transport_type = $5, plate_number = $6, contact = $7, contact_number = $8, handlers_license = $9, handlers_issued_date = $10, handlers_expiration = $11, transport_carrier = $12, transport_issued_date = $13, transport_expiration = $14, status = $15, created_by = $16, updated_at = CURRENT_TIMESTAMP
-            WHERE recipient_id = $17
+            SET customer_name = $1, province = $2, city = $3, barangay = $4, transport_type = $5, plate_number = $6, contact = $7, contact_number = $8, status = $9, created_by = $10, updated_at = CURRENT_TIMESTAMP
+            WHERE recipient_id = $11
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -117,12 +99,6 @@ class ShippingPermitRecipientsController {
             plate_number || null,
             contact || null,
             contact_number || null,
-            handlers_license || null,
-            handlers_issued_date || null,
-            handlers_expiration || null,
-            transport_carrier || null,
-            transport_issued_date || null,
-            transport_expiration || null,
             status,
             created_by || null,
             recipientId

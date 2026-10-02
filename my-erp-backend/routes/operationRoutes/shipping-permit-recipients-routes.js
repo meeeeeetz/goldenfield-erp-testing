@@ -52,12 +52,6 @@ router.post('/', async (req, res) => {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status
         } = req.body;
 
@@ -78,12 +72,6 @@ router.post('/', async (req, res) => {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status,
             created_by
         });
@@ -105,12 +93,6 @@ router.put('/:recipientId', async (req, res) => {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status
         } = req.body;
 
@@ -125,12 +107,6 @@ router.put('/:recipientId', async (req, res) => {
             plate_number,
             contact,
             contact_number,
-            handlers_license,
-            handlers_issued_date,
-            handlers_expiration,
-            transport_carrier,
-            transport_issued_date,
-            transport_expiration,
             status,
             created_by
         });

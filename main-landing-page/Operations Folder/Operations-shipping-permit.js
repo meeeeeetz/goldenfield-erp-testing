@@ -25,10 +25,14 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                     </button>
                     <button id="add-recipient-details-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                        <span class="btn-label">Add Recipient Details</span>
-                    </button>
-                </div>
-                <div class="permit-boxes-row">
+                         <span class="btn-label">Add Recipient Details</span>
+                     </button>
+                     <button id="open-recipient-papers-btn" class="btn-icon-circle" style="background-color: #EAD355; color: #1a1f2e;">
+                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                         <span class="btn-label">Recipient papers</span>
+                     </button>
+                 </div>
+                 <div class="permit-boxes-row">
                     <div class="card shipping-box">
                         <h3>Active Licenses</h3>
                         <div class="active-licenses-carousel" id="active-licenses-carousel">
@@ -141,18 +145,12 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                         <th>Plate Number</th>
                                         <th>Contact</th>
                                         <th>Contact Number</th>
-                                        <th>Handlers License</th>
-                                        <th>Handlers Issued</th>
-                                        <th>Handlers Expiration</th>
-                                        <th>Transport Carrier</th>
-                                        <th>Transport Issued</th>
-                                        <th>Transport Expiration</th>
                                         <th>Status</th>
                                         <th>Created by</th>
                                     </tr>
                                 </thead>
                                 <tbody id="recipients-table-body">
-                                    <tr><td colspan="15" style="text-align:center; color: #94a3b8;">Loading recipients...</td></tr>
+                                    <tr><td colspan="11" style="text-align:center; color: #94a3b8;">Loading recipients...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -229,34 +227,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                      <label>Contact Number</label>
                                      <input type="text" id="create-recipient-contact-number" placeholder="+63 XXX-XXX-XXXX" maxlength="16" />
                                  </div>
-                             </div>
-                              <div class="modal-meta-row">
-                                  <div class="modal-field" style="flex: 0 0 calc(40% - 4px);">
-                                      <label>Handlers License</label>
-                                      <input type="text" id="create-recipient-handlers-license" placeholder="Enter handlers license" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Handlers Issued</label>
-                                      <input type="date" id="create-recipient-handlers-issued" class="modal-select" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Handlers Expiration</label>
-                                      <input type="date" id="create-recipient-handlers-expiration" class="modal-select" />
-                                  </div>
-                              </div>
-                              <div class="modal-meta-row">
-                                  <div class="modal-field" style="flex: 0 0 calc(40% - 4px);">
-                                      <label>Transport Carrier</label>
-                                      <input type="text" id="create-recipient-transport-carrier" placeholder="Enter transport carrier" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Transport Issued</label>
-                                      <input type="date" id="create-recipient-transport-issued" class="modal-select" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Transport Expiration</label>
-                                      <input type="date" id="create-recipient-transport-expiration" class="modal-select" />
-                                  </div>
                               </div>
                              <div class="modal-meta-row">
                                  <div class="modal-field">
@@ -328,34 +298,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                                      <label>Contact Number</label>
                                      <input type="text" id="manage-recipient-contact-number" placeholder="+63 XXX-XXX-XXXX" maxlength="16" />
                                  </div>
-                             </div>
-                              <div class="modal-meta-row">
-                                  <div class="modal-field" style="flex: 0 0 calc(40% - 4px);">
-                                      <label>Handlers License</label>
-                                      <input type="text" id="manage-recipient-handlers-license" placeholder="Enter handlers license" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Handlers Issued</label>
-                                      <input type="date" id="manage-recipient-handlers-issued" class="modal-select" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Handlers Expiration</label>
-                                      <input type="date" id="manage-recipient-handlers-expiration" class="modal-select" />
-                                  </div>
-                              </div>
-                              <div class="modal-meta-row">
-                                  <div class="modal-field" style="flex: 0 0 calc(40% - 4px);">
-                                      <label>Transport Carrier</label>
-                                      <input type="text" id="manage-recipient-transport-carrier" placeholder="Enter transport carrier" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Transport Issued</label>
-                                      <input type="date" id="manage-recipient-transport-issued" class="modal-select" />
-                                  </div>
-                                  <div class="modal-field" style="flex: 0 0 calc(30% - 4px);">
-                                      <label>Transport Expiration</label>
-                                      <input type="date" id="manage-recipient-transport-expiration" class="modal-select" />
-                                  </div>
                               </div>
                              <div class="modal-meta-row">
                                  <div class="modal-field">
@@ -369,6 +311,71 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                              <div class="modal-tab-actions">
                                  <button id="save-manage-recipient-btn" class="btn-primary">Save</button>
                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div id="recipient-papers-modal" class="modal hidden">
+                      <div class="modal-content" style="max-width: 760px; width: 95%;">
+                          <div class="modal-header-row">
+                              <h3>Recipient Datas</h3>
+                              <button class="modal-close-btn" id="close-recipient-papers-modal">&times;</button>
+                          </div>
+                          <div class="modal-field">
+                              <label>Recipient</label>
+                              <select id="recipient-papers-recipient" class="modal-select">
+                                  <option value="">Select Recipient</option>
+                              </select>
+                          </div>
+                          <div class="modal-field">
+                              <label>Permits</label>
+                              <select id="recipient-papers-permit-type" class="modal-select">
+                                  <option value="">Select Permit</option>
+                                  <option value="handlers_certificate">Handlers certificate</option>
+                                  <option value="transport_carrier">Transport carrier</option>
+                              </select>
+                          </div>
+                          <div id="recipient-papers-handlers-panel" class="modal-meta-row" style="display:none;">
+                              <div class="modal-field">
+                                  <label>Registration Number</label>
+                                  <input type="text" id="rp-handlers-registration-number" class="modal-select" placeholder="Enter registration number" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Issued Date</label>
+                                  <input type="date" id="rp-handlers-issued-date" class="modal-select" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Expiration Date</label>
+                                  <input type="date" id="rp-handlers-expiration-date" class="modal-select" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Issued by</label>
+                                  <input type="text" id="rp-handlers-issued-by" class="modal-select" placeholder="Enter issued by" />
+                              </div>
+                          </div>
+                          <div id="recipient-papers-transport-panel" class="modal-meta-row" style="display:none;">
+                              <div class="modal-field">
+                                  <label>License number</label>
+                                  <input type="text" id="rp-transport-license-number" class="modal-select" placeholder="Enter license number" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Transport carrier</label>
+                                  <input type="text" id="rp-transport-carrier" class="modal-select" placeholder="Enter transport carrier" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Issued Date</label>
+                                  <input type="date" id="rp-transport-issued-date" class="modal-select" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Expiration Date</label>
+                                  <input type="date" id="rp-transport-expiration-date" class="modal-select" />
+                              </div>
+                              <div class="modal-field">
+                                  <label>Issued by</label>
+                                  <input type="text" id="rp-transport-issued-by" class="modal-select" placeholder="Enter issued by" />
+                              </div>
+                          </div>
+                          <div class="modal-tab-actions">
+                              <button id="save-recipient-papers-btn" class="btn-primary">Save</button>
                           </div>
                       </div>
                   </div>
@@ -566,12 +573,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             document.getElementById('create-recipient-plate-number').value = '';
             document.getElementById('create-recipient-contact').value = '';
             document.getElementById('create-recipient-contact-number').value = '';
-            document.getElementById('create-recipient-handlers-license').value = '';
-            document.getElementById('create-recipient-handlers-issued').value = '';
-            document.getElementById('create-recipient-handlers-expiration').value = '';
-            document.getElementById('create-recipient-transport-carrier').value = '';
-            document.getElementById('create-recipient-transport-issued').value = '';
-            document.getElementById('create-recipient-transport-expiration').value = '';
             document.getElementById('create-recipient-status').value = 'Active';
 
             switchRecipientTab('create');
@@ -618,12 +619,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             const plateNumber = document.getElementById('create-recipient-plate-number').value.trim();
             const contact = document.getElementById('create-recipient-contact').value.trim();
             const contactNumber = document.getElementById('create-recipient-contact-number').value.trim();
-            const handlersLicense = document.getElementById('create-recipient-handlers-license').value.trim();
-            const handlersIssued = document.getElementById('create-recipient-handlers-issued').value;
-            const handlersExpiration = document.getElementById('create-recipient-handlers-expiration').value;
-            const transportCarrier = document.getElementById('create-recipient-transport-carrier').value.trim();
-            const transportIssued = document.getElementById('create-recipient-transport-issued').value;
-            const transportExpiration = document.getElementById('create-recipient-transport-expiration').value;
             const status = document.getElementById('create-recipient-status').value;
 
             if (!customerName) {
@@ -648,12 +643,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                         plate_number: plateNumber || null,
                         contact: contact || null,
                         contact_number: contactNumber || null,
-                        handlers_license: handlersLicense || null,
-                        handlers_issued_date: handlersIssued || null,
-                        handlers_expiration: handlersExpiration || null,
-                        transport_carrier: transportCarrier || null,
-                        transport_issued_date: transportIssued || null,
-                        transport_expiration: transportExpiration || null,
                         status: status
                     })
                 });
@@ -681,12 +670,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             const plateNumber = document.getElementById('manage-recipient-plate-number').value.trim();
             const contact = document.getElementById('manage-recipient-contact').value.trim();
             const contactNumber = document.getElementById('manage-recipient-contact-number').value.trim();
-            const handlersLicense = document.getElementById('manage-recipient-handlers-license').value.trim();
-            const handlersIssued = document.getElementById('manage-recipient-handlers-issued').value;
-            const handlersExpiration = document.getElementById('manage-recipient-handlers-expiration').value;
-            const transportCarrier = document.getElementById('manage-recipient-transport-carrier').value.trim();
-            const transportIssued = document.getElementById('manage-recipient-transport-issued').value;
-            const transportExpiration = document.getElementById('manage-recipient-transport-expiration').value;
             const status = document.getElementById('manage-recipient-status').value;
 
             if (!customerName) {
@@ -710,12 +693,6 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                         plate_number: plateNumber || null,
                         contact: contact || null,
                         contact_number: contactNumber || null,
-                        handlers_license: handlersLicense || null,
-                        handlers_issued_date: handlersIssued || null,
-                        handlers_expiration: handlersExpiration || null,
-                        transport_carrier: transportCarrier || null,
-                        transport_issued_date: transportIssued || null,
-                        transport_expiration: transportExpiration || null,
                         status: status
                     })
                 });
@@ -756,7 +733,7 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                 const recipients = await res.json();
 
                 if (!recipients.length) {
-                    tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; color: #94a3b8;">No recipients found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color: #94a3b8;">No recipients found</td></tr>';
                     return;
                 }
 
@@ -771,19 +748,13 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                         <td>${r.plate_number || ''}</td>
                         <td>${r.contact || ''}</td>
                         <td>${r.contact_number || ''}</td>
-                        <td>${r.handlers_license || ''}</td>
-                        <td>${formatDate(r.handlers_issued_date) || ''}</td>
-                        <td>${formatDate(r.handlers_expiration) || ''}</td>
-                        <td>${r.transport_carrier || ''}</td>
-                        <td>${formatDate(r.transport_issued_date) || ''}</td>
-                        <td>${formatDate(r.transport_expiration) || ''}</td>
                         <td>${r.status || ''}</td>
                         <td>${r.created_by || ''}</td>
                     </tr>
                 `).join('');
             } catch (err) {
                 console.error('Failed to load recipients:', err);
-                tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; color: #94a3b8;">No recipients found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color: #94a3b8;">No recipients found</td></tr>';
             }
         }
 
@@ -835,6 +806,118 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
 
         setupContactNumber(document.getElementById('create-recipient-contact-number'));
         setupContactNumber(document.getElementById('manage-recipient-contact-number'));
+
+        const papersRecipientSelect = document.getElementById('recipient-papers-recipient');
+        if (papersRecipientSelect) {
+            papersRecipientSelect.innerHTML = '<option value="">Select Recipient</option>';
+        }
+
+        function openRecipientPapersModal() {
+            const modal = document.getElementById('recipient-papers-modal');
+            if (!modal) return;
+            document.getElementById('recipient-papers-recipient').value = '';
+            document.getElementById('recipient-papers-permit-type').value = '';
+            document.getElementById('rp-handlers-registration-number').value = '';
+            document.getElementById('rp-handlers-issued-date').value = '';
+            document.getElementById('rp-handlers-expiration-date').value = '';
+            document.getElementById('rp-handlers-issued-by').value = '';
+            document.getElementById('rp-transport-license-number').value = '';
+            document.getElementById('rp-transport-carrier').value = '';
+            document.getElementById('rp-transport-issued-date').value = '';
+            document.getElementById('rp-transport-expiration-date').value = '';
+            document.getElementById('rp-transport-issued-by').value = '';
+            const handlersPanel = document.getElementById('recipient-papers-handlers-panel');
+            const transportPanel = document.getElementById('recipient-papers-transport-panel');
+            if (handlersPanel) handlersPanel.style.display = 'none';
+            if (transportPanel) transportPanel.style.display = 'none';
+            modal.classList.remove('hidden');
+            loadPapersRecipients();
+        }
+
+        function closeRecipientPapersModal() {
+            const modal = document.getElementById('recipient-papers-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function loadPapersRecipients() {
+            const select = document.getElementById('recipient-papers-recipient');
+            if (!select) return;
+            select.innerHTML = '<option value="">Select Recipient</option>';
+            try {
+                const res = await fetch(API_BASE_SHIPPING_PERMIT_RECIPIENTS, { headers: getAuthHeaders() });
+                if (!res.ok) return;
+                const recipients = await res.json();
+                recipients
+                    .filter(r => (r.status || '').toLowerCase() === 'active' && r.recipient_id)
+                    .forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r.recipient_id;
+                        opt.textContent = (r.customer_name || r.recipient_id);
+                        select.appendChild(opt);
+                    });
+            } catch (err) {
+                console.error('Failed to load recipients for papers:', err);
+            }
+        }
+
+        function toggleRecipientPapersPanels() {
+            const value = (document.getElementById('recipient-papers-permit-type').value || '').trim();
+            const handlersPanel = document.getElementById('recipient-papers-handlers-panel');
+            const transportPanel = document.getElementById('recipient-papers-transport-panel');
+            if (handlersPanel) handlersPanel.style.display = (value === 'handlers_certificate') ? 'flex' : 'none';
+            if (transportPanel) transportPanel.style.display = (value === 'transport_carrier') ? 'flex' : 'none';
+        }
+
+        function saveRecipientPapers() {
+            const recipientId = document.getElementById('recipient-papers-recipient').value.trim();
+            const permitType = (document.getElementById('recipient-papers-permit-type').value || '').trim();
+
+            if (!recipientId || !permitType) {
+                alert('Please select a recipient and a permit type');
+                return;
+            }
+
+            const payload = {
+                recipient_id: recipientId,
+                paper_type: permitType
+            };
+
+            if (permitType === 'handlers_certificate') {
+                payload.registration_number = document.getElementById('rp-handlers-registration-number').value.trim();
+                payload.issued_date = document.getElementById('rp-handlers-issued-date').value;
+                payload.expiration_date = document.getElementById('rp-handlers-expiration-date').value;
+                payload.issued_by = document.getElementById('rp-handlers-issued-by').value.trim();
+            } else {
+                payload.license_number = document.getElementById('rp-transport-license-number').value.trim();
+                payload.transport_carrier_name = document.getElementById('rp-transport-carrier').value.trim();
+                payload.issued_date = document.getElementById('rp-transport-issued-date').value;
+                payload.expiration_date = document.getElementById('rp-transport-expiration-date').value;
+                payload.issued_by = document.getElementById('rp-transport-issued-by').value.trim();
+            }
+
+            console.log('Recipient papers payload (design preview, not persisted):', payload);
+            alert('Recipient papers saved (design preview). See console for the payload.');
+            closeRecipientPapersModal();
+        }
+
+        const openRecipientPapersBtn = document.getElementById('open-recipient-papers-btn');
+        if (openRecipientPapersBtn) { openRecipientPapersBtn.onclick = openRecipientPapersModal; }
+
+        const closeRecipientPapersBtn = document.getElementById('close-recipient-papers-modal');
+        if (closeRecipientPapersBtn) { closeRecipientPapersBtn.onclick = closeRecipientPapersModal; }
+
+        const recipientPapersModal = document.getElementById('recipient-papers-modal');
+        if (recipientPapersModal) {
+            recipientPapersModal.addEventListener('click', (e) => {
+                if (e.target === recipientPapersModal) { recipientPapersModal.classList.add('hidden'); }
+            });
+        }
+
+        const saveRecipientPapersBtn = document.getElementById('save-recipient-papers-btn');
+        if (saveRecipientPapersBtn) { saveRecipientPapersBtn.onclick = saveRecipientPapers; }
+
+        const recipientPapersPermitType = document.getElementById('recipient-papers-permit-type');
+        if (recipientPapersPermitType) { recipientPapersPermitType.addEventListener('change', toggleRecipientPapersPanels); }
 
         function switchLicenseTab(tab) {
             const createPanel = document.getElementById('panel-create-license');
