@@ -215,9 +215,11 @@ ModuleComponents['systems-user-management'] = (container) => {
                     <td>${u.last_login ? new Date(u.last_login).toLocaleDateString() : '-'}</td>
                     <td>${new Date(u.created_at).toLocaleDateString()}</td>
                     <td>
-                        <button class="btn-edit" onclick="window.editUser(${u.id})">Edit</button>
-                        ${u.id === currentUser.id ? `<button class="btn-primary" onclick="window.openChangePassword()" style="padding:6px 12px;font-size:12px;">Change Password</button>` : ''}
-                        ${canDeactivate ? `<button class="btn-delete" onclick="window.deactivateUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', '${u.status}')">${u.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</button>` : ''}
+                        <div class="user-action-cell">
+                            <button class="btn-primary user-action-btn" onclick="window.editUser(${u.id})">Edit</button>
+                            ${u.id === currentUser.id ? `<button class="btn-secondary user-action-btn" onclick="window.openChangePassword()">Change Password</button>` : ''}
+                            ${canDeactivate ? `<button class="btn-danger user-action-btn" onclick="window.deactivateUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', '${u.status}')">${u.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</button>` : ''}
+                        </div>
                     </td>
                 </tr>
             `;
