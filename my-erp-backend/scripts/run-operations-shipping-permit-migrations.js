@@ -10,13 +10,17 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
+    ssl: { rejectUnauthorized: false }
 });
 
 async function runMigration() {
     const sqlFiles = [
         path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients.sql'),
         path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-add-columns.sql'),
-        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-drop-columns.sql')
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipients-drop-columns.sql'),
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipient-papers.sql'),
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipient-papers-add-license-plate.sql'),
+        path.join(__dirname, '..', '..', 'my-erp-database', 'operations-database', 'operations-shipping-permit-database', 'shipping-permit-recipient-papers-add-photo-path.sql')
     ];
 
     for (const sqlFile of sqlFiles) {

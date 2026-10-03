@@ -67,6 +67,8 @@ const organizationalStructureRoutes = require('./routes/humanResourceRoutes/orga
     const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
 const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
 const shippingPermitRecipientsRoutes = require('./routes/operationRoutes/shipping-permit-recipients-routes');
+const shippingPermitRecipientPapersRoutes = require('./routes/operationRoutes/shipping-permit-recipient-papers-routes');
+const shippingPermitRecipientPhotoRoutes = require('./routes/operationRoutes/shipping-permit-recipient-photo-routes');
 const shippingPermitLicensesRoutes = require('./routes/operationRoutes/shipping-permit-licenses-routes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
@@ -120,6 +122,8 @@ app.use('/api/petty-cash', pettyCashRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
 app.use('/api/scratch-layer', scratchLayerRoutes);
 app.use('/api/shipping-permit-recipients', shippingPermitRecipientsRoutes);
+app.use('/api/shipping-permit-recipient-papers', shippingPermitRecipientPapersRoutes);
+app.use('/api/shipping-permit-recipient-photo', shippingPermitRecipientPhotoRoutes);
 app.use('/api/shipping-permit-licenses', shippingPermitLicensesRoutes);
 app.use('/api/egg-products', eggProductsRoutes);
 app.use('/api/daily-egg-production', dailyEggProductionRoutes);

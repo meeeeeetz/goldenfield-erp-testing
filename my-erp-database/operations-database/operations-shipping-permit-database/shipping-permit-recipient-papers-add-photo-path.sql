@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS shipping_permit_recipient_papers ADD COLUMN IF NOT EXISTS photo_path VARCHAR(500);

@@ -7,6 +7,8 @@ function getAuthHeaders() {
 
 var API_BASE_SHIPPING_PERMIT_RECIPIENTS = '/api/shipping-permit-recipients';
 var API_BASE_SHIPPING_LICENSES = '/api/shipping-permit-licenses';
+var API_BASE_SHIPPING_PERMIT_RECIPIENT_PAPERS = '/api/shipping-permit-recipient-papers';
+var API_BASE_SHIPPING_PERMIT_RECIPIENT_PHOTO = '/api/shipping-permit-recipient-photo';
 
 ModuleComponents['operations-shipping-permit'] = (container) => {
         container.innerHTML = `
@@ -315,67 +317,122 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                       </div>
                   </div>
                   <div id="recipient-papers-modal" class="modal hidden">
-                      <div class="modal-content" style="max-width: 760px; width: 95%;">
+                      <div class="modal-content" style="max-width: 980px; width: 95%;">
                           <div class="modal-header-row">
                               <h3>Recipient Datas</h3>
                               <button class="modal-close-btn" id="close-recipient-papers-modal">&times;</button>
                           </div>
-                          <div class="modal-field">
-                              <label>Recipient</label>
-                              <select id="recipient-papers-recipient" class="modal-select">
-                                  <option value="">Select Recipient</option>
-                              </select>
+                          <div class="modal-tabs">
+                              <button class="modal-tab active" id="tab-create-permits" onclick="switchRecipientPapersTab('create')">Create Permits</button>
+                              <button class="modal-tab" id="tab-created-permits" onclick="switchRecipientPapersTab('list')">Created permits</button>
                           </div>
-                          <div class="modal-field">
-                              <label>Permits</label>
-                              <select id="recipient-papers-permit-type" class="modal-select">
-                                  <option value="">Select Permit</option>
-                                  <option value="handlers_certificate">Handlers certificate</option>
-                                  <option value="transport_carrier">Transport carrier</option>
-                              </select>
+                          <div id="panel-create-permits" class="modal-tab-panel" style="display: block;">
+                              <div class="modal-meta-row">
+                                  <div class="modal-field">
+                                      <label>Recipient</label>
+                                      <select id="recipient-papers-recipient" class="modal-select">
+                                          <option value="">Select Recipient</option>
+                                      </select>
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Permits</label>
+                                      <select id="recipient-papers-permit-type" class="modal-select">
+                                          <option value="">Select Permit</option>
+                                          <option value="handlers_certificate">Handlers certificate</option>
+                                          <option value="transport_carrier">Transport carrier</option>
+                                      </select>
+                                  </div>
+                              </div>
+                              <div id="recipient-papers-handlers-panel" class="modal-meta-row" style="display:none;">
+                                  <div class="modal-field">
+                                      <label>Registration Number</label>
+                                      <input type="text" id="rp-handlers-registration-number" class="modal-select" placeholder="Enter registration number" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Issued Date</label>
+                                      <input type="date" id="rp-handlers-issued-date" class="modal-select" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Expiration Date</label>
+                                      <input type="date" id="rp-handlers-expiration-date" class="modal-select" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Issued by</label>
+                                      <input type="text" id="rp-handlers-issued-by" class="modal-select" placeholder="Enter issued by" />
+                                  </div>
+                                  <div class="modal-field" style="flex: 0 0 100%;">
+                                      <label>Handlers Certificate Photo</label>
+                                      <div id="rp-handlers-photo-zone" class="photo-drop-zone" style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background-color 0.2s; background: #fafafa; display: flex; flex-direction: column; align-items: center;">
+                                          <input type="file" id="rp-handlers-photo-input" accept="image/jpeg,image/png,application/pdf" style="display: none;" />
+                                          <svg id="rp-handlers-photo-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#999" stroke-width="1.5" style="margin-bottom: 8px; display: block;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                          <p id="rp-handlers-photo-text" style="margin: 0; color: #666; font-size: 13px;">Drag & drop or click to upload<br><small>JPG, PNG, PDF (max 5MB)</small></p>
+                                          <div id="rp-handlers-photo-preview" style="display: none; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                                              <img id="rp-handlers-photo-img" src="" alt="Preview" style="max-width: 200px; max-height: 150px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                              <button type="button" id="rp-handlers-photo-remove" style="padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div id="recipient-papers-transport-panel" class="modal-meta-row" style="display:none;">
+                                  <div class="modal-field">
+                                      <label>Transport carrier License</label>
+                                      <input type="text" id="rp-transport-carrier" class="modal-select" placeholder="Enter transport carrier" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>License Plate</label>
+                                      <input type="text" id="rp-transport-license-plate" class="modal-select" placeholder="Enter license plate" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Issued Date</label>
+                                      <input type="date" id="rp-transport-issued-date" class="modal-select" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Expiration Date</label>
+                                      <input type="date" id="rp-transport-expiration-date" class="modal-select" />
+                                  </div>
+                                  <div class="modal-field">
+                                      <label>Issued by</label>
+                                      <input type="text" id="rp-transport-issued-by" class="modal-select" placeholder="Enter issued by" />
+                                  </div>
+                                  <div class="modal-field" style="flex: 0 0 100%;">
+                                      <label>Transport Carrier Photo</label>
+<div id="rp-transport-photo-zone" class="photo-drop-zone" style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background-color 0.2s; background: #fafafa; display: flex; flex-direction: column; align-items: center;">
+                                           <input type="file" id="rp-transport-photo-input" accept="image/jpeg,image/png,application/pdf" style="display: none;" />
+                                           <svg id="rp-transport-photo-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#999" stroke-width="1.5" style="margin-bottom: 8px; display: block;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                           <p id="rp-transport-photo-text" style="margin: 0; color: #666; font-size: 13px;">Drag & drop or click to upload<br><small>JPG, PNG, PDF (max 5MB)</small></p>
+                                           <div id="rp-transport-photo-preview" style="display: none; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                                               <img id="rp-transport-photo-img" src="" alt="Preview" style="max-width: 200px; max-height: 150px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                               <button type="button" id="rp-transport-photo-remove" style="padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                                           </div>
+                                       </div>
+                                  </div>
+                              </div>
+                              <div class="modal-tab-actions">
+                                  <button id="save-recipient-papers-btn" class="btn-primary">Save</button>
+                              </div>
                           </div>
-                          <div id="recipient-papers-handlers-panel" class="modal-meta-row" style="display:none;">
-                              <div class="modal-field">
-                                  <label>Registration Number</label>
-                                  <input type="text" id="rp-handlers-registration-number" class="modal-select" placeholder="Enter registration number" />
+                          <div id="panel-created-permits" class="modal-tab-panel" style="display: none;">
+                              <div style="max-height: 50vh; overflow: auto;">
+                                  <table class="data-table" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 1000px;">
+                                      <thead>
+                                          <tr>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999; width: 50px; text-align: center;">Photo</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Recipients Permits ID</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Recipient</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Permits</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Registration No.</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">License Plate</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Issued Date</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Expiration Date</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Issued by</th>
+                                              <th style="position: sticky; top: 0; background: #FFD000; z-index: 999;">Action</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody id="created-permits-tbody">
+                                          <tr><td colspan="10" style="text-align: center; padding: 20px; color: #999;">Loading...</td></tr>
+                                      </tbody>
+                                  </table>
                               </div>
-                              <div class="modal-field">
-                                  <label>Issued Date</label>
-                                  <input type="date" id="rp-handlers-issued-date" class="modal-select" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Expiration Date</label>
-                                  <input type="date" id="rp-handlers-expiration-date" class="modal-select" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Issued by</label>
-                                  <input type="text" id="rp-handlers-issued-by" class="modal-select" placeholder="Enter issued by" />
-                              </div>
-                          </div>
-                          <div id="recipient-papers-transport-panel" class="modal-meta-row" style="display:none;">
-                              <div class="modal-field">
-                                  <label>License number</label>
-                                  <input type="text" id="rp-transport-license-number" class="modal-select" placeholder="Enter license number" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Transport carrier</label>
-                                  <input type="text" id="rp-transport-carrier" class="modal-select" placeholder="Enter transport carrier" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Issued Date</label>
-                                  <input type="date" id="rp-transport-issued-date" class="modal-select" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Expiration Date</label>
-                                  <input type="date" id="rp-transport-expiration-date" class="modal-select" />
-                              </div>
-                              <div class="modal-field">
-                                  <label>Issued by</label>
-                                  <input type="text" id="rp-transport-issued-by" class="modal-select" placeholder="Enter issued by" />
-                              </div>
-                          </div>
-                          <div class="modal-tab-actions">
-                              <button id="save-recipient-papers-btn" class="btn-primary">Save</button>
                           </div>
                       </div>
                   </div>
@@ -812,24 +869,52 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             papersRecipientSelect.innerHTML = '<option value="">Select Recipient</option>';
         }
 
+        function switchRecipientPapersTab(tab) {
+            const createPanel = document.getElementById('panel-create-permits');
+            const listPanel = document.getElementById('panel-created-permits');
+            const createTab = document.getElementById('tab-create-permits');
+            const listTab = document.getElementById('tab-created-permits');
+
+            if (tab === 'create') {
+                // Reset editing state when manually switching to create tab
+                if (editingPermitId) {
+                    editingPermitId = null;
+                }
+                createPanel.style.display = 'block';
+                listPanel.style.display = 'none';
+                createTab.classList.add('active');
+                listTab.classList.remove('active');
+            } else {
+                createPanel.style.display = 'none';
+                listPanel.style.display = 'block';
+                createTab.classList.remove('active');
+                listTab.classList.add('active');
+                loadCreatedPermitsFromDB().then(loadCreatedPermits);
+            }
+        }
+
         function openRecipientPapersModal() {
             const modal = document.getElementById('recipient-papers-modal');
             if (!modal) return;
+            editingPermitId = null;
             document.getElementById('recipient-papers-recipient').value = '';
             document.getElementById('recipient-papers-permit-type').value = '';
             document.getElementById('rp-handlers-registration-number').value = '';
             document.getElementById('rp-handlers-issued-date').value = '';
             document.getElementById('rp-handlers-expiration-date').value = '';
             document.getElementById('rp-handlers-issued-by').value = '';
-            document.getElementById('rp-transport-license-number').value = '';
             document.getElementById('rp-transport-carrier').value = '';
+            document.getElementById('rp-transport-license-plate').value = '';
             document.getElementById('rp-transport-issued-date').value = '';
             document.getElementById('rp-transport-expiration-date').value = '';
             document.getElementById('rp-transport-issued-by').value = '';
+            resetPhotoZone('handlers');
+            resetPhotoZone('transport');
             const handlersPanel = document.getElementById('recipient-papers-handlers-panel');
             const transportPanel = document.getElementById('recipient-papers-transport-panel');
             if (handlersPanel) handlersPanel.style.display = 'none';
             if (transportPanel) transportPanel.style.display = 'none';
+            switchRecipientPapersTab('create');
             modal.classList.remove('hidden');
             loadPapersRecipients();
         }
@@ -860,6 +945,123 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             }
         }
 
+        let createdPermitsData = [];
+        let editingPermitId = null;
+
+        async function loadCreatedPermitsFromDB() {
+            try {
+                const res = await fetch(`${API_BASE_SHIPPING_PERMIT_RECIPIENT_PAPERS}`, {
+                    headers: getAuthHeaders()
+                });
+                if (!res.ok) return;
+                const papers = await res.json();
+                createdPermitsData = papers.map(p => ({
+                    id: p.recipient_paper_id,
+                    recipient_id: p.recipient_id,
+                    recipient_name: p.customer_name,
+                    paper_type: p.paper_type,
+                    registration_number: p.registration_number,
+                    transport_carrier_name: p.transport_carrier_name,
+                    license_plate: p.license_plate,
+                    issued_date: p.issued_date ? p.issued_date.split('T')[0] : '',
+                    expiration_date: p.expiration_date ? p.expiration_date.split('T')[0] : '',
+                    issued_by: p.issued_by,
+                    photo_path: p.photo_path
+                }));
+            } catch (err) {
+                console.error('Failed to load permits from DB:', err);
+            }
+        }
+
+        // Photo preview tooltip (similar to Feeds Transaction)
+        const permitPhotoTooltip = document.createElement('div');
+        permitPhotoTooltip.className = 'permit-photo-preview-tooltip';
+        permitPhotoTooltip.style.display = 'none';
+        permitPhotoTooltip.style.cssText = 'position:fixed; z-index:9999; pointer-events:none; background:rgba(0,0,0,0.85); border-radius:8px; padding:10px; box-shadow:0 4px 20px rgba(0,0,0,0.3); max-width:400px; max-height:80vh;';
+        document.body.appendChild(permitPhotoTooltip);
+
+        function loadCreatedPermits() {
+            const tbody = document.getElementById('created-permits-tbody');
+            if (!tbody) return;
+
+            if (createdPermitsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px; color: #999;">No permits created yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = createdPermitsData.map((p, idx) => `
+                <tr>
+                    <td style="text-align: center; vertical-align: middle;">
+                        ${p.photo_path && String(p.photo_path).trim() ? 
+                            `<span class="permit-photo-icon-wrap" data-photo-path="${p.photo_path}" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </span>` 
+                            : `<span class="permit-photo-icon-wrap" style="display:inline-flex; align-items:center; justify-content:center; opacity:0.4;">
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#800000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </span>`
+                        }
+                    </td>
+                    <td>${p.id || `RP-${String(idx + 1).padStart(5, '0')}`}</td>
+                    <td>${p.recipient_name || p.recipient_id || ''}</td>
+                    <td>${p.paper_type === 'handlers_certificate' ? 'Handlers certificate' : 'Transport carrier'}</td>
+                    <td>${p.registration_number || p.transport_carrier_name || ''}</td>
+                    <td>${p.license_plate || ''}</td>
+                    <td>${p.issued_date || ''}</td>
+                    <td>${p.expiration_date || ''}</td>
+                    <td>${p.issued_by || ''}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-icon" onclick="editCreatedPermit(${idx})" style="background: none; border: none; cursor: pointer; padding: 4px; margin: 0 4px;" title="Edit">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2196F3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="deleteCreatedPermit(${idx})" style="background: none; border: none; cursor: pointer; padding: 4px; margin: 0 4px;" title="Delete">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Attach hover events for photo icons
+            tbody.querySelectorAll('.permit-photo-icon-wrap[data-photo-path]').forEach(wrap => {
+                wrap.addEventListener('mouseenter', (e) => showPermitPhotoPreview(e, wrap.dataset.photoPath));
+                wrap.addEventListener('mousemove', (e) => positionPermitPhotoPreview(e));
+                wrap.addEventListener('mouseleave', hidePermitPhotoPreview);
+            });
+        }
+
+        function showPermitPhotoPreview(e, photoPath) {
+            if (!permitPhotoTooltip) return;
+            const fullSrc = photoPath.startsWith('http') ? photoPath : `/${photoPath}`;
+            permitPhotoTooltip.innerHTML = `<img src="${fullSrc}" alt="Permit photo preview" style="max-width:100%; max-height:80vh; display:block; border-radius:4px;">`;
+            permitPhotoTooltip.style.display = 'block';
+            positionPermitPhotoPreview(e);
+        }
+
+        function positionPermitPhotoPreview(e) {
+            if (!permitPhotoTooltip || permitPhotoTooltip.style.display !== 'block') return;
+            const tooltipRect = permitPhotoTooltip.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            let left = e.clientX + 20;
+            let top = e.clientY - tooltipRect.height / 2;
+            if (left + tooltipRect.width > vw - 20) left = e.clientX - tooltipRect.width - 20;
+            if (top < 20) top = 20;
+            if (top + tooltipRect.height > vh - 20) top = vh - tooltipRect.height - 20;
+            permitPhotoTooltip.style.left = left + 'px';
+            permitPhotoTooltip.style.top = top + 'px';
+        }
+
+        function hidePermitPhotoPreview() {
+            if (permitPhotoTooltip) permitPhotoTooltip.style.display = 'none';
+        }
+
         function toggleRecipientPapersPanels() {
             const value = (document.getElementById('recipient-papers-permit-type').value || '').trim();
             const handlersPanel = document.getElementById('recipient-papers-handlers-panel');
@@ -868,7 +1070,146 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
             if (transportPanel) transportPanel.style.display = (value === 'transport_carrier') ? 'flex' : 'none';
         }
 
-        function saveRecipientPapers() {
+        function resetPhotoZone(type) {
+            const zone = document.getElementById(`rp-${type}-photo-zone`);
+            const input = document.getElementById(`rp-${type}-photo-input`);
+            const icon = document.getElementById(`rp-${type}-photo-icon`);
+            const text = document.getElementById(`rp-${type}-photo-text`);
+            const preview = document.getElementById(`rp-${type}-photo-preview`);
+            const img = document.getElementById(`rp-${type}-photo-img`);
+            if (zone) zone.style.borderColor = '#ccc';
+            if (zone) zone.style.backgroundColor = '#fafafa';
+            if (input) input.value = '';
+            if (icon) icon.style.display = 'block';
+            if (text) text.style.display = 'block';
+            if (preview) preview.style.display = 'none';
+            if (img) img.src = '';
+            zone.dataset.photoPath = '';
+        }
+
+        function setupPhotoZone(type) {
+            const zone = document.getElementById(`rp-${type}-photo-zone`);
+            const input = document.getElementById(`rp-${type}-photo-input`);
+            if (!zone || !input) return;
+
+            zone.addEventListener('click', (e) => {
+                if (e.target.id === `rp-${type}-photo-remove`) return;
+                input.click();
+            });
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handlePhotoSelect(type, e.target.files[0]);
+                }
+            });
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.style.borderColor = '#28a745';
+                zone.style.backgroundColor = '#f0fff4';
+            });
+
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.style.borderColor = '#ccc';
+                zone.style.backgroundColor = '#fafafa';
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.style.borderColor = '#ccc';
+                zone.style.backgroundColor = '#fafafa';
+                if (e.dataTransfer.files.length > 0) {
+                    handlePhotoSelect(type, e.dataTransfer.files[0]);
+                }
+            });
+
+            const removeBtn = document.getElementById(`rp-${type}-photo-remove`);
+            if (removeBtn) {
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resetPhotoZone(type);
+                });
+            }
+        }
+
+        async function handlePhotoSelect(type, file) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Only JPEG, PNG, and PDF files are allowed');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+
+            const recipientId = document.getElementById('recipient-papers-recipient').value.trim();
+            if (!recipientId) {
+                alert('Please select a recipient first');
+                return;
+            }
+
+            const zone = document.getElementById(`rp-${type}-photo-zone`);
+            const icon = document.getElementById(`rp-${type}-photo-icon`);
+            const text = document.getElementById(`rp-${type}-photo-text`);
+            const preview = document.getElementById(`rp-${type}-photo-preview`);
+            const img = document.getElementById(`rp-${type}-photo-img`);
+
+            // Show loading state
+            if (text) text.textContent = 'Uploading...';
+            if (icon) icon.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('photo', file);
+                formData.append('recipient_id', recipientId);
+                formData.append('paper_type', type === 'handlers' ? 'handlers_certificate' : 'transport_carrier');
+
+                const res = await fetch(`${API_BASE_SHIPPING_PERMIT_RECIPIENT_PHOTO}/upload-photo`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Upload failed');
+                }
+
+                const data = await res.json();
+                
+                // Store the public URL for preview and database
+                zone.dataset.photoPath = data.public_url || data.file_path;
+
+                // Show preview using public URL
+                if (icon) icon.style.display = 'none';
+                if (text) text.style.display = 'none';
+                if (preview) preview.style.display = 'flex';
+                if (img) {
+                    if (file.type === 'application/pdf') {
+                        img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzM1NDUiIHN0cm9rZS13aWR0aD0iMiI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiI+PC9yZWN0PjxwYXRoIGQ9Ik0xMiA3VjE3TTggMTNsNCA0IDQtNCI+PC9wYXRoPjwvc3ZnPg==';
+                    } else {
+                        img.src = data.public_url || data.file_path;
+                    }
+                }
+
+            } catch (err) {
+                console.error('Photo upload error:', err);
+                alert('Failed to upload photo: ' + err.message);
+                resetPhotoZone(type);
+            }
+        }
+
+        function getPhotoPath(type) {
+            const zone = document.getElementById(`rp-${type}-photo-zone`);
+            return zone?.dataset?.photoPath || '';
+        }
+
+        async function saveRecipientPapers() {
             const recipientId = document.getElementById('recipient-papers-recipient').value.trim();
             const permitType = (document.getElementById('recipient-papers-permit-type').value || '').trim();
 
@@ -887,17 +1228,125 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
                 payload.issued_date = document.getElementById('rp-handlers-issued-date').value;
                 payload.expiration_date = document.getElementById('rp-handlers-expiration-date').value;
                 payload.issued_by = document.getElementById('rp-handlers-issued-by').value.trim();
+                payload.photo_path = getPhotoPath('handlers');
             } else {
-                payload.license_number = document.getElementById('rp-transport-license-number').value.trim();
                 payload.transport_carrier_name = document.getElementById('rp-transport-carrier').value.trim();
+                payload.license_plate = document.getElementById('rp-transport-license-plate').value.trim();
                 payload.issued_date = document.getElementById('rp-transport-issued-date').value;
                 payload.expiration_date = document.getElementById('rp-transport-expiration-date').value;
                 payload.issued_by = document.getElementById('rp-transport-issued-by').value.trim();
+                payload.photo_path = getPhotoPath('transport');
             }
 
-            console.log('Recipient papers payload (design preview, not persisted):', payload);
-            alert('Recipient papers saved (design preview). See console for the payload.');
-            closeRecipientPapersModal();
+            console.log('Recipient papers payload:', payload);
+
+            // Send to backend
+            try {
+                const isEditing = !!editingPermitId;
+                const url = isEditing 
+                    ? `${API_BASE_SHIPPING_PERMIT_RECIPIENT_PAPERS}/${editingPermitId}`
+                    : `${API_BASE_SHIPPING_PERMIT_RECIPIENT_PAPERS}`;
+                const method = isEditing ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to save permit');
+                }
+
+                const savedPaper = await res.json();
+
+                const recipientSelect = document.getElementById('recipient-papers-recipient');
+                const recipientName = recipientSelect.options[recipientSelect.selectedIndex]?.text || recipientId;
+
+                const newPermit = {
+                    id: savedPaper.recipient_paper_id || editingPermitId || `RP-${String(createdPermitsData.length + 1).padStart(5, '0')}`,
+                    recipient_id: recipientId,
+                    recipient_name: recipientName,
+                    paper_type: permitType,
+                    registration_number: payload.registration_number || '',
+                    transport_carrier_name: payload.transport_carrier_name || '',
+                    license_plate: payload.license_plate || '',
+                    issued_date: payload.issued_date,
+                    expiration_date: payload.expiration_date,
+                    issued_by: payload.issued_by,
+                    photo_path: payload.photo_path || ''
+                };
+                createdPermitsData.push(newPermit);
+
+                alert(isEditing ? 'Permit updated successfully!' : 'Permit saved successfully!');
+                editingPermitId = null;
+                resetPhotoZone('handlers');
+                resetPhotoZone('transport');
+                switchRecipientPapersTab('list');
+            } catch (err) {
+                console.error('Save permit error:', err);
+                alert('Failed to save permit: ' + err.message);
+            }
+        }
+
+        function editCreatedPermit(index) {
+            const permit = createdPermitsData[index];
+            if (!permit) return;
+            
+            // Switch to create tab and populate form
+            switchRecipientPapersTab('create');
+            
+            // Track the permit being edited (AFTER tab switch to avoid reset)
+            editingPermitId = permit.id;
+            
+            document.getElementById('recipient-papers-recipient').value = permit.recipient_id || '';
+            document.getElementById('recipient-papers-permit-type').value = permit.paper_type || '';
+            toggleRecipientPapersPanels();
+            
+            if (permit.paper_type === 'handlers_certificate') {
+                document.getElementById('rp-handlers-registration-number').value = permit.registration_number || '';
+                document.getElementById('rp-handlers-issued-date').value = permit.issued_date || '';
+                document.getElementById('rp-handlers-expiration-date').value = permit.expiration_date || '';
+                document.getElementById('rp-handlers-issued-by').value = permit.issued_by || '';
+            } else {
+                document.getElementById('rp-transport-carrier').value = permit.transport_carrier_name || '';
+                document.getElementById('rp-transport-license-plate').value = permit.license_plate || '';
+                document.getElementById('rp-transport-issued-date').value = permit.issued_date || '';
+                document.getElementById('rp-transport-expiration-date').value = permit.expiration_date || '';
+                document.getElementById('rp-transport-issued-by').value = permit.issued_by || '';
+            }
+            
+            // Remove the old entry from local array (will be re-added on save)
+            createdPermitsData.splice(index, 1);
+        }
+
+        async function deleteCreatedPermit(index) {
+            const permit = createdPermitsData[index];
+            if (!permit) return;
+
+            if (confirm('Are you sure you want to delete this permit?')) {
+                try {
+                    // Delete from backend
+                    const res = await fetch(`${API_BASE_SHIPPING_PERMIT_RECIPIENT_PAPERS}/${permit.id}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || 'Failed to delete permit');
+                    }
+
+                    // Remove from local array
+                    createdPermitsData.splice(index, 1);
+                    loadCreatedPermits();
+                    alert('Permit deleted successfully!');
+                } catch (err) {
+                    console.error('Delete permit error:', err);
+                    alert('Failed to delete permit: ' + err.message);
+                }
+            }
         }
 
         const openRecipientPapersBtn = document.getElementById('open-recipient-papers-btn');
@@ -918,6 +1367,9 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
 
         const recipientPapersPermitType = document.getElementById('recipient-papers-permit-type');
         if (recipientPapersPermitType) { recipientPapersPermitType.addEventListener('change', toggleRecipientPapersPanels); }
+
+        setupPhotoZone('handlers');
+        setupPhotoZone('transport');
 
         function switchLicenseTab(tab) {
             const createPanel = document.getElementById('panel-create-license');
@@ -1330,6 +1782,9 @@ ModuleComponents['operations-shipping-permit'] = (container) => {
         window.saveCreateLicense = saveCreateLicense;
         window.saveManageLicense = saveManageLicense;
         window.setupLicensePhotoUploadZone = setupLicensePhotoUploadZone;
+        window.switchRecipientPapersTab = switchRecipientPapersTab;
+        window.editCreatedPermit = editCreatedPermit;
+        window.deleteCreatedPermit = deleteCreatedPermit;
         window.loadLicenses = loadLicenses;
 
         window.switchRecipientTab = switchRecipientTab;

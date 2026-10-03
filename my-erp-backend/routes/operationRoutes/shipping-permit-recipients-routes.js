@@ -60,7 +60,11 @@ router.post('/', async (req, res) => {
         }
 
         const recipientId = req.body.recipient_id || await controller.getNextRecipientId();
-        const created_by = req.user ? (req.user.first_name + ' ' + req.user.last_name) : null;
+        const created_by = req.user
+            ? (req.user.first_name && req.user.last_name
+                ? `${req.user.first_name} ${req.user.last_name}`
+                : req.user.name || req.user.username || req.user.role || 'Super Admin')
+            : 'Super Admin';
 
         const recipient = await controller.createRecipient({
             recipient_id: recipientId,
@@ -96,7 +100,11 @@ router.put('/:recipientId', async (req, res) => {
             status
         } = req.body;
 
-        const created_by = req.user ? (req.user.first_name + ' ' + req.user.last_name) : null;
+        const created_by = req.user
+            ? (req.user.first_name && req.user.last_name
+                ? `${req.user.first_name} ${req.user.last_name}`
+                : req.user.name || req.user.username || req.user.role || 'Super Admin')
+            : 'Super Admin';
 
         const recipient = await controller.updateRecipient(req.params.recipientId, {
             customer_name,

@@ -98,9 +98,12 @@ ModuleComponents['hr-salary'] = (container) => {
             </div>
 
             <div class="card" style="margin-top: 24px; padding: 0; overflow: visible;">
-                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">History of Salary Overview</h3>
-                    <button id="upload-payroll-btn" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Upload Payrolls (ADMIN ONLY)</button>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <input type="text" id="salary-history-search" placeholder="Search by name..." style="padding: 8px 12px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;" />
+                        <button id="upload-payroll-btn" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 13px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Upload Payrolls (ADMIN ONLY)</button>
+                    </div>
                 </div>
                 <div style="max-height: 60vh; overflow: auto;">
                     <table class="data-table" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 2000px;">
@@ -1466,6 +1469,7 @@ function initializeModule(contentArea) {
     let historyPayrolls = [];
     let historyCurrentPage = 1;
     const historyRowsPerPage = 10;
+    let historySearchQuery = '';
 
     function renderOverviewPagination() {
         const totalPages = Math.max(1, Math.ceil(overviewPayrolls.length / overviewRowsPerPage));
@@ -1554,10 +1558,20 @@ function initializeModule(contentArea) {
     }
 
     function renderHistoryPagination() {
-        const totalPages = Math.max(1, Math.ceil(historyPayrolls.length / historyRowsPerPage));
+        // Filter payrolls by search query (name or employee_id)
+        const query = (historySearchQuery || '').toLowerCase().trim();
+        const filteredPayrolls = query
+            ? historyPayrolls.filter(p => {
+                const fullName = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
+                const empId = (p.employee_id || '').toLowerCase();
+                return fullName.includes(query) || empId.includes(query);
+              })
+            : historyPayrolls;
+
+        const totalPages = Math.max(1, Math.ceil(filteredPayrolls.length / historyRowsPerPage));
         if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
         const start = (historyCurrentPage - 1) * historyRowsPerPage;
-        const pageData = historyPayrolls.slice(start, start + historyRowsPerPage);
+        const pageData = filteredPayrolls.slice(start, start + historyRowsPerPage);
         const tbody = document.getElementById('salary-history-tbody');
         if (!tbody) return;
         if (pageData.length === 0) {
@@ -3440,6 +3454,15 @@ function initializeModule(contentArea) {
 
     if (uploadPayrollBtn) {
         uploadPayrollBtn.addEventListener('click', openUploadPayrollModal);
+    }
+
+    const salaryHistorySearch = document.getElementById('salary-history-search');
+    if (salaryHistorySearch) {
+        salaryHistorySearch.addEventListener('input', (e) => {
+            historySearchQuery = e.target.value;
+            historyCurrentPage = 1;
+            renderHistoryPagination();
+        });
     }
 
     if (closeUploadPayrollModal) {
