@@ -163,6 +163,38 @@ class PettyCashController {
         return result.rows[0];
     }
 
+    _extractElectricBillIdFromItem(item) {
+        if (!item) return null;
+        const match = item.match(/^Electric Bill for (ElBiID-\d+)$/);
+        return match ? match[1] : null;
+    }
+
+    async addPettyCashTransactionOnly(client, transactionData) {
+        const { date, pettycashcategory, item, remarks, store, amount, status, replenish_amount, source, check_number } = transactionData;
+        const nextId = await this._getNextPettyCashIdClient(client);
+        const petty_cash_code = `PeCID-${nextId}`;
+        const query = `
+            INSERT INTO petty_cash 
+            (date, pettycashcategory, item, remarks, store, amount, status, petty_cash_code, replenish_amount, source, check_number) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *
+        `;
+        const result = await client.query(query, [
+            date,
+            pettycashcategory,
+            item,
+            remarks,
+            store,
+            amount,
+            status || 'Pending',
+            petty_cash_code,
+            replenish_amount || 0,
+            source || null,
+            check_number || null
+        ]);
+        return result.rows[0];
+    }
+
     async updatePettyCashTransaction(pettyCashCode, transactionData) {
         const { date, pettycashcategory, item, remarks, store, amount, status } = transactionData;
 
@@ -191,11 +223,20 @@ class PettyCashController {
         const result = await this.db.query(query, values);
         const updated = result.rows[0];
 
+        const electricBillId = this._extractElectricBillIdFromItem(updated.item);
+        const isElectricBillPayment = electricBillId !== null;
+
         if (updated && status === 'Rejected') {
             try {
-                const existingExpenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
-                if (existingExpenses.length > 0) {
-                    const expense = existingExpenses[0];
+                let expense = null;
+                if (isElectricBillPayment) {
+                    const expenses = await this.expenseController.getExpenseByTrackingId(electricBillId);
+                    if (expenses.length > 0) expense = expenses[0];
+                } else {
+                    const expenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
+                    if (expenses.length > 0) expense = expenses[0];
+                }
+                if (expense) {
                     await this.expenseController.updateExpense(expense.id, {
                         remarks: `Rejected by system`,
                         total_amount: 0,
@@ -211,9 +252,15 @@ class PettyCashController {
 
         if (updated && status === 'Approved') {
             try {
-                const existingExpenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
-                if (existingExpenses.length > 0) {
-                    const expense = existingExpenses[0];
+                let expense = null;
+                if (isElectricBillPayment) {
+                    const expenses = await this.expenseController.getExpenseByTrackingId(electricBillId);
+                    if (expenses.length > 0) expense = expenses[0];
+                } else {
+                    const expenses = await this.expenseController.getExpenseByTrackingId(pettyCashCode);
+                    if (expenses.length > 0) expense = expenses[0];
+                }
+                if (expense) {
                     const expenseStatus = updated.pettycashcategory === 'Replenishment' ? 'Cleared' : 'Cleared on Petty Cash';
                     await this.expenseController.updateExpense(expense.id, {
                         status: expenseStatus

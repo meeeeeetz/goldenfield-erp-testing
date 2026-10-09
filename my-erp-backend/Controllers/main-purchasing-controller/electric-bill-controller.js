@@ -12,6 +12,7 @@ class ElectricBillController {
             SELECT eb.*, 
                    CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
                    ba.bank,
+                   ba.bank_code,
                    ba.bank_account_number
             FROM electric_bills eb
             LEFT JOIN users u ON eb.created_by = u.id
@@ -83,6 +84,12 @@ class ElectricBillController {
             const description = `Electric Bill from ${billing_start} to ${billing_end}`;
             const remarks = `Total KWH used ${kwh || 0} at ${rate_per_kwh || 0}`;
             
+            let accountSource = payment_source || null;
+            if (payment_source && !payment_source.startsWith('petty-cash')) {
+                const bankResult = await this.db.query('SELECT bank_code FROM bank_accounts WHERE bank_account_id = $1', [payment_source]);
+                accountSource = bankResult.rows[0]?.bank_code || payment_source;
+            }
+            
             await expenseController.addExpense({
                 expense_list_id: nextExpenseId,
                 tracking_id: electric_bill_id,
@@ -92,7 +99,7 @@ class ElectricBillController {
                 description: description,
                 remarks: remarks,
                 total_amount: amount,
-                account_source: payment_source || null,
+                account_source: accountSource,
                 cleared_date: payment_date || null,
                 status: 'Pending'
             });
@@ -106,70 +113,165 @@ class ElectricBillController {
     async updateElectricBill(electricBillId, billData) {
         const { date, billing_start, billing_end, demand, kwh, rate_per_kwh, amount, status, payment_date, payment_source, check_number, file_path } = billData;
 
-        const updates = [];
-        const values = [];
-        let counter = 1;
+        const currentBill = await this.db.query('SELECT payment_date, payment_source, billing_start, billing_end, amount FROM electric_bills WHERE electric_bill_id = $1', [electricBillId]);
+        if (currentBill.rows.length === 0) {
+            throw new Error('Electric bill not found');
+        }
+        const existing = currentBill.rows[0];
 
-        if (date !== undefined) { updates.push(`date = $${counter++}`); values.push(date); }
-        if (billing_start !== undefined) { updates.push(`billing_start = $${counter++}`); values.push(billing_start); }
-        if (billing_end !== undefined) { updates.push(`billing_end = $${counter++}`); values.push(billing_end); }
-        if (demand !== undefined) { updates.push(`demand = $${counter++}`); values.push(demand || null); }
-        if (kwh !== undefined) { updates.push(`kwh = $${counter++}`); values.push(kwh || null); }
-        if (rate_per_kwh !== undefined) { updates.push(`rate_per_kwh = $${counter++}`); values.push(rate_per_kwh || null); }
-        if (amount !== undefined) { updates.push(`amount = $${counter++}`); values.push(amount); }
-        if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
-        if (payment_date !== undefined) { updates.push(`payment_date = $${counter++}`); values.push(payment_date || null); }
-        if (payment_source !== undefined) { updates.push(`payment_source = $${counter++}`); values.push(payment_source || null); }
-        if (check_number !== undefined) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }
-        if (file_path !== undefined) { updates.push(`file_path = $${counter++}`); values.push(file_path || null); }
+        if (existing.payment_date && existing.payment_source) {
+            throw new Error('This bill has already been paid');
+        }
 
-        updates.push(`updated_at = CURRENT_TIMESTAMP`);
-        values.push(electricBillId);
+        const finalPaymentSource = payment_source !== undefined ? payment_source : existing.payment_source;
+        const finalPaymentDate = payment_date !== undefined ? payment_date : existing.payment_date;
+        const finalAmount = amount !== undefined ? amount : existing.amount;
+        const finalBillingStart = billing_start !== undefined ? billing_start : existing.billing_start;
+        const finalBillingEnd = billing_end !== undefined ? billing_end : existing.billing_end;
 
-        const oldPathRow = await this.db.query('SELECT file_path FROM electric_bills WHERE electric_bill_id = $1', [electricBillId]);
-        const oldPath = oldPathRow.rows[0]?.file_path;
+        const isPettyCashPayment = finalPaymentSource === 'petty-cash';
 
-        const query = `
-            UPDATE electric_bills 
-            SET ${updates.join(', ')}
-            WHERE electric_bill_id = $${counter}
-            RETURNING *
-        `;
-        
-        const result = await this.db.query(query, values);
-
-        const updatedBill = result.rows[0];
-
-        if (updatedBill && file_path === null && oldPath) {
-            try {
-                await deleteFile(oldPath);
-            } catch (e) {
-                console.error('Failed to delete old electric bill file:', e.message);
+        if (isPettyCashPayment && finalPaymentDate && finalAmount) {
+            const balanceResult = await this.db.query(`
+                SELECT COALESCE(SUM(replenish_amount), 0) - COALESCE(SUM(amount), 0) as available
+                FROM petty_cash
+                WHERE status != 'Rejected'
+            `);
+            const available = Number(balanceResult.rows[0]?.available || 0);
+            if (available < Number(finalAmount)) {
+                throw new Error(`Insufficient petty cash balance. Available: ₱${available.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
             }
         }
 
-        if (updatedBill) {
-            const expenseResult = await this.db.query('SELECT id FROM expenses WHERE tracking_id = $1', [electricBillId]);
-            if (expenseResult.rows.length > 0) {
-                const expenseId = expenseResult.rows[0].id;
-                const expenseStatus = (payment_date && payment_source) ? 'Cleared' : (payment_date || payment_source ? 'Pending' : 'Pending');
+        const client = await this.db.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query("SELECT pg_advisory_xact_lock(2001)");
 
-                await this.db.query(
-                    `UPDATE expenses 
-                    SET account_source = $1, cleared_date = $2, status = $3, total_amount = $4, updated_at = CURRENT_TIMESTAMP 
-                    WHERE id = $5`,
-                    [
-                        payment_source || null,
-                        payment_date || null,
-                        expenseStatus,
-                        amount || null,
-                        expenseId
-                    ]
-                );
+            let pettyCashCode = null;
+
+            if (isPettyCashPayment && finalPaymentDate && finalAmount) {
+                const PettyCashController = require('../main-operations-controller/petty-cash-controller');
+                const pettyCashController = new PettyCashController(client);
+
+                const nextIdResult = await client.query("SELECT MAX(CAST(SUBSTRING(petty_cash_code FROM '\\d+') AS INTEGER)) as max_num FROM petty_cash");
+                const nextId = (nextIdResult.rows[0]?.max_num || 0) + 1;
+                pettyCashCode = `PeCID-${nextId}`;
+
+                const pcQuery = `
+                    INSERT INTO petty_cash 
+                    (date, pettycashcategory, item, remarks, store, amount, status, petty_cash_code, replenish_amount, source, check_number) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    RETURNING *
+                `;
+                await client.query(pcQuery, [
+                    finalPaymentDate,
+                    'Direct Utilities & Energy',
+                    `Electric Bill for ${electricBillId}`,
+                    `${finalBillingStart} to ${finalBillingEnd}`,
+                    'Tarlac II Electric Cooperative Inc.',
+                    finalAmount,
+                    'Pending',
+                    pettyCashCode,
+                    0,
+                    null,
+                    'Not applicable'
+                ]);
             }
-        }
 
-        return updatedBill;
+            const updates = [];
+            const values = [];
+            let counter = 1;
+
+            if (date !== undefined) { updates.push(`date = $${counter++}`); values.push(date); }
+            if (billing_start !== undefined) { updates.push(`billing_start = $${counter++}`); values.push(billing_start); }
+            if (billing_end !== undefined) { updates.push(`billing_end = $${counter++}`); values.push(billing_end); }
+            if (demand !== undefined) { updates.push(`demand = $${counter++}`); values.push(demand || null); }
+            if (kwh !== undefined) { updates.push(`kwh = $${counter++}`); values.push(kwh || null); }
+            if (rate_per_kwh !== undefined) { updates.push(`rate_per_kwh = $${counter++}`); values.push(rate_per_kwh || null); }
+            if (amount !== undefined) { updates.push(`amount = $${counter++}`); values.push(amount); }
+            if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
+            if (payment_date !== undefined) { updates.push(`payment_date = $${counter++}`); values.push(payment_date || null); }
+            if (payment_source !== undefined) { updates.push(`payment_source = $${counter++}`); values.push(payment_source || null); }
+            if (check_number !== undefined) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }
+            if (file_path !== undefined) { updates.push(`file_path = $${counter++}`); values.push(file_path || null); }
+
+            if (isPettyCashPayment) {
+                updates.push(`check_number = $${counter++}`); values.push('Not applicable');
+                updates.push(`status = $${counter++}`); values.push('Paid');
+            }
+
+            updates.push(`updated_at = CURRENT_TIMESTAMP`);
+            values.push(electricBillId);
+
+            const query = `
+                UPDATE electric_bills 
+                SET ${updates.join(', ')}
+                WHERE electric_bill_id = $${counter}
+                RETURNING *
+            `;
+            
+            const result = await client.query(query, values);
+            const updatedBill = result.rows[0];
+
+            if (updatedBill) {
+                const expenseResult = await client.query('SELECT id FROM expenses WHERE tracking_id = $1', [electricBillId]);
+                if (expenseResult.rows.length > 0) {
+                    const expenseId = expenseResult.rows[0].id;
+                    let expenseStatus;
+                    let accountSource;
+
+                    if (isPettyCashPayment) {
+                        expenseStatus = 'Cleared on Petty Cash';
+                        accountSource = null;
+                    } else {
+                        expenseStatus = (finalPaymentDate && finalPaymentSource) ? 'Cleared' : (finalPaymentDate || finalPaymentSource ? 'Pending' : 'Pending');
+                        if (finalPaymentSource && !finalPaymentSource.startsWith('petty-cash')) {
+                            const bankResult = await client.query('SELECT bank_code FROM bank_accounts WHERE bank_account_id = $1', [finalPaymentSource]);
+                            accountSource = bankResult.rows[0]?.bank_code || finalPaymentSource;
+                        } else {
+                            accountSource = finalPaymentSource || null;
+                        }
+                    }
+
+                    await client.query(
+                        `UPDATE expenses 
+                        SET account_source = $1, cleared_date = $2, status = $3, total_amount = $4, updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = $5`,
+                        [
+                            accountSource,
+                            finalPaymentDate || null,
+                            expenseStatus,
+                            finalAmount || null,
+                            expenseId
+                        ]
+                    );
+                } else {
+                    console.warn(`No expense found for electric bill ${electricBillId}`);
+                }
+            }
+
+            await client.query('COMMIT');
+
+            if (updatedBill && file_path === null && existing.file_path) {
+                try {
+                    await deleteFile(existing.file_path);
+                } catch (e) {
+                    console.error('Failed to delete old electric bill file:', e.message);
+                }
+            }
+
+            if (pettyCashCode) {
+                updatedBill.petty_cash_code = pettyCashCode;
+            }
+
+            return updatedBill;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 
     async deleteElectricBill(id) {

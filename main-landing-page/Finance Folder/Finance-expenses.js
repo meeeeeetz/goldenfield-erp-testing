@@ -10,6 +10,16 @@ var expenseListRowsPerPage = 10;
 var expenseListSortColumn = null;
 var expenseListSortDirection = 'asc';
 
+function maskAccountNumber(accountNumber) {
+    if (!accountNumber) return '';
+    const str = String(accountNumber);
+    if (str.length <= 5) return str;
+    const first3 = str.slice(0, 3);
+    const last2 = str.slice(-2);
+    const middle = '*'.repeat(str.length - 5);
+    return first3 + middle + last2;
+}
+
 ModuleComponents['finance-expenses'] = (container) => {
     container.innerHTML = `
         <div class="header-actions">
@@ -658,7 +668,7 @@ function filterExpenses() {
                 <td>${exp.description || '-'}</td>
                 <td>${exp.remarks || '-'}</td>
                 <td>${Number(exp.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td>${exp.account_source || '-'}</td>
+                <td>${exp.bank_code || (exp.account_source || '-')}</td>
                 <td>${formatDateLocal(exp.cleared_date)}</td>
                 <td>${exp.status || '-'}</td>
                 <td style="text-align: center; color: #e74c3c; font-weight: bold; cursor: pointer; font-size: 20px; padding: 8px;"><span class="delete-expense-btn" data-expense-id="${exp.id}" style="cursor: pointer;">&times;</span></td>

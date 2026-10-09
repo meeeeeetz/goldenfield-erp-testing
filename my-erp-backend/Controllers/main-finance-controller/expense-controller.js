@@ -6,25 +6,45 @@ class ExpenseController {
     }
 
     async getAllExpenses() {
-        const query = 'SELECT * FROM expenses ORDER BY date DESC, created_at DESC';
+        const query = `
+            SELECT e.*, ba.bank_code, ba.bank_account_number, ba.bank
+            FROM expenses e
+            LEFT JOIN bank_accounts ba ON e.account_source = ba.bank_code
+            ORDER BY e.date DESC, e.created_at DESC
+        `;
         const result = await this.db.query(query);
         return result.rows;
     }
 
     async getExpenseById(id) {
-        const query = 'SELECT * FROM expenses WHERE id = $1';
+        const query = `
+            SELECT e.*, ba.bank_code, ba.bank_account_number, ba.bank
+            FROM expenses e
+            LEFT JOIN bank_accounts ba ON e.account_source = ba.bank_code
+            WHERE e.id = $1
+        `;
         const result = await this.db.query(query, [id]);
         return result.rows[0];
     }
 
     async getExpenseByCode(expenseListId) {
-        const query = 'SELECT * FROM expenses WHERE expense_list_id = $1';
+        const query = `
+            SELECT e.*, ba.bank_code, ba.bank_account_number, ba.bank
+            FROM expenses e
+            LEFT JOIN bank_accounts ba ON e.account_source = ba.bank_code
+            WHERE e.expense_list_id = $1
+        `;
         const result = await this.db.query(query, [expenseListId]);
         return result.rows[0];
     }
 
     async getExpenseByTrackingId(trackingId) {
-        const query = 'SELECT * FROM expenses WHERE tracking_id = $1';
+        const query = `
+            SELECT e.*, ba.bank_code, ba.bank_account_number, ba.bank
+            FROM expenses e
+            LEFT JOIN bank_accounts ba ON e.account_source = ba.bank_code
+            WHERE e.tracking_id = $1
+        `;
         const result = await this.db.query(query, [trackingId]);
         return result.rows;
     }

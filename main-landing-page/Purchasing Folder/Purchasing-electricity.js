@@ -414,6 +414,26 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                 } catch (err) {
                     console.error('Failed to load bank accounts', err);
                 }
+
+                sourceSelect.onchange = () => {
+                    if (sourceSelect.value === 'petty-cash') {
+                        checkInput.value = 'Not applicable';
+                        checkInput.disabled = true;
+                        checkInput.style.backgroundColor = '#f5f5f5';
+                    } else {
+                        checkInput.disabled = false;
+                        checkInput.style.backgroundColor = '';
+                        if (checkInput.value === 'Not applicable') {
+                            checkInput.value = '';
+                        }
+                    }
+                };
+
+                if (sourceSelect.value === 'petty-cash') {
+                    checkInput.value = 'Not applicable';
+                    checkInput.disabled = true;
+                    checkInput.style.backgroundColor = '#f5f5f5';
+                }
             }
 
             modal.classList.remove('hidden');
@@ -463,25 +483,13 @@ ModuleComponents['purchasing-electricity'] = (container) => {
                     throw new Error(errData.error || 'Failed to save payment');
                 }
 
-                const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(currentPaymentBillId)}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                    },
-                    body: JSON.stringify({
-                        account_source: paymentSource,
-                        cleared_date: paymentDate,
-                        status: 'Paid'
-                    })
-                });
-
-                if (!expenseRes.ok) {
-                    const expenseErr = await expenseRes.json().catch(() => ({}));
-                    console.error('Failed to update expense:', expenseErr);
+                const data = await res.json();
+                
+                let message = 'Payment saved successfully';
+                if (data.petty_cash_code) {
+                    message += `\nPetty Cash Transaction Created: ${data.petty_cash_code}`;
                 }
-
-                alert('Payment saved successfully');
+                alert(message);
                 document.getElementById('payment-modal').classList.add('hidden');
                 loadElectricBillsTable();
             } catch (err) {
@@ -792,7 +800,7 @@ function renderElectricBillsTable() {
                 </button>
             </td>
             <td>${formatDate(bill.payment_date)}</td>
-            <td>${bill.bank ? bill.bank + ' - ' + maskAccountNumber(bill.bank_account_number) : (bill.payment_source || '-')}</td>
+            <td>${bill.bank_code ? bill.bank_code + ' - ' + maskAccountNumber(bill.bank_account_number) : (bill.payment_source || '-')}</td>
             <td>${bill.check_number || '-'}</td>
         </tr>
     `).join('');
