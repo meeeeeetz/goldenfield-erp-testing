@@ -57,70 +57,66 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         </div>
                     </div>
 </div>
-<div class="card petty-transactions-card" style="padding: 0; overflow: visible;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">Pending Petty Cash Transactions</h3>
+<div class="card petty-transactions-card">
+                    <div class="card-header-row">
+                        <h3>Pending Petty Cash Transactions</h3>
                         <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
                             <input type="text" id="pending-petty-search" placeholder="Search name or date..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;">
                             <button id="approve-filtered-petty-btn" class="btn-primary" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer; background: #28a745; border-color: #28a745; color: white;">Approve Filtered</button>
                             <button id="reject-filtered-petty-btn" class="btn-danger" type="button" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">Reject Filtered</button>
                         </div>
                     </div>
-                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
-                        <thead>
-                            <tr style="background: #FFD000;">
-                                <th style="width: 140px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Transaction ID</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Date</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Category</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Item</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Remarks</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Store</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Source</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Check No.</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Replenish Amount</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Amount</th>
-                                <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Status</th>
-                                <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Action</th>
-                            </tr>
-                        </thead>
-                    </table>
-                    <div style="overflow-x: auto; overflow-y: auto; max-height: 50vh; position: relative;">
+                    <div style="overflow-x: auto; overflow-y: auto; max-height: 50vh;">
                         <div id="pending-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
                             <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
                             <div style="font-size: 14px; font-weight: 600; color: #1a1f2e;">Processing...</div>
                             <div id="pending-loading-count" style="font-size: 12px; color: #64748b;"></div>
                         </div>
-                        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
+                        <table class="data-table petty-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1300px; table-layout: fixed;">
+                            <thead>
+                                <tr style="background: #FFD000;">
+                                    <th style="width: 140px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Transaction ID</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Date</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Category</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Item</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Remarks</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Store</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Source</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Check No.</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Replenish Amount</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Amount</th>
+                                    <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Status</th>
+                                    <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Action</th>
+                                </tr>
+                            </thead>
                             <tbody id="pending-petty-tbody">
                                 <tr><td colspan='12' style='text-align: center; padding: 20px; color: #999;'>Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-<div class="card petty-transactions-card" style="padding: 0; overflow: visible;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1a1f2e;">Petty Cash Transactions</h3>
-                        <input type="text" id="petty-search" placeholder="Search transactions..." style="padding: 6px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px; width: 220px; box-sizing: border-box;" />
+<div class="card petty-transactions-card">
+                    <div class="card-header-row">
+                        <h3>Petty Cash Transactions</h3>
+                        <input type="text" id="petty-search" placeholder="Search transactions..." class="petty-search-input" />
                     </div>
-                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
-                        <thead>
-                            <tr style="background: #FFD000;">
-                                <th style="width: 140px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Transaction ID</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Date</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Category</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Item</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Remarks</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Store</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Source</th>
-                                <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Check No.</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Replenish Amount</th>
-                                <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Amount</th>
-                                <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600;">Status</th>
-                            </tr>
-                        </thead>
-                    </table>
-                    <div style="overflow-x: auto; overflow-y: auto; max-height: 50vh; position: relative;">
-                        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; margin: 0;">
+                    <div style="overflow-x: auto; overflow-y: auto; max-height: 50vh;">
+                        <table class="data-table petty-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1200px; table-layout: fixed;">
+                            <thead>
+                                <tr style="background: #FFD000;">
+                                    <th style="width: 140px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Transaction ID</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Date</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Category</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Item</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Remarks</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Store</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Source</th>
+                                    <th style="width: 120px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Check No.</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Replenish Amount</th>
+                                    <th style="width: 150px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Amount</th>
+                                    <th style="width: 100px; padding: 6px 10px; font-size: 13px; font-weight: 600; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
                             <tbody id="petty-tbody">
                                 <tr><td colspan='11' style='text-align: center; padding: 20px; color: #999;'>Loading...</td></tr>
                             </tbody>

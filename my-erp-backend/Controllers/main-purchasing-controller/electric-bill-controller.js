@@ -193,7 +193,7 @@ class ElectricBillController {
             if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
             if (payment_date !== undefined) { updates.push(`payment_date = $${counter++}`); values.push(payment_date || null); }
             if (payment_source !== undefined) { updates.push(`payment_source = $${counter++}`); values.push(payment_source || null); }
-            if (check_number !== undefined) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }
+            if (check_number !== undefined && !isPettyCashPayment) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }
             if (file_path !== undefined) { updates.push(`file_path = $${counter++}`); values.push(file_path || null); }
 
             if (isPettyCashPayment) {

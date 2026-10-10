@@ -1418,6 +1418,14 @@ body {
 .petty-transactions-card .data-table td {
     padding: 6px 10px;
     font-size: 13px;
+    text-align: center;
+}
+
+.petty-transactions-card .petty-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #FFD000;
 }
 
 .petty-transactions-card .card-header-row {
