@@ -80,8 +80,17 @@ class ElectricBillController {
         try {
             const expenseController = new ExpenseController(pool);
             const nextExpenseId = await expenseController.getNextExpenseId();
-            
-            const description = `Electric Bill from ${billing_start} to ${billing_end}`;
+
+            const formatDate = (d) => {
+                if (!d) return '';
+                const date = d instanceof Date ? d : new Date(d);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const description = `Electric Bill from ${formatDate(billing_start)} to ${formatDate(billing_end)}`;
             const remarks = `Total KWH used ${kwh || 0} at ${rate_per_kwh || 0}`;
             
             let accountSource = payment_source || null;
@@ -190,7 +199,7 @@ class ElectricBillController {
             if (kwh !== undefined) { updates.push(`kwh = $${counter++}`); values.push(kwh || null); }
             if (rate_per_kwh !== undefined) { updates.push(`rate_per_kwh = $${counter++}`); values.push(rate_per_kwh || null); }
             if (amount !== undefined) { updates.push(`amount = $${counter++}`); values.push(amount); }
-            if (status !== undefined) { updates.push(`status = $${counter++}`); values.push(status); }
+            if (status !== undefined && !isPettyCashPayment) { updates.push(`status = $${counter++}`); values.push(status); }
             if (payment_date !== undefined) { updates.push(`payment_date = $${counter++}`); values.push(payment_date || null); }
             if (payment_source !== undefined) { updates.push(`payment_source = $${counter++}`); values.push(payment_source || null); }
             if (check_number !== undefined && !isPettyCashPayment) { updates.push(`check_number = $${counter++}`); values.push(check_number || null); }

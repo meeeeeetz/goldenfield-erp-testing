@@ -283,6 +283,39 @@ class SalaryComputationController {
             totals.set(department, existing);
         }
 
+        const paidPayrollQuery = `
+            SELECT ep.employee_id,
+                   COALESCE(NULLIF(ec.department, ''), NULLIF(ep.department, ''), 'Unassigned') AS department,
+                   p.net_pay
+            FROM payroll p
+            JOIN employee_profile ep ON ep.employee_id = p.employee_id
+            LEFT JOIN LATERAL (
+                SELECT department
+                FROM employee_compensation
+                WHERE employee_id = ep.employee_id
+                ORDER BY created_at DESC
+                LIMIT 1
+            ) ec ON true
+            WHERE p.status = 'Paid'
+              AND p.date_start >= $1
+              AND p.date_end <= $2
+              AND ep.employment_status = 'Active'
+        `;
+
+        const paidResult = await this.db.query(paidPayrollQuery, [dateFrom, dateTo]);
+        const paidPayrolls = paidResult.rows || [];
+
+        for (const payroll of paidPayrolls) {
+            const netPay = Number(payroll.net_pay) || 0;
+            if (netPay <= 0) continue;
+
+            const department = payroll.department || 'Unassigned';
+            const existing = totals.get(department) || { department, gross_pay: 0, employee_count: 0 };
+            existing.gross_pay += netPay;
+            existing.employee_count += 1;
+            totals.set(department, existing);
+        }
+
         const departments = [...totals.values()]
             .map(row => ({
                 department: row.department,

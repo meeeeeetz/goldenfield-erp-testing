@@ -191,6 +191,21 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                     <div id="bulk-preview-table" style="overflow-x: auto;"></div>
                                 </div>
                             </div>
+                            <div id="bulk-summary-cards" style="display: none; gap: 16px;">
+                                <div id="bulk-amount-card" style="flex: 1; border: 2px solid #2563eb; border-radius: 8px; padding: 14px 16px; background: #eff6ff;">
+                                    <div style="font-weight: 600; color: #1e40af; font-size: 14px; margin-bottom: 4px;">Amount - Sum All</div>
+                                    <div id="bulk-amount-sum" style="font-size: 22px; font-weight: 700; color: #2563eb;">₱0.00</div>
+                                </div>
+                                <div id="bulk-replenish-card" style="flex: 1; border: 2px solid #8b5cf6; border-radius: 8px; padding: 14px 16px; background: #f5f3ff;">
+                                    <div style="font-weight: 600; color: #6d28d9; font-size: 14px; margin-bottom: 4px;">Replenish Amount - Sum All</div>
+                                    <div id="bulk-replenish-sum" style="font-size: 22px; font-weight: 700; color: #7c3aed;">₱0.00</div>
+                                </div>
+                                <div id="bulk-balance-card" style="flex: 1; border: 2px solid #16a34a; border-radius: 8px; padding: 14px 16px; background: #f0fdf4;">
+                                    <div style="font-weight: 600; color: #15803d; font-size: 14px; margin-bottom: 4px;">New Petty Cash Balance</div>
+                                    <div id="bulk-balance-value" style="font-size: 22px; font-weight: 700; color: #22c55e;">₱0.00</div>
+                                    <div id="bulk-balance-formula" style="font-size: 11px; color: #4ade80; margin-top: 4px;"></div>
+                                </div>
+                            </div>
                             <div id="bulk-validation-results" style="display: none; flex: 1; gap: 16px;">
                                 <div id="bulk-success-box" style="flex: 1; border: 2px solid #22c55e; border-radius: 8px; padding: 14px 16px; background: #f0fdf4; display: none;">
                                     <div style="font-weight: 600; color: #15803d; font-size: 14px; margin-bottom: 4px;">Successful Rows</div>
@@ -515,7 +530,9 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                 })
                             });
 
-                            if (!expenseRes.ok) {
+                            if (expenseRes.status === 404) {
+                                alert("Transaction " + pettyId + " approved successfully");
+                            } else if (!expenseRes.ok) {
                                 const expenseError = await expenseRes.json().catch(() => ({}));
                                 console.error('Update expense error:', expenseError);
                                 alert('Transaction approved, but failed to update expense record: ' + (expenseError.error || 'Unknown error'));
@@ -534,7 +551,9 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                 })
                             });
 
-                            if (!expenseRes.ok) {
+                            if (expenseRes.status === 404) {
+                                alert("Transaction " + pettyId + " approved successfully");
+                            } else if (!expenseRes.ok) {
                                 const expenseError = await expenseRes.json().catch(() => ({}));
                                 console.error('Update expense error:', expenseError);
                                 alert('Transaction approved, but failed to update expense record: ' + (expenseError.error || 'Unknown error'));
@@ -640,7 +659,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                 successCount++;
                                 const category = (txn.pettycashcategory || '').toLowerCase();
                                 if (category === 'replenishment') {
-                                    await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
+                                    const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
                                         method: "PUT",
                                         headers: {
                                             "Content-Type": "application/json",
@@ -650,8 +669,13 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                             status: "Cleared"
                                         })
                                     });
+                                    if (expenseRes.status === 404) {
+                                        // No expense tracked by this petty cash code; backend already updated it.
+                                    } else if (!expenseRes.ok) {
+                                        console.error('Update expense error for', code);
+                                    }
                                 } else {
-                                    await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
+                                    const expenseRes = await fetch(`/api/expenses/by-tracking-id/${encodeURIComponent(code)}`, {
                                         method: "PUT",
                                         headers: {
                                             "Content-Type": "application/json",
@@ -661,6 +685,11 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                                             status: "Cleared on Petty Cash"
                                         })
                                     });
+                                    if (expenseRes.status === 404) {
+                                        // No expense tracked by this petty cash code; backend already updated it.
+                                    } else if (!expenseRes.ok) {
+                                        console.error('Update expense error for', code);
+                                    }
                                 }
                             }
                         } catch (err) {
@@ -817,6 +846,12 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             if (rejectedDetails) rejectedDetails.textContent = '';
             const loadingOverlay = document.getElementById('bulk-loading-overlay');
             if (loadingOverlay) loadingOverlay.style.display = 'none';
+            const summaryCards = document.getElementById('bulk-summary-cards');
+            if (summaryCards) summaryCards.style.display = 'none';
+            const previewContainer = document.getElementById('bulk-preview');
+            const previewTable = document.getElementById('bulk-preview-table');
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (previewTable) previewTable.innerHTML = '';
         };
         const bulkDropZone = document.getElementById('bulk-drop-zone');
         const bulkFileInput = document.getElementById('bulk-file-input');
@@ -826,6 +861,18 @@ ModuleComponents['operations-petty-cash'] = (container) => {
         const saveBulkBtn = document.getElementById('save-bulk-btn');
 
         document.getElementById('bulk-upload-petty-btn').onclick = () => {
+            const previewContainer = document.getElementById('bulk-preview');
+            const previewTable = document.getElementById('bulk-preview-table');
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (previewTable) previewTable.innerHTML = '';
+            const validationResults = document.getElementById('bulk-validation-results');
+            if (validationResults) validationResults.style.display = 'none';
+            const successBox = document.getElementById('bulk-success-box');
+            if (successBox) successBox.style.display = 'none';
+            const rejectedBox = document.getElementById('bulk-rejected-box');
+            if (rejectedBox) rejectedBox.style.display = 'none';
+            const summaryCards = document.getElementById('bulk-summary-cards');
+            if (summaryCards) summaryCards.style.display = 'none';
             bulkModal.classList.remove('hidden');
         };
         document.getElementById('close-bulk-upload-btn').onclick = closeBulkModal;
@@ -876,27 +923,69 @@ ModuleComponents['operations-petty-cash'] = (container) => {
             if (successBox) successBox.style.display = 'none';
             const rejectedBox = document.getElementById('bulk-rejected-box');
             if (rejectedBox) rejectedBox.style.display = 'none';
+            const summaryCards = document.getElementById('bulk-summary-cards');
+            if (summaryCards) summaryCards.style.display = 'none';
 
             const previewContainer = document.getElementById('bulk-preview');
             const previewTable = document.getElementById('bulk-preview-table');
             if (!previewContainer || !previewTable || !file) return;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
+const reader = new FileReader();
+            reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
 
-                    if (!jsonData.length) {
+if (!jsonData.length) {
                         previewTable.innerHTML = '<div style="padding: 20px; color: #999;">No data found in file</div>';
                         previewContainer.style.display = 'block';
+                        const summaryCards = document.getElementById('bulk-summary-cards');
+                        if (summaryCards) summaryCards.style.display = 'none';
                         return;
                     }
 
-                    const headers = jsonData[0];
+const headers = jsonData[0];
                     const rows = jsonData.slice(1);
+
+                    const amountIdx = headers.findIndex(h => String(h).toLowerCase().includes('amount'));
+                    const replenishIdx = headers.findIndex(h => String(h).toLowerCase().includes('replenish'));
+
+                    let totalAmount = 0;
+                    let totalReplenish = 0;
+                    rows.forEach(row => {
+                        const amt = parseFloat(String(row[amountIdx >= 0 ? amountIdx : -1] || 0).replace(/,/g, '')) || 0;
+                        totalAmount += amt;
+                        if (replenishIdx >= 0) {
+                            const rep = parseFloat(String(row[replenishIdx] || 0).replace(/,/g, '')) || 0;
+                            totalReplenish += rep;
+                        }
+                    });
+
+                    const summaryCards = document.getElementById('bulk-summary-cards');
+                    const amountSumEl = document.getElementById('bulk-amount-sum');
+                    const replenishSumEl = document.getElementById('bulk-replenish-sum');
+                    const balanceValueEl = document.getElementById('bulk-balance-value');
+                    const balanceFormulaEl = document.getElementById('bulk-balance-formula');
+                    if (summaryCards) summaryCards.style.display = 'flex';
+                    if (amountSumEl) amountSumEl.textContent = '₱' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (replenishSumEl) replenishSumEl.textContent = '₱' + totalReplenish.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    // Fetch current available petty cash and compute new balance
+                    let available = 0;
+                    try {
+                        const statsRes = await fetch('/api/petty-cash/stats');
+                        if (statsRes.ok) {
+                            const statsData = await statsRes.json();
+                            available = parseFloat(statsData.available || 0) || 0;
+                        }
+                    } catch (statsErr) {
+                        console.warn('Could not load petty cash stats for balance calc:', statsErr);
+                    }
+                    const newBalance = available - totalAmount + totalReplenish;
+                    if (balanceValueEl) balanceValueEl.textContent = '₱' + newBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (balanceFormulaEl) balanceFormulaEl.textContent = '₱' + available.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' - ₱' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' + ₱' + totalReplenish.toLocaleString('en-US', { minimumFractionDigits: 2 });
 
                     let html = '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
                     html += '<thead><tr>';
@@ -920,10 +1009,12 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                     html += '</tbody></table>';
                     previewTable.innerHTML = html;
                     previewContainer.style.display = 'block';
-                } catch (err) {
+} catch (err) {
                     console.error('Failed to parse file:', err);
                     previewTable.innerHTML = '<div style="padding: 20px; color: #dc2626;">Failed to parse file. Please ensure it is a valid Excel/CSV file.</div>';
                     previewContainer.style.display = 'block';
+                    const summaryCards = document.getElementById('bulk-summary-cards');
+                    if (summaryCards) summaryCards.style.display = 'none';
                 }
             };
 
@@ -970,6 +1061,21 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         return;
                     }
 
+                    // Fetch active bank codes for source validation
+                    let activeBankCodes = [];
+                    try {
+                        const bankRes = await fetch('/api/bank-accounts');
+                        if (bankRes.ok) {
+                            const bankAccounts = await bankRes.json();
+                            activeBankCodes = bankAccounts
+                                .filter(acc => acc.status === 'Active')
+                                .map(acc => String(acc.bank_code || '').trim())
+                                .filter(Boolean);
+                        }
+                    } catch (bankErr) {
+                        console.warn('Could not load bank accounts for validation:', bankErr);
+                    }
+
                     const validRows = [];
                     const invalidRows = [];
                     let skippedBlankRows = 0;
@@ -1007,6 +1113,10 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                         if (isReplenishment) {
                             if (!date) { isValid = false; reasons.push('missing date'); }
                             if (!source) { isValid = false; reasons.push('missing source'); }
+                            if (source && activeBankCodes.length && !activeBankCodes.includes(String(source).trim())) {
+                                isValid = false;
+                                reasons.push('invalid bank code (not an active bank account)');
+                            }
                             if (!parsedReplenishAmount) { isValid = false; reasons.push('missing replenish amount'); }
                         } else {
                             if (!date) { isValid = false; reasons.push('missing date'); }
@@ -1170,7 +1280,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 if (Array.isArray(bankAccounts)) {
                     const activeAccounts = bankAccounts.filter(acc => acc.status === 'Active');
                     activeAccounts.forEach(acc => {
-                        const sourceFormat = `${acc.bank_code}-${acc.bank_account_number}`;
+                        const sourceFormat = `${acc.bank_code}`;
                         bankData.push([
                             acc.bank || '',
                             acc.bank_code || '',
@@ -1249,7 +1359,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 if (!res.ok) throw new Error('Failed to load bank accounts');
                 const accounts = await res.json();
                 const activeAccounts = accounts.filter(acc => acc.status === 'Active');
-                sourceSelect.innerHTML = '<option value="">Select bank account</option>' + activeAccounts.map(acc => `<option value="${acc.bank_code}-${acc.bank_account_number}">${acc.bank_code} - ${acc.bank_account_number}</option>`).join('');
+                sourceSelect.innerHTML = '<option value="">Select bank account</option>' + activeAccounts.map(acc => `<option value="${acc.bank_code}">${acc.bank_code}</option>`).join('');
             } catch (err) {
                 console.error('Failed to load bank accounts:', err);
                 sourceSelect.innerHTML = '<option value="">Failed to load bank accounts</option>';
@@ -1379,7 +1489,7 @@ ModuleComponents['operations-petty-cash'] = (container) => {
                 if (Array.isArray(bankAccounts)) {
                     const activeAccounts = bankAccounts.filter(acc => acc.status === 'Active');
                     activeAccounts.forEach(acc => {
-                        const sourceFormat = `${acc.bank_code}-${acc.bank_account_number}`;
+                        const sourceFormat = `${acc.bank_code}`;
                         bankData.push([
                             acc.bank || '',
                             acc.bank_code || '',
