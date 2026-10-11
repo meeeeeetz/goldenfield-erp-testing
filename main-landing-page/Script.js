@@ -28,6 +28,8 @@ const tabModules = {
     'hr-salary-overtime': 'Human Resource Folder/Human-salary-overtime.js',
     'hr-salary-leave': 'Human Resource Folder/Human-salary-leaves.js',
     'hr-salary-losses': 'Human Resource Folder/Human-losses.js',
+    'hr-salary-chicken-hauling': 'Human Resource Folder/Human-chicken-hauling.js',
+    'hr-salary-vaccination': 'Human Resource Folder/Human-vaccination-salary.js',
     'hr-employees': 'Human Resource Folder/Human-employees.js',
     'hr-evaluation': 'Human Resource Folder/Human-evaluation.js',
     'hr-offenses': 'Human Resource Folder/Human-offenses.js',
@@ -96,6 +98,8 @@ const tabTitles = {
     'hr-salary-overtime': 'Overtime Logs',
     'hr-salary-leave': 'Leaves',
     'hr-salary-losses': 'Loss/Damages',
+    'hr-salary-chicken-hauling': 'Chicken Hauling Salary',
+    'hr-salary-vaccination': 'Vaccination Salary',
     'hr-employees': 'Employees',
     'hr-evaluation': 'Evaluation',
     'hr-offenses': 'Offenses',
@@ -142,6 +146,8 @@ const subParentMap = {
     'hr-employees-manage-org-structure': 'hr-employees',
     'hr-salary-attendance': 'hr-salary',
     'hr-salary-overtime': 'hr-salary',
+    'hr-salary-chicken-hauling': 'hr-salary',
+    'hr-salary-vaccination': 'hr-salary',
     'purchasing-feeds-delivery': 'purchasing-feeds'
 };
 

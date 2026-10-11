@@ -195,6 +195,14 @@ ModuleComponents['hr-salary'] = (container) => {
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 <span class="btn-label">Overtime Log</span>
             </button>
+            <button id="add-chicken-hauling-btn" class="btn-icon-circle">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-3.5 3-6 6-6 1.5 0 3 .8 4 2"></path><path d="M9 9c1.5-1.5 3.5-1.5 4.5 0"></path><path d="M15 9c1.5-1.5 3.5-1.5 4.5 0"></path><ellipse cx="15" cy="16" rx="5" ry="4"></ellipse><circle cx="17" cy="15.5" r="1"></circle><path d="M12 16.5h5"></path><path d="M11 18h4"></path><path d="M10 19.5h2"></path></svg>
+                <span class="btn-label">Chicken Hauling</span>
+            </button>
+            <button id="add-vaccination-salary-btn" class="btn-icon-circle">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2h-5"></path><path d="M12 2v20"></path><path d="M8.5 22h7"></path><path d="M12 6h-1v10h1"></path><path d="M8 12h8"></path></svg>
+                <span class="btn-label">Vaccination Salary</span>
+            </button>
             <button id="add-leave-log-btn" class="btn-icon-circle">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span class="btn-label">Leave Logs</span>
@@ -1660,6 +1668,26 @@ function initializeModule(contentArea) {
             e.preventDefault();
             e.stopPropagation();
             switchTab('hr-salary-attendance');
+        });
+    }
+
+    const addChickenHaulingBtn = document.getElementById('add-chicken-hauling-btn');
+
+    if (addChickenHaulingBtn) {
+        addChickenHaulingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            switchTab('hr-salary-chicken-hauling');
+        });
+    }
+
+    const addVaccinationSalaryBtn = document.getElementById('add-vaccination-salary-btn');
+
+    if (addVaccinationSalaryBtn) {
+        addVaccinationSalaryBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            switchTab('hr-salary-vaccination');
         });
     }
 
