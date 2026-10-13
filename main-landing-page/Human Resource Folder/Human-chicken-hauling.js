@@ -16,6 +16,15 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
                 </button>
             </div>
 
+            <div class="card" style="padding: 0; margin-bottom: 20px;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Chicken Hauling Logs Batch</h3>
+                </div>
+                <div style="padding: 40px 20px; text-align: center; color: #999;">
+                    <p style="margin: 0;">No hauling logs yet. Click "Create Hauling logs" to add a new batch.</p>
+                </div>
+            </div>
+
         <div id="hauling-log-modal" class="modal" style="display:none; align-items: center; justify-content: center;">
             <div class="modal-content" style="max-width: 1000px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
                 <div class="modal-header-row">
