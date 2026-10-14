@@ -18,7 +18,58 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
 
             <div class="card" style="padding: 0; margin-bottom: 20px;">
                 <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Chicken Hauling Logs</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Chicken Hauling ID</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Date</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Building</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Start Time</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">End Time</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">No. of Employees</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Grand Total</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Status</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="9" style="padding: 20px; border: 1px solid #ddd; text-align: center; color: #999;">No data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; margin-bottom: 20px;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Confirmed Batch Chicken Hauling Logs</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Batch Chicken Hauling ID</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Date Start</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Date End</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Building</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Grand Total</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Status</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; background: #FFD000;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" style="padding: 20px; border: 1px solid #ddd; text-align: center; color: #999;">No data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; margin-bottom: 20px;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                     <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Chicken Hauling Logs Batch</h3>
+                    <button id="confirm-chicken-hauling-batch-btn" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 14px;">Confirm Batch Chicken Hauling Salary</button>
                 </div>
                 <div style="padding: 40px 20px; text-align: center; color: #999;">
                     <p style="margin: 0;">No hauling logs yet. Click "Create Hauling logs" to add a new batch.</p>
@@ -372,5 +423,10 @@ workerSearchResults?.addEventListener('mousedown', async (e) => {
             console.error('Save error:', err);
             alert('Failed to save');
         }
+    });
+
+    const confirmBatchBtn = document.getElementById('confirm-chicken-hauling-batch-btn');
+    confirmBatchBtn?.addEventListener('click', () => {
+        alert('Confirm Batch Chicken Hauling Salary');
     });
 };
