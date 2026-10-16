@@ -1,3 +1,4 @@
+﻿
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -15,78 +16,66 @@ const checkDatabaseRoutes = require('./routes/financeRoutes/checkDatabaseRoutes'
 const organizationalUnitRoutes = require('./routes/humanResourceRoutes/organizational-unit-routes');
 const organizationalRoleRoutes = require('./routes/humanResourceRoutes/organizational-role-routes');
 const organizationalStructureRoutes = require('./routes/humanResourceRoutes/organizational-structure-routes');
-    const employeeProfileRoutes = require('./routes/humanResourceRoutes/employee-profile-routes');
-    const shiftPolicyRoutes = require('./routes/humanResourceRoutes/shift-policy-routes');
-    const employeeCompensationRoutes = require('./routes/humanResourceRoutes/employee-compensation-routes');
-    const attendanceLogRoutes = require('./routes/humanResourceRoutes/attendance-log-routes');
-    const overtimeLogRoutes = require('./routes/humanResourceRoutes/overtime-log-routes');
-    const leaveLogRoutes = require('./routes/humanResourceRoutes/leave-log-routes');
-    const salaryComputationRoutes = require('./routes/humanResourceRoutes/salary-computation-routes');
-    const holidayRoutes = require('./routes/humanResourceRoutes/holiday-routes');
-    const cashAdvanceRoutes = require('./routes/humanResourceRoutes/cash-advance-routes');
-    const cashAdvanceRepaymentRoutes = require('./routes/humanResourceRoutes/cash-advance-repayment-routes');
-    const payrollRoutes = require('./routes/humanResourceRoutes/payroll-routes');
-    const lossesDamagesRoutes = require('./routes/humanResourceRoutes/lossesdamages');
-    const lossesDamagesRepaymentRoutes = require('./routes/humanResourceRoutes/lossesdamages-repayment');
-    const batchPayrollRoutes = require('./routes/humanResourceRoutes/batch-payroll');
-    const codeOfConductRoutes = require('./routes/humanResourceRoutes/code-of-conduct-routes');
-    const onboardingDocumentsRoutes = require('./routes/humanResourceRoutes/onboarding-documents-routes');
-    const offensesRoutes = require('./routes/humanResourceRoutes/offenses-routes');
-    const schedulingRoutes = require('./routes/humanResourceRoutes/scheduling-routes');
-    const pettyCashRoutes = require('./routes/operationRoutes/petty-cash-routes');
-    const layerBuildingsRoutes = require('./routes/operationRoutes/layer-buildings-routes');
-    const eggProductsRoutes = require('./routes/operationRoutes/egg-products-routes');
-    const dailyEggProductionRoutes = require('./routes/operationRoutes/daily-egg-production-routes');
-    const feedsSupplierRoutes = require('./routes/purchasingRoutes/feeds-supplier-routes');
-    const feedTypeRoutes = require('./routes/purchasingRoutes/feed-type-routes');
-    const feedInventoryRoutes = require('./routes/purchasingRoutes/feed-inventory-routes');
-    const orderFeedsRoutes = require('./routes/purchasingRoutes/order-feeds-routes');
-    const orderFeedsRepaymentRoutes = require('./routes/purchasingRoutes/order-feeds-repayment-routes');
-    const userManagementRoutes = require('./routes/userManagementRoutes');
-    const electricBillRoutes = require('./routes/purchasingRoutes/electricBillRoutes');
-    const expenseRoutes = require('./routes/financeRoutes/expenseRoutes');
-    const eggTraySupplierRoutes = require('./routes/purchasingRoutes/egg-tray-supplier-routes');
-    const eggTrayTypeRoutes = require('./routes/purchasingRoutes/egg-tray-type-routes');
-    const orderEggTrayRoutes = require('./routes/purchasingRoutes/order-egg-tray-routes');
-    const vetSuppliesCategoryRoutes = require('./routes/purchasingRoutes/vet-supplies-category-routes');
-    const vetSupplierRoutes = require('./routes/purchasingRoutes/vet-supplier-routes');
-    const vetProductRoutes = require('./routes/purchasingRoutes/vet-product-routes');
-    const orderVetSuppliesRoutes = require('./routes/purchasingRoutes/order-vet-supplies-routes');
-    const orderVetSuppliesRepaymentRoutes = require('./routes/purchasingRoutes/order-vet-supplies-repayment-routes');
-    const vetProductsInventoryRoutes = require('./routes/purchasingRoutes/vet-products-inventory-routes');
-    const vetSuppliesUseRoutes = require('./routes/purchasingRoutes/vet-supplies-use-routes');
-    const rtlSuppliersRoutes = require('./routes/purchasingRoutes/rtl-suppliers-routes');
-    const rtlTypesRoutes = require('./routes/purchasingRoutes/rtl-types-routes');
-    const orderRtlRoutes = require('./routes/purchasingRoutes/order-rtl-routes');
-    const orderRtlRepaymentsRoutes = require('./routes/purchasingRoutes/order-rtl-repayments-routes');
-    const miscSuppliersRoutes = require('./routes/purchasingRoutes/misc-suppliers-routes');
-    const orderMiscRoutes = require('./routes/purchasingRoutes/order-misc-routes');
-    const orderMiscRepaymentsRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
-    const gasOperatorRoutes = require('./routes/purchasingRoutes/gas-operator-routes');
-    const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
-    const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
-const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
-const shippingPermitRecipientsRoutes = require('./routes/operationRoutes/shipping-permit-recipients-routes');
-const shippingPermitRecipientPapersRoutes = require('./routes/operationRoutes/shipping-permit-recipient-papers-routes');
-const shippingPermitRecipientPhotoRoutes = require('./routes/operationRoutes/shipping-permit-recipient-photo-routes');
-const shippingPermitLicensesRoutes = require('./routes/operationRoutes/shipping-permit-licenses-routes');
+const employeeProfileRoutes = require('./routes/humanResourceRoutes/employee-profile-routes');
+const shiftPolicyRoutes = require('./routes/humanResourceRoutes/shift-policy-routes');
+const employeeCompensationRoutes = require('./routes/humanResourceRoutes/employee-compensation-routes');
+const attendanceLogRoutes = require('./routes/humanResourceRoutes/attendance-log-routes');
+const overtimeLogRoutes = require('./routes/humanResourceRoutes/overtime-log-routes');
+const leaveLogRoutes = require('./routes/humanResourceRoutes/leave-log-routes');
+const salaryComputationRoutes = require('./routes/humanResourceRoutes/salary-computation-routes');
+const holidayRoutes = require('./routes/humanResourceRoutes/holiday-routes');
+const cashAdvanceRoutes = require('./routes/humanResourceRoutes/cash-advance-routes');
+const cashAdvanceRepaymentRoutes = require('./routes/humanResourceRoutes/cash-advance-repayment-routes');
+const payrollRoutes = require('./routes/humanResourceRoutes/payroll-routes');
+const lossesDamagesRoutes = require('./routes/humanResourceRoutes/lossesdamages');
+const lossesDamagesRepaymentRoutes = require('./routes/humanResourceRoutes/lossesdamages-repayment');
+const batchPayrollRoutes = require('./routes/humanResourceRoutes/batch-payroll');
+const chickenHaulingRoutes = require('./routes/humanResourceRoutes/chicken-hauling');
+const codeOfConductRoutes = require('./routes/humanResourceRoutes/code-of-conduct-routes');
+const onboardingDocumentsRoutes = require('./routes/humanResourceRoutes/onboarding-documents-routes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const userManagementRoutes = require('./routes/userManagementRoutes');
+const electricBillRoutes = require('./routes/purchasingRoutes/electricBillRoutes');
+const orderFeedsRoutes = require('./routes/purchasingRoutes/order-feeds-routes');
+const orderFeedsRepaymentRoutes = require('./routes/purchasingRoutes/order-feeds-repayment-routes');
+const eggTraySupplierRoutes = require('./routes/purchasingRoutes/egg-tray-supplier-routes');
+const eggTrayTypeRoutes = require('./routes/purchasingRoutes/egg-tray-type-routes');
+const orderEggTrayRoutes = require('./routes/purchasingRoutes/order-egg-tray-routes');
+const vetSuppliesCategoriesRoutes = require('./routes/purchasingRoutes/vet-supplies-category-routes');
+const vetSuppliesRoutes = require('./routes/purchasingRoutes/vet-supplier-routes');
+const vetProductsRoutes = require('./routes/purchasingRoutes/vet-product-routes');
+const orderVetSuppliesRoutes = require('./routes/purchasingRoutes/order-vet-supplies-routes');
+const orderVetSuppliesRepaymentRoutes = require('./routes/purchasingRoutes/order-vet-supplies-repayment-routes');
+const vetProductsInventoryRoutes = require('./routes/purchasingRoutes/vet-products-inventory-routes');
+const vetSuppliesUseRoutes = require('./routes/purchasingRoutes/vet-supplies-use-routes');
+const rtlSuppliersRoutes = require('./routes/purchasingRoutes/rtl-suppliers-routes');
+const rtlTypesRoutes = require('./routes/purchasingRoutes/rtl-types-routes');
+const orderRtlRoutes = require('./routes/purchasingRoutes/order-rtl-routes');
+const orderRtlRepaymentRoutes = require('./routes/purchasingRoutes/order-rtl-repayments-routes');
+const miscSuppliersRoutes = require('./routes/purchasingRoutes/misc-suppliers-routes');
+const orderMiscRoutes = require('./routes/purchasingRoutes/order-misc-routes');
+const orderMiscRepaymentRoutes = require('./routes/purchasingRoutes/order-misc-repayments-routes');
+const gasOperatorRoutes = require('./routes/purchasingRoutes/gas-operator-routes');
+const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
+const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
+const expenseRoutes = require('./routes/financeRoutes/expenseRoutes');
+const layerBuildingsRoutes = require('./routes/operationRoutes/layer-buildings-routes');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-
 // Global error handler to catch unhandled rejections and JSON parse errors
 process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
-});
-
-process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
 });
 
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+// API Routes
 app.use('/api/products', productRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/price-changes', priceChangeRoutes);
@@ -114,32 +103,13 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/loss-damages', lossesDamagesRoutes);
 app.use('/api/loss-damage-repayments', lossesDamagesRepaymentRoutes);
 app.use('/api/batch-payroll', batchPayrollRoutes);
+app.use('/api/chicken-hauling', chickenHaulingRoutes);
+app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
 app.use('/api/code-of-conduct', codeOfConductRoutes);
 app.use('/api/onboarding-documents', onboardingDocumentsRoutes);
-app.use('/api/offenses', offensesRoutes);
-app.use('/api/schedules', schedulingRoutes);
-app.use('/api/petty-cash', pettyCashRoutes);
-app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
-app.use('/api/scratch-layer', scratchLayerRoutes);
-app.use('/api/shipping-permit-recipients', shippingPermitRecipientsRoutes);
-app.use('/api/shipping-permit-recipient-papers', shippingPermitRecipientPapersRoutes);
-app.use('/api/shipping-permit-recipient-photo', shippingPermitRecipientPhotoRoutes);
-app.use('/api/shipping-permit-licenses', shippingPermitLicensesRoutes);
-app.use('/api/egg-products', eggProductsRoutes);
-app.use('/api/daily-egg-production', dailyEggProductionRoutes);
-app.use('/api/feeds-suppliers', feedsSupplierRoutes);
-app.use('/api/feed-types', feedTypeRoutes);
-app.use('/api/feed-inventory', feedInventoryRoutes);
-app.use('/api/users', userManagementRoutes);
-app.use('/api/electric-bills', electricBillRoutes);
-app.use('/api/order-feeds', orderFeedsRoutes);
-app.use('/api/order-feeds-repayment', orderFeedsRepaymentRoutes);
-app.use('/api/egg-tray-suppliers', eggTraySupplierRoutes);
-app.use('/api/egg-tray-types', eggTrayTypeRoutes);
-app.use('/api/order-egg-trays', orderEggTrayRoutes);
-app.use('/api/vet-supplies-categories', vetSuppliesCategoryRoutes);
-app.use('/api/vet-suppliers', vetSupplierRoutes);
-app.use('/api/vet-products', vetProductRoutes);
+app.use('/api/vet-supplies-categories', vetSuppliesCategoriesRoutes);
+app.use('/api/vet-supplies', vetSuppliesRoutes);
+app.use('/api/vet-products', vetProductsRoutes);
 app.use('/api/order-vet-supplies', orderVetSuppliesRoutes);
 app.use('/api/order-vet-supplies-repayment', orderVetSuppliesRepaymentRoutes);
 app.use('/api/vet-products-inventory', vetProductsInventoryRoutes);
@@ -147,15 +117,30 @@ app.use('/api/vet-supplies-use', vetSuppliesUseRoutes);
 app.use('/api/rtl-suppliers', rtlSuppliersRoutes);
 app.use('/api/rtl-types', rtlTypesRoutes);
 app.use('/api/order-rtl', orderRtlRoutes);
-app.use('/api/order-rtl-repayments', orderRtlRepaymentsRoutes);
+app.use('/api/order-rtl-repayments', orderRtlRepaymentRoutes);
 app.use('/api/miscellaneous-suppliers', miscSuppliersRoutes);
 app.use('/api/order-misc', orderMiscRoutes);
-app.use('/api/order-misc-repayments', orderMiscRepaymentsRoutes);
+app.use('/api/order-misc-repayments', orderMiscRepaymentRoutes);
 app.use('/api/gas-operators', gasOperatorRoutes);
 app.use('/api/loan-accounts', loanAccountRoutes);
 app.use('/api/loan-transactions', loanTransactionRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/users', userManagementRoutes);
+app.use('/api/electric-bills', electricBillRoutes);
+app.use('/api/order-feeds', orderFeedsRoutes);
+app.use('/api/order-feeds-repayment', orderFeedsRepaymentRoutes);
+app.use('/api/egg-tray-suppliers', eggTraySupplierRoutes);
+app.use('/api/egg-tray-types', eggTrayTypeRoutes);
+app.use('/api/order-egg-trays', orderEggTrayRoutes);
+app.use('/api/vet-supplies-categories', vetSuppliesCategoriesRoutes);
+app.use('/api/vet-supplies', vetSuppliesRoutes);
+app.use('/api/vet-products', vetProductsRoutes);
+app.use('/api/order-vet-supplies', orderVetSuppliesRoutes);
+app.use('/api/order-vet-supplies-repayment', orderVetSuppliesRepaymentRoutes);
+app.use('/api/vet-products-inventory', vetProductsInventoryRoutes);
+app.use('/api/vet-supplies-use', vetSuppliesUseRoutes);
+
 // Note: File uploads now use Supabase Storage
 // Static file serving is only for backward compatibility during migration
 
@@ -172,18 +157,23 @@ app.use((err, req, res, next) => {
     if (err) {
         const isJsonError = err.type === 'entity.parse.error' ||
                            err.message?.includes('Unexpected token') ||
-                           err.message?.includes('JSON');
+                           err.status === 400;
+                           
         if (isJsonError) {
-            console.error('JSON Parse Error:', err.message);
             return res.status(400).json({ error: 'Invalid JSON' });
         }
-        console.error('Unhandled route error:', err);
-        return res.status(500).json({ error: err.message || 'Internal server error' });
+        
+        // Default error handler
+        console.error(err);
+        res.status(err.status || 500).json({
+            error: err.message || 'Something went wrong!'
+        });
     }
-    next(err);
 });
 
 app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
+    console.log('Server is running on port ' + PORT);
 });
+
+
 
