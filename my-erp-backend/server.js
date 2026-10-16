@@ -60,6 +60,14 @@ const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
 const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
 const expenseRoutes = require('./routes/financeRoutes/expenseRoutes');
 const layerBuildingsRoutes = require('./routes/operationRoutes/layer-buildings-routes');
+const pettyCashRoutes = require('./routes/operationRoutes/petty-cash-routes');
+const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
+const shippingPermitRecipientsRoutes = require('./routes/operationRoutes/shipping-permit-recipients-routes');
+const shippingPermitRecipientPapersRoutes = require('./routes/operationRoutes/shipping-permit-recipient-papers-routes');
+const shippingPermitRecipientPhotoRoutes = require('./routes/operationRoutes/shipping-permit-recipient-photo-routes');
+const shippingPermitLicensesRoutes = require('./routes/operationRoutes/shipping-permit-licenses-routes');
+const eggProductsRoutes = require('./routes/operationRoutes/egg-products-routes');
+const dailyEggProductionRoutes = require('./routes/operationRoutes/daily-egg-production-routes');
 
 
 
@@ -105,6 +113,14 @@ app.use('/api/loss-damage-repayments', lossesDamagesRepaymentRoutes);
 app.use('/api/batch-payroll', batchPayrollRoutes);
 app.use('/api/chicken-hauling', chickenHaulingRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
+app.use('/api/petty-cash', pettyCashRoutes);
+app.use('/api/scratch-layer', scratchLayerRoutes);
+app.use('/api/shipping-permit-recipients', shippingPermitRecipientsRoutes);
+app.use('/api/shipping-permit-recipient-papers', shippingPermitRecipientPapersRoutes);
+app.use('/api/shipping-permit-recipient-photo', shippingPermitRecipientPhotoRoutes);
+app.use('/api/shipping-permit-licenses', shippingPermitLicensesRoutes);
+app.use('/api/egg-products', eggProductsRoutes);
+app.use('/api/daily-egg-production', dailyEggProductionRoutes);
 app.use('/api/code-of-conduct', codeOfConductRoutes);
 app.use('/api/onboarding-documents', onboardingDocumentsRoutes);
 app.use('/api/vet-supplies-categories', vetSuppliesCategoriesRoutes);
@@ -156,8 +172,7 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
     if (err) {
         const isJsonError = err.type === 'entity.parse.error' ||
-                           err.message?.includes('Unexpected token') ||
-                           err.status === 400;
+                           err.message?.includes('Unexpected token');
                            
         if (isJsonError) {
             return res.status(400).json({ error: 'Invalid JSON' });
