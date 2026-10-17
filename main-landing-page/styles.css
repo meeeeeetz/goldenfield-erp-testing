@@ -252,6 +252,11 @@ body {
     border: 2px solid #D6D6D6;
 }
 
+.card button {
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
 .card h2 {
     font-size: 25px;
     font-weight: 600;

@@ -53,13 +53,25 @@ class ChickenHaulingController {
         }
     }
 
-    async getHaulingLogById(id) {
+async getHaulingLogById(id) {
         try {
             const query = 'SELECT * FROM chicken_hauling_logs WHERE hauling_id = $1';
             const values = [id];
             
             const result = await this.db.query(query, values);
             return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async deleteHaulingLog(id) {
+        try {
+            const query = 'DELETE FROM chicken_hauling_logs WHERE hauling_id = $1 RETURNING *';
+            const values = [id];
+            
+            const result = await this.db.query(query, values);
+            return result.rows[0] || null;
         } catch (error) {
             throw error;
         }

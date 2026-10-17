@@ -84,7 +84,7 @@ router.get('/:payrollId', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { employee_id, date_start, date_end, total_days_worked, total_overtime_hours, total_allowance, total_leaves_usage, regular_holiday, special_holiday, total_income_tax, total_sss_payment, total_sss_loan_payment, total_philhealth_payment, total_pagibig_payment, total_pagibig_loan_payment, total_cash_loan_deductions, starting_cash_loan, ending_cash_loan, total_losses_damages, starting_losses_damages, ending_losses_damages, net_pay, status } = req.body;
+        const { employee_id, date_start, date_end, total_days_worked, total_overtime_hours, total_allowance, total_leaves_usage, regular_holiday, special_holiday, total_income_tax, total_sss_payment, total_sss_loan_payment, total_philhealth_payment, total_pagibig_payment, total_pagibig_loan_payment, total_cash_loan_deductions, starting_cash_loan, ending_cash_loan, total_losses_damages, starting_losses_damages, ending_losses_damages, net_pay, status, gross_pay, gross_deduction } = req.body;
         if (!employee_id || !date_start || !date_end) {
             return res.status(400).json({ error: 'employee_id, date_start, and date_end are required' });
         }

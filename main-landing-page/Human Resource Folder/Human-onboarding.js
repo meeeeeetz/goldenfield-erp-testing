@@ -413,7 +413,7 @@ ModuleComponents['hr-onboarding'] = (container) => {
             </div>
         </div>
         <div id="upload-documents-modal" class="modal hidden" style="align-items: flex-start; padding-top: 20px; overflow-y: auto;">
-            <div class="modal-content" style="max-width: 780px; width: 95%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-content" style="max-width: 780px; width: 95%; max-height: none; overflow-y: visible;">
                 <div class="modal-header-row">
                     <h3>3rd Step - Upload Documents</h3>
                     <button class="modal-close-btn" id="close-upload-documents-modal">&times;</button>
@@ -1010,9 +1010,9 @@ ModuleComponents['hr-onboarding'] = (container) => {
             throw new Error('Only JPG and PNG files are allowed.');
         }
 
-        const maxSize = 1 * 1024 * 1024;
+        const maxSize = 4 * 1024 * 1024;
         if (file.size > maxSize) {
-            throw new Error('File size must not exceed 1MB.');
+            throw new Error('File size must not exceed 4MB.');
         }
 
         return new Promise((resolve, reject) => {
@@ -1178,6 +1178,8 @@ ModuleComponents['hr-onboarding'] = (container) => {
                         cropImage.src = e.target.result;
                         cropModal.classList.remove('hidden');
                         cropModal.style.setProperty('display', 'flex', 'important');
+                        cropModal.style.setProperty('pointer-events', 'auto', 'important');
+                        cropModal.style.setProperty('z-index', '2147483647', 'important');
 
                         const cropSize = 320;
                         const container = cropImage.parentElement;
@@ -1670,6 +1672,15 @@ ModuleComponents['hr-onboarding'] = (container) => {
                 if (uploadDocumentsModal) {
                     uploadDocumentsModal.classList.remove('hidden');
                     uploadDocumentsModal.style.setProperty('display', 'flex', 'important');
+                    uploadDocumentsModal.style.setProperty('align-items', 'flex-start', 'important');
+                    uploadDocumentsModal.style.setProperty('overflow-y', 'auto', 'important');
+                    uploadDocumentsModal.style.setProperty('visibility', 'visible', 'important');
+                    uploadDocumentsModal.style.setProperty('opacity', '1', 'important');
+                    uploadDocumentsModal.style.setProperty('z-index', '2147483647', 'important');
+                    uploadDocumentsModal.style.setProperty('pointer-events', 'auto', 'important');
+                    uploadDocumentsModal.style.setProperty('position', 'fixed', 'important');
+                    uploadDocumentsModal.style.setProperty('inset', '0', 'important');
+                    document.querySelectorAll('#upload-documents-modal .upload-zone').forEach(setupUploadZone);
                 }
 
             } catch (err) {
@@ -1887,6 +1898,14 @@ ModuleComponents['hr-onboarding'] = (container) => {
             await populateShiftPolicyDropdown();
             compensationConfigModal.classList.remove('hidden');
             compensationConfigModal.style.setProperty('display', 'flex', 'important');
+            compensationConfigModal.style.setProperty('align-items', 'flex-start', 'important');
+            compensationConfigModal.style.setProperty('overflow-y', 'auto', 'important');
+            compensationConfigModal.style.setProperty('visibility', 'visible', 'important');
+            compensationConfigModal.style.setProperty('opacity', '1', 'important');
+            compensationConfigModal.style.setProperty('z-index', '2147483647', 'important');
+            compensationConfigModal.style.setProperty('pointer-events', 'auto', 'important');
+            compensationConfigModal.style.setProperty('position', 'fixed', 'important');
+            compensationConfigModal.style.setProperty('inset', '0', 'important');
         }
     };
 

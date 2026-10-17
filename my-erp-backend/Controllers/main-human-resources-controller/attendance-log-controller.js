@@ -53,16 +53,6 @@ class AttendanceLogController {
             throw new Error(`The following employees do not have a shift policy assigned: ${missingShiftPolicy.join(', ')}`);
         }
 
-        const employeeId = logs[0].employee_id;
-        const dates = logs.map(log => log.date).filter(Boolean);
-        if (dates.length) {
-            const placeholders = dates.map((_, idx) => `$${idx + 1}`).join(', ');
-            await this.db.query(
-                `DELETE FROM attendance_log WHERE employee_id = $${dates.length + 1} AND date IN (${placeholders})`,
-                [...dates, employeeId]
-            );
-        }
-
         const values = [];
         const placeholders = [];
         let paramIndex = 1;

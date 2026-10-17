@@ -83,5 +83,27 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// DELETE /api/chicken-hauling/:id - Delete a chicken hauling log by ID
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({ error: 'hauling ID is required' });
+        }
+        
+        const result = await controller.deleteHaulingLog(id);
+        
+        if (!result) {
+            return res.status(404).json({ error: 'Chicken hauling log not found' });
+        }
+        
+        res.json({ message: 'Chicken hauling log deleted successfully', deleted: result });
+    } catch (error) {
+        console.error('Error deleting chicken hauling log:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
 

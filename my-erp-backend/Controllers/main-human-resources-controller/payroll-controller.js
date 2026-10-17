@@ -50,8 +50,30 @@ class PayrollController {
     async getPaidPayrollTotals() {
         const query = `
             SELECT 
-                COALESCE(SUM(gross_pay), 0) as total_gross_pay,
-                COALESCE(SUM(net_pay), 0) as total_net_pay
+                COALESCE(SUM(
+                    COALESCE(total_days_worked, 0) +
+                    COALESCE(total_overtime_hours, 0) +
+                    COALESCE(total_allowance, 0) +
+                    COALESCE(total_leaves_usage, 0) +
+                    COALESCE(regular_holiday, 0) +
+                    COALESCE(special_holiday, 0)
+                ), 0) as total_gross_pay,
+                COALESCE(SUM(
+                    (COALESCE(total_days_worked, 0) +
+                     COALESCE(total_overtime_hours, 0) +
+                     COALESCE(total_allowance, 0) +
+                     COALESCE(total_leaves_usage, 0) +
+                     COALESCE(regular_holiday, 0) +
+                     COALESCE(special_holiday, 0)) -
+                    (COALESCE(total_income_tax, 0) +
+                     COALESCE(total_sss_payment, 0) +
+                     COALESCE(total_sss_loan_payment, 0) +
+                     COALESCE(total_philhealth_payment, 0) +
+                     COALESCE(total_pagibig_payment, 0) +
+                     COALESCE(total_pagibig_loan_payment, 0) +
+                     COALESCE(total_cash_loan_deductions, 0) +
+                     COALESCE(total_losses_damages, 0))
+                ), 0) as total_net_pay
             FROM payroll
         `;
         const result = await this.db.query(query);
@@ -62,8 +84,30 @@ class PayrollController {
         const query = `
             SELECT 
                 employee_id,
-                COALESCE(SUM(gross_pay), 0) as total_gross_pay,
-                COALESCE(SUM(net_pay), 0) as total_net_pay
+                COALESCE(SUM(
+                    COALESCE(total_days_worked, 0) +
+                    COALESCE(total_overtime_hours, 0) +
+                    COALESCE(total_allowance, 0) +
+                    COALESCE(total_leaves_usage, 0) +
+                    COALESCE(regular_holiday, 0) +
+                    COALESCE(special_holiday, 0)
+                ), 0) as total_gross_pay,
+                COALESCE(SUM(
+                    (COALESCE(total_days_worked, 0) +
+                     COALESCE(total_overtime_hours, 0) +
+                     COALESCE(total_allowance, 0) +
+                     COALESCE(total_leaves_usage, 0) +
+                     COALESCE(regular_holiday, 0) +
+                     COALESCE(special_holiday, 0)) -
+                    (COALESCE(total_income_tax, 0) +
+                     COALESCE(total_sss_payment, 0) +
+                     COALESCE(total_sss_loan_payment, 0) +
+                     COALESCE(total_philhealth_payment, 0) +
+                     COALESCE(total_pagibig_payment, 0) +
+                     COALESCE(total_pagibig_loan_payment, 0) +
+                     COALESCE(total_cash_loan_deductions, 0) +
+                     COALESCE(total_losses_damages, 0))
+                ), 0) as total_net_pay
             FROM payroll
             GROUP BY employee_id
         `;

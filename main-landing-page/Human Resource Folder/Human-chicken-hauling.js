@@ -16,12 +16,15 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
                 </button>
             </div>
 
-            <div class="card" style="padding: 0; margin-bottom: 20px;">
-                <div style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e;">Chicken Hauling Logs Batch</h3>
-                    <button id="confirm-chicken-hauling-batch-btn" class="btn-primary" type="button" style="padding: 8px 16px; font-size: 14px;">Confirm Batch Chicken Hauling Salary</button>
+            <div class="card" style="padding: 0; margin-bottom: 20px; position: relative;">
+                <div id="batch-header" style="padding: 16px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; background: #EADECB;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1f2e; white-space: nowrap;">Chicken Hauling Logs Batch</h3>
+                    <div id="batch-button-group" style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+                        <button id="delete-chicken-hauling-batch-btn" class="btn-secondary" type="button" style="display: inline-block !important; visibility: visible !important; padding: 8px 16px; font-size: 14px; background: #f44336 !important; color: #fff !important; border: none !important; border-radius: 4px; cursor: pointer; font-weight: 600;">Delete Batch</button>
+                        <button id="confirm-chicken-hauling-batch-btn" class="btn-primary" type="button" style="display: inline-block !important; visibility: visible !important; padding: 8px 16px; font-size: 14px; background: #FFD000 !important; color: #1a1f2e !important; border: none !important; border-radius: 4px; cursor: pointer; font-weight: 600;">Confirm Batch</button>
+                    </div>
                 </div>
-                <div style="padding: 40px 20px; text-align: center; color: #999;">
+                <div id="batch-content" style="padding: 40px 20px; text-align: center; color: #999;">
                     <p style="margin: 0;">No hauling logs yet. Click "Create Hauling logs" to add a new batch.</p>
                 </div>
             </div>
@@ -266,34 +269,52 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
             displayPendingBatches(Array.isArray(batches) ? batches : []);
         } catch (err) {
             console.error('Failed to load pending batches:', err);
-            const allCards = document.querySelectorAll('.card');
-            allCards.forEach(card => {
-                const heading = card.querySelector('h3');
-                if (heading && heading.textContent.includes('Chicken Hauling Logs Batch')) {
-                    const container = card.querySelector('div:nth-child(2)');
-                    if (container) showNoPendingBatches(container);
-                }
-            });
+            const batchContent = document.getElementById('batch-content');
+            if (batchContent) {
+                showNoPendingBatches(batchContent);
+            } else {
+                const allCards = document.querySelectorAll('.card');
+                allCards.forEach(card => {
+                    const heading = card.querySelector('h3');
+                    if (heading && heading.textContent.includes('Chicken Hauling Logs Batch')) {
+                        const container = card.querySelector('div:nth-child(2)');
+                        if (container) showNoPendingBatches(container);
+                    }
+                });
+            }
         }
     }
 
     function displayPendingBatches(batches) {
         // Find the batch card by its heading text
-        const allCards = document.querySelectorAll('.card');
-        let batchSection = null;
-        allCards.forEach(card => {
-            const heading = card.querySelector('h3');
-            if (heading && heading.textContent.includes('Chicken Hauling Logs Batch')) {
-                batchSection = card;
-            }
-        });
-        if (!batchSection) return;
+        const batchHeader = document.getElementById('batch-header');
+        const batchContent = document.getElementById('batch-content');
+        const batchSection = batchHeader ? batchHeader.closest('.card') : null;
         
-        const batchContainer = batchSection.querySelector('div:nth-child(2)'); // The div with padding
-        if (!batchContainer) return;
+        if (!batchSection || !batchContent) {
+            // Fallback: find by heading text
+            const allCards = document.querySelectorAll('.card');
+            for (const card of allCards) {
+                const heading = card.querySelector('h3');
+                if (heading && heading.textContent.includes('Chicken Hauling Logs Batch')) {
+                    batchSection = card;
+                    batchContent = card.querySelector('div:nth-child(2)');
+                    break;
+                }
+            }
+        }
+        
+        if (!batchSection || !batchContent) return;
+        
+        // Ensure buttons are visible
+        const btnGroup = document.getElementById('batch-button-group');
+        if (btnGroup) {
+            btnGroup.style.display = 'flex';
+            btnGroup.style.visibility = 'visible';
+        }
         
         if (batches.length === 0) {
-            showNoPendingBatches(batchContainer);
+            showNoPendingBatches(batchContent);
             return;
         }
         
@@ -417,9 +438,15 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
             container.appendChild(batchCard);
         });
         
-        // Clear container and add the breakdowns
-        batchContainer.innerHTML = '';
-        batchContainer.appendChild(container);
+// Clear container and add the breakdowns
+        batchContent.innerHTML = '';
+        batchContent.appendChild(container);
+        
+        // Ensure buttons are visible after content is rendered
+        if (btnGroup) {
+            btnGroup.style.display = 'flex';
+            btnGroup.style.visibility = 'visible';
+        }
     }
 
     function showNoPendingBatches(container) {
@@ -1238,10 +1265,43 @@ workerSearchResults?.addEventListener('mousedown', async (e) => {
         }
     });
 
-    const confirmBatchBtn = document.getElementById('confirm-chicken-hauling-batch-btn');
+const confirmBatchBtn = document.getElementById('confirm-chicken-hauling-batch-btn');
     confirmBatchBtn?.addEventListener('click', () => {
         // Open confirmation modal instead of just alerting
         openConfirmBatchModal();
+    });
+
+    const deleteBatchBtn = document.getElementById('delete-chicken-hauling-batch-btn');
+    deleteBatchBtn?.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete the pending batch? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            const res = await fetch('/api/chicken-hauling?status=pending', {
+                headers: getAuthHeaders()
+            });
+            const batches = await res.json();
+            const pendingBatches = Array.isArray(batches) ? batches : [];
+            if (pendingBatches.length === 0) {
+                alert('No pending batches to delete');
+                return;
+            }
+            const batch = pendingBatches[0];
+            const deleteRes = await fetch(`/api/chicken-hauling/${batch.hauling_id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            const deleteResult = await deleteRes.json();
+            if (deleteRes.ok) {
+                alert('Batch deleted successfully');
+                loadPendingBatches();
+            } else {
+                alert('Error: ' + (deleteResult.error || 'Failed to delete batch'));
+            }
+        } catch (err) {
+            console.error('Delete error:', err);
+            alert('Failed to delete batch');
+        }
     });
 
     // Load pending batches when component initializes
