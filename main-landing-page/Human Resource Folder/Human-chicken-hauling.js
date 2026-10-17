@@ -372,11 +372,11 @@ ModuleComponents['hr-salary-chicken-hauling'] = (container) => {
                     // Build per-day cells
                     let dayCells = '';
                     for (let d = 1; d <= maxDays; d++) {
-                        const hours = hoursPerDay[d - 1] || 0;
+                        const hours = parseFloat(hoursPerDay[d - 1]) || 0;
                         const dailyRate = parseFloat(worker.daily_rate || 0);
                         const amount = dailyRate > 0 ? parseFloat(((dailyRate / 8) * 1.25 * hours).toFixed(2)) : 0;
                         dayCells += `
-                            <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">${hours}</td>
+                            <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">${hours.toFixed(2)}</td>
                             <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: right;">P ${formatNumberWithCommas(amount.toFixed(2))}</td>
                         `;
                     }
