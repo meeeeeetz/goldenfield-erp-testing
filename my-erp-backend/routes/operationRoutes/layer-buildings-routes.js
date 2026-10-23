@@ -51,7 +51,8 @@ router.get('/buildings/:buildingId', async (req, res) => {
 
 router.post('/buildings', async (req, res) => {
     try {
-        const building = await controller.createBuilding(req.body);
+        const created_by = req.user?.name || req.user?.first_name || req.user?.email || null;
+        const building = await controller.createBuilding({ ...req.body, created_by });
         res.status(201).json(building);
     } catch (error) {
         res.status(500).json({ error: error.message });

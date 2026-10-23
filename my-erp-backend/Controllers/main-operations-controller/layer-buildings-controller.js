@@ -141,15 +141,17 @@ class LayerBuildingsController {
     }
 
     async createBuilding(buildingData) {
-        const { building_id, building_name, status, created_by } = buildingData;
+        const { building_id, building_name, date_of_arrival, age_of_arrival, status, created_by } = buildingData;
         const query = `
-            INSERT INTO layer_buildings (building_id, building_name, status, created_by)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO layer_buildings (building_id, building_name, date_of_arrival, age_of_arrival, status, created_by, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
             RETURNING *
         `;
         const result = await this.db.query(query, [
             building_id,
             building_name,
+            date_of_arrival || null,
+            age_of_arrival || null,
             status || 'Active',
             created_by || null
         ]);
@@ -157,14 +159,14 @@ class LayerBuildingsController {
     }
 
     async updateBuilding(buildingId, buildingData) {
-        const { building_name, status } = buildingData;
+        const { building_name, date_of_arrival, age_of_arrival, status } = buildingData;
         const query = `
             UPDATE layer_buildings
-            SET building_name = $1, status = $2, updated_at = CURRENT_TIMESTAMP
-            WHERE building_id = $3
+            SET building_name = $1, date_of_arrival = $2, age_of_arrival = $3, status = $4, updated_at = CURRENT_TIMESTAMP
+            WHERE building_id = $5
             RETURNING *
         `;
-        const result = await this.db.query(query, [building_name, status, buildingId]);
+        const result = await this.db.query(query, [building_name, date_of_arrival || null, age_of_arrival || null, status, buildingId]);
         return result.rows[0];
     }
 

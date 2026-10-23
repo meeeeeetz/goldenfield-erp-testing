@@ -5,7 +5,11 @@ function getAuthHeaders() {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
-ModuleComponents['operations-layer-buildings'] = (container) => {
+function formatAgeArrival(el) {
+    let v = el.value.replace(/\D/g, '');
+    if (v.length > 2) v = v.slice(0,2) + ' - ' + v.slice(2,4);
+    el.value = v;
+}
         container.innerHTML = `
             <div class="buildings-layout">
                 <div class="header-actions">
@@ -362,6 +366,14 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 <input type="text" id="new-building-name" placeholder="e.g. Main Layer House A" />
                             </div>
                             <div class="modal-field">
+                                <label for="new-building-date-arrival">Date of Arrival</label>
+                                <input type="date" id="new-building-date-arrival" />
+                            </div>
+                            <div class="modal-field">
+                                <label for="new-building-age-arrival">Age of Arrival</label>
+                                <input type="text" id="new-building-age-arrival" placeholder="XX - XX" maxlength="7" oninput="formatAgeArrival(this)" />
+                            </div>
+                            <div class="modal-field">
                                 <label for="new-building-status">Status</label>
                                 <select class="modal-select" id="new-building-status">
                                     <option value="Active">Active</option>
@@ -474,13 +486,15 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
         document.getElementById('save-new-building-btn').onclick = async () => {
             const buildingId = document.getElementById('new-building-id').value;
             const buildingName = document.getElementById('new-building-name').value.trim();
+            const dateOfArrival = document.getElementById('new-building-date-arrival').value;
+            const ageOfArrival = document.getElementById('new-building-age-arrival').value.trim();
             const status = document.getElementById('new-building-status').value;
             if (!buildingName) { alert('Please enter a building name.'); return; }
             try {
                 const res = await fetch('/api/layer-buildings-reports/buildings', {
                     method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ building_id: buildingId, building_name: buildingName, status })
+                    body: JSON.stringify({ building_id: buildingId, building_name: buildingName, date_of_arrival: dateOfArrival || null, age_of_arrival: ageOfArrival || null, status })
                 });
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
@@ -488,6 +502,8 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 }
                 alert('Building saved successfully');
                 document.getElementById('new-building-name').value = '';
+                document.getElementById('new-building-date-arrival').value = '';
+                document.getElementById('new-building-age-arrival').value = '';
                 closeAddRemoveModal();
                 loadBuildingsTable();
             } catch (err) {

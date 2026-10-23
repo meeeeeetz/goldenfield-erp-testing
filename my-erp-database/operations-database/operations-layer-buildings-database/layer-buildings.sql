@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS layer_buildings (
     building_id VARCHAR(20) PRIMARY KEY,
     building_name VARCHAR(100) NOT NULL,
+    date_of_arrival DATE,
+    age_of_arrival VARCHAR(10),
     status VARCHAR(20) NOT NULL DEFAULT 'Active',
     created_by VARCHAR(100),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
