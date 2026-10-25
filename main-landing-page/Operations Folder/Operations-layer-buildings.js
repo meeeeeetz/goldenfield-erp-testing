@@ -5,13 +5,93 @@ function getAuthHeaders() {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
-function formatAgeArrival(el) {
-    let v = el.value.replace(/\D/g, '');
-    if (v.length > 2) v = v.slice(0,2) + ' - ' + v.slice(2,4);
-    el.value = v;
+function parseCullingAge(str) {
+    if (!str) return null;
+    const v = str.toString().trim();
+    if (!v.includes('-')) return null;
+    const parts = v.split('-');
+    if (parts.length !== 2) return null;
+    const week = parseInt(parts[0], 10);
+    const day = parseInt(parts[1], 10);
+    if (isNaN(week) || isNaN(day)) return null;
+    return { week, day };
 }
-        container.innerHTML = `
-            <div class="buildings-layout">
+
+function countCullingDays(cullingAge, arrivalAge) {
+    const c = parseCullingAge(cullingAge);
+    const a = parseCullingAge(arrivalAge);
+    if (!c || !a) return 0;
+    return (c.week * 7 + c.day) - (a.week * 7 + a.day);
+}
+
+function addDaysToDateString(dateStr, days) {
+    if (!dateStr) return '';
+    // Expect YYYY-MM-DD format
+    const parts = dateStr.toString().split('T')[0].split('-');
+    if (parts.length !== 3) return '';
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return '';
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + Number(days || 0));
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function formatCullingAge(input) {
+    if (!input) return;
+    let v = input.value.replace(/[^0-9-]/g, '');
+    const parts = v.split('-');
+    if (parts.length > 2) {
+        v = parts[0] + '-' + parts.slice(1).join('');
+    }
+    if (v.length > 6) v = v.slice(0, 6);
+    input.value = v;
+}
+
+function updateCullingDateForRow(row) {
+    if (!row) return;
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 5) return;
+    const dateOfArrivalCell = cells[1];
+    const ageOfArrivalCell = cells[2];
+    const cullingAgeInput = row.querySelector('.culling-age-input');
+    const cullingDateCell = cells[4];
+    if (!cullingAgeInput || !cullingDateCell) return;
+    const arrivalDate = (dateOfArrivalCell.textContent || '').trim();
+    const arrivalAge = (ageOfArrivalCell.textContent || '').trim();
+    const cullingAge = cullingAgeInput.value || '';
+    const parsedCulling = parseCullingAge(cullingAge);
+    if (!parsedCulling) {
+        cullingDateCell.textContent = '';
+        return;
+    }
+    const totalDays = countCullingDays(cullingAge, arrivalAge);
+    const result = addDaysToDateString(arrivalDate, totalDays);
+    cullingDateCell.textContent = result;
+}
+
+function setupCullingDateCalculation() {
+    const tbody = document.getElementById('culling-buildings-body');
+    if (!tbody) return;
+    tbody.addEventListener('input', (e) => {
+        const target = e.target;
+        if (target && target.classList && target.classList.contains('culling-age-input')) {
+            formatCullingAge(target);
+            const row = target.closest('tr');
+            updateCullingDateForRow(row);
+        }
+    });
+    tbody.querySelectorAll('tr').forEach(row => {
+        updateCullingDateForRow(row);
+    });
+}
+
+ModuleComponents['operations-layer-buildings'] = (container) => {
+    container.innerHTML = `
                 <div class="header-actions">
                     <h2>Layer Buildings</h2>
                 </div>
@@ -156,6 +236,9 @@ function formatAgeArrival(el) {
                                 <tr>
                                     <th>Building ID</th>
                                     <th>Building Name</th>
+                                    <th>Date of Arrival</th>
+                                    <th>Age of Arrival</th>
+                                    <th>Created By</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -164,64 +247,64 @@ function formatAgeArrival(el) {
                         </table>
                     </div>
                 </div>
+                <div class="vet-bottom-row-2" style="grid-template-columns: 1fr;">
+                    <div class="card graph-placeholder vet-tracking-card">
+                        <h3>Culling Date</h3>
+                        <div class="table-wrap">
+                            <table class="data-table product-table">
+                                <thead>
+                                    <tr>
+                                        <th>Layer Building</th>
+                                        <th>Date of Arrival</th>
+                                        <th>Age of Arrival</th>
+                                        <th>Culling Age</th>
+                                        <th>Culling Date</th>
+                                        <th>Next Arrival Date</th>
+                                        <th>Company</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="culling-buildings-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button class="page-btn">&laquo; 1st</button>
+                            <button class="page-btn">&laquo; Prev</button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">Next &raquo;</button>
+                            <button class="page-btn">Last &raquo;</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="vet-bottom-row-2">
-                <div class="card graph-placeholder vet-tracking-card">
-                    <h3>Culling Date</h3>
-                    <div class="table-wrap">
-                        <table class="data-table product-table">
-                            <thead>
-                                <tr>
-                                    <th>Layer Buidling</th>
-                                    <th>Culling Date</th>
-                                    <th>Arrival Date</th>
-                                    <th>Company</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>701</td><td>2027-01-15</td><td>2025-08-10</td><td>ABC Hatchery</td></tr>
-                                <tr><td>702</td><td>2026-12-20</td><td>2025-09-01</td><td>XYZ Hatchery</td></tr>
-                                <tr><td>703</td><td>2027-02-28</td><td>2025-07-20</td><td>Prime Hatchery</td></tr>
-                                <tr><td>704</td><td>2026-11-15</td><td>2025-10-05</td><td>Metro Hatchery</td></tr>
-                                <tr><td>705</td><td>2027-03-10</td><td>2025-06-15</td><td>ABC Hatchery</td></tr>
-                                <tr><td>706</td><td>2026-12-30</td><td>2025-08-25</td><td>XYZ Hatchery</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card graph-placeholder vet-tracking-card">
+                        <h3>mass Vaccination Schedule</h3>
+                        <div class="table-wrap">
+                            <table class="data-table product-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Vaccine type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>2026-07-15</td><td>Newcastle Disease</td></tr>
+                                    <tr><td>2026-07-22</td><td>Infectious Bronchitis</td></tr>
+                                    <tr><td>2026-07-29</td><td>Marek's Disease</td></tr>
+                                    <tr><td>2026-08-05</td><td>Avian Influenza</td></tr>
+                                    <tr><td>2026-08-12</td><td>Gumboro</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button class="page-btn">&laquo; 1st</button>
+                            <button class="page-btn">&laquo; Prev</button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">Next &raquo;</button>
+                            <button class="page-btn">Last &raquo;</button>
+                        </div>
                     </div>
-                    <div class="pagination">
-                        <button class="page-btn">&laquo; Prev</button>
-                        <button class="page-btn active">1</button>
-                        <button class="page-btn">2</button>
-                        <button class="page-btn">3</button>
-                        <button class="page-btn">Next &raquo;</button>
-                    </div>
-                </div>
-                <div class="card graph-placeholder vet-tracking-card">
-                    <h3>mass Vaccination Schedule</h3>
-                    <div class="table-wrap">
-                        <table class="data-table product-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Vaccine type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>2026-07-15</td><td>Newcastle Disease</td></tr>
-                                <tr><td>2026-07-22</td><td>Infectious Bronchitis</td></tr>
-                                <tr><td>2026-07-29</td><td>Marek's Disease</td></tr>
-                                <tr><td>2026-08-05</td><td>Avian Influenza</td></tr>
-                                <tr><td>2026-08-12</td><td>Gumboro</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="pagination">
-                        <button class="page-btn">&laquo; Prev</button>
-                        <button class="page-btn active">1</button>
-                        <button class="page-btn">2</button>
-                        <button class="page-btn">3</button>
-                        <button class="page-btn">Next &raquo;</button>
-                    </div>
-                </div>
                 </div>
                 <div id="building-modal" class="modal hidden">
                     <div class="modal-content daily-layer-modal">
@@ -506,6 +589,27 @@ function formatAgeArrival(el) {
                 document.getElementById('new-building-age-arrival').value = '';
                 closeAddRemoveModal();
                 loadBuildingsTable();
+        (async () => {
+            try {
+                const res = await fetch('/api/layer-buildings-reports/buildings/active', { headers: getAuthHeaders() });
+                if (!res.ok) return;
+                const buildings = await res.json();
+                const tbody = document.getElementById('culling-buildings-body');
+                if (!tbody) return;
+                tbody.innerHTML = buildings.map(b => `
+                    <tr>
+                        <td>${b.building_name || ''}</td>
+                        <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
+                        <td>${b.age_of_arrival || ''}</td>
+                        <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
+                        <td></td>
+                        <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
+                        <td><select class="rtl-company-select" style="border-radius: 4px; width: 160px; font-size: 12px;"></select></td>
+                        <td><button type="button" class="culling-save-btn" style="border:none;background:none;cursor:pointer;" title="Save">&#128190;</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+        })();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -527,6 +631,27 @@ function formatAgeArrival(el) {
                 alert('Building updated successfully');
                 closeAddRemoveModal();
                 loadBuildingsTable();
+        (async () => {
+            try {
+                const res = await fetch('/api/layer-buildings-reports/buildings/active', { headers: getAuthHeaders() });
+                if (!res.ok) return;
+                const buildings = await res.json();
+                const tbody = document.getElementById('culling-buildings-body');
+                if (!tbody) return;
+                tbody.innerHTML = buildings.map(b => `
+                    <tr>
+                        <td>${b.building_name || ''}</td>
+                        <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
+                        <td>${b.age_of_arrival || ''}</td>
+                        <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
+                        <td></td>
+                        <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
+                        <td><select class="rtl-company-select" style="border-radius: 4px; width: 160px; font-size: 12px;"></select></td>
+                        <td><button type="button" class="culling-save-btn" style="border:none;background:none;cursor:pointer;" title="Save">&#128190;</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+        })();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -789,16 +914,90 @@ function formatAgeArrival(el) {
                     <tr>
                         <td>${b.building_id || ''}</td>
                         <td>${b.building_name || ''}</td>
+                        <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
+                        <td>${b.age_of_arrival || ''}</td>
+                        <td>${b.created_by || ''}</td>
                         <td>${b.status || ''}</td>
                     </tr>
                 `).join('');
             } catch (err) {
                 console.error('Failed to load buildings', err);
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #e74c3c;">Failed to load data</td></tr>';
             }
         }
 
         loadBuildingsTable();
+        (async () => {
+            try {
+                const res = await fetch('/api/layer-buildings-reports/buildings/active', { headers: getAuthHeaders() });
+                if (!res.ok) return;
+                const buildings = await res.json();
+                const tbody = document.getElementById('culling-buildings-body');
+                if (!tbody) return;
+                tbody.innerHTML = buildings.map(b => `
+                    <tr>
+                        <td>${b.building_name || ''}</td>
+                        <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
+                        <td>${b.age_of_arrival || ''}</td>
+                        <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
+                        <td></td>
+                        <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
+                        <td><select class="rtl-company-select" style="border-radius: 4px; width: 160px; font-size: 12px;"></select></td>
+                        <td><button type="button" class="culling-save-btn" style="border:none;background:none;cursor:pointer;" title="Save">&#128190;</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+            // populate company dropdowns
+            try {
+                const r = await fetch('/api/rtl-suppliers', { headers: getAuthHeaders() });
+                if (r.ok) {
+                    const suppliers = await r.json();
+                    const active = suppliers.filter(s => (s.status || '').toLowerCase() === 'active');
+                    document.querySelectorAll('.rtl-company-select').forEach(sel => {
+                        sel.innerHTML = '<option value="">Select</option>' + active.map(s => `<option value="${s.company_name}">${s.company_name}</option>`).join('');
+                    });
+                }
+            } catch (e) {}
+            // load saved culling data
+            try {
+                const r2 = await fetch('/api/layer-buildings-culling', { headers: getAuthHeaders() });
+                if (r2.ok) {
+                    const saved = await r2.json();
+                    const map = {};
+                    (saved || []).forEach(s => { map[s.building_name] = s; });
+                    document.querySelectorAll('#culling-buildings-body tr').forEach(row => {
+                        const name = row.cells[0].textContent.trim();
+                        const rec = map[name];
+                        if (!rec) return;
+                        const input = row.querySelector('.culling-age-input');
+                        if (input) input.value = rec.culling_age || '';
+                        if (row.cells[4]) row.cells[4].textContent = rec.culling_date || '';
+                        const dateInput = row.cells[5].querySelector('input[type="date"]');
+                        if (dateInput) dateInput.value = (rec.next_arrival_date || '').toString().slice(0,10);
+                        const sel = row.querySelector('.rtl-company-select');
+                        if (sel) sel.value = rec.company || '';
+                    });
+                }
+            } catch (e) {}
+            // save handler
+            document.getElementById('culling-buildings-body').addEventListener('click', async (e) => {
+                const btn = e.target.closest('.culling-save-btn');
+                if (!btn) return;
+                const row = btn.closest('tr');
+                const buildingName = row.cells[0].textContent.trim();
+                const cullingAge = row.querySelector('.culling-age-input')?.value || '';
+                const nextArrival = row.cells[5].querySelector('input[type="date"]')?.value || '';
+                const company = row.querySelector('.rtl-company-select')?.value || '';
+                const cullingDate = row.cells[4].textContent.trim();
+                const res = await fetch('/api/layer-buildings-culling', {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ building_name: buildingName, culling_age: cullingAge, culling_date: cullingDate, next_arrival_date: nextArrival, company })
+                });
+                if (res.ok) alert('Saved successfully');
+            });
+            setupCullingDateCalculation();
+        })();
         loadBuildingViewTabs();
     }
 

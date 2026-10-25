@@ -1,4 +1,4 @@
-﻿
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -60,6 +60,7 @@ const loanAccountRoutes = require('./routes/financeRoutes/loan-account-routes');
 const loanTransactionRoutes = require('./routes/financeRoutes/loan-transaction-routes');
 const expenseRoutes = require('./routes/financeRoutes/expenseRoutes');
 const layerBuildingsRoutes = require('./routes/operationRoutes/layer-buildings-routes');
+const layerBuildingsCullingRoutes = require('./routes/operationRoutes/layer-buildings-culling-routes');
 const pettyCashRoutes = require('./routes/operationRoutes/petty-cash-routes');
 const scratchLayerRoutes = require('./routes/operationRoutes/scratch-layer-routes');
 const shippingPermitRecipientsRoutes = require('./routes/operationRoutes/shipping-permit-recipients-routes');
@@ -113,6 +114,7 @@ app.use('/api/loss-damage-repayments', lossesDamagesRepaymentRoutes);
 app.use('/api/batch-payroll', batchPayrollRoutes);
 app.use('/api/chicken-hauling', chickenHaulingRoutes);
 app.use('/api/layer-buildings-reports', layerBuildingsRoutes);
+app.use('/api/layer-buildings-culling', layerBuildingsCullingRoutes);
 app.use('/api/petty-cash', pettyCashRoutes);
 app.use('/api/scratch-layer', scratchLayerRoutes);
 app.use('/api/shipping-permit-recipients', shippingPermitRecipientsRoutes);

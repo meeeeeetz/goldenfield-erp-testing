@@ -561,8 +561,11 @@ function calculateRowTotal(row) {
     const qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
     const price = priceInput ? (parseFloat(String(priceInput.value).replace(/,/g, '')) || 0) : 0;
     const tray = trayInput ? (parseFloat(trayInput.dataset.originalTray || trayInput.value) || 0) : 0;
+    const productSelect = row ? row.querySelector('.receipt-product') : null;
+    const productName = productSelect && productSelect.selectedIndex > 0 ? productSelect.options[productSelect.selectedIndex].textContent.trim() : '';
+    const isCashReimbursement = productName === 'Cash Reimbursement';
     const trayTotal = qty * tray;
-    const priceTotal = qty * price;
+    const priceTotal = isCashReimbursement ? -qty : (qty * price);
     if (trayInput) trayInput.value = trayTotal.toFixed(0);
     if (totalInput) totalInput.value = priceTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     calculateGrandTotal();
