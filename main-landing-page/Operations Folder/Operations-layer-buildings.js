@@ -258,7 +258,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                         <th>Date of Arrival</th>
                                         <th>Age of Arrival</th>
                                         <th>Culling Age</th>
-                                        <th>Culling Date</th>
+                                        <th class="sortable" data-sort="culling_date">Culling Date <span class="sort-arrow">&#8645;</span></th>
                                         <th>Next Arrival Date</th>
                                         <th>Company</th>
                                         <th>Action</th>
@@ -997,6 +997,24 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 if (res.ok) alert('Saved successfully');
             });
             setupCullingDateCalculation();
+            // sortable culling date header
+            const table = document.querySelector('#culling-buildings-body')?.closest('table');
+            const th = table?.querySelector('th[data-sort="culling_date"]');
+            if (th) {
+                th.style.cursor = 'pointer';
+                th.addEventListener('click', () => {
+                    const tbody = document.getElementById('culling-buildings-body');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    const asc = th.dataset.dir !== 'asc';
+                    th.dataset.dir = asc ? 'asc' : 'desc';
+                    rows.sort((a,b) => {
+                        const va = (a.cells[4].textContent || '').trim();
+                        const vb = (b.cells[4].textContent || '').trim();
+                        return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                    });
+                    rows.forEach(r => tbody.appendChild(r));
+                });
+            }
         })();
         loadBuildingViewTabs();
     }
