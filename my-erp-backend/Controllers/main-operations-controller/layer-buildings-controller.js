@@ -109,6 +109,7 @@ class LayerBuildingsController {
     }
 
     async getAllBuildings() {
+        await this.db.query('ALTER TABLE layer_buildings ADD COLUMN IF NOT EXISTS total_population VARCHAR(50)');
         const query = 'SELECT * FROM layer_buildings ORDER BY created_at DESC';
         const result = await this.db.query(query);
         return result.rows;
@@ -121,6 +122,7 @@ class LayerBuildingsController {
     }
 
     async getActiveBuildings() {
+        await this.db.query('ALTER TABLE layer_buildings ADD COLUMN IF NOT EXISTS total_population VARCHAR(50)');
         const query = "SELECT * FROM layer_buildings WHERE status = 'Active' ORDER BY building_name";
         const result = await this.db.query(query);
         return result.rows;
@@ -141,10 +143,11 @@ class LayerBuildingsController {
     }
 
     async createBuilding(buildingData) {
-        const { building_id, building_name, date_of_arrival, age_of_arrival, status, created_by } = buildingData;
+        await this.db.query('ALTER TABLE layer_buildings ADD COLUMN IF NOT EXISTS total_population VARCHAR(50)');
+        const { building_id, building_name, date_of_arrival, age_of_arrival, total_population, status, created_by } = buildingData;
         const query = `
-            INSERT INTO layer_buildings (building_id, building_name, date_of_arrival, age_of_arrival, status, created_by, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+            INSERT INTO layer_buildings (building_id, building_name, date_of_arrival, age_of_arrival, total_population, status, created_by, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -152,6 +155,7 @@ class LayerBuildingsController {
             building_name,
             date_of_arrival || null,
             age_of_arrival || null,
+            total_population || null,
             status || 'Active',
             created_by || null
         ]);
@@ -159,14 +163,15 @@ class LayerBuildingsController {
     }
 
     async updateBuilding(buildingId, buildingData) {
-        const { building_name, date_of_arrival, age_of_arrival, status } = buildingData;
+        await this.db.query('ALTER TABLE layer_buildings ADD COLUMN IF NOT EXISTS total_population VARCHAR(50)');
+        const { building_name, date_of_arrival, age_of_arrival, total_population, status } = buildingData;
         const query = `
             UPDATE layer_buildings
-            SET building_name = $1, date_of_arrival = $2, age_of_arrival = $3, status = $4, updated_at = CURRENT_TIMESTAMP
-            WHERE building_id = $5
+            SET building_name = $1, date_of_arrival = $2, age_of_arrival = $3, total_population = $4, status = $5, updated_at = CURRENT_TIMESTAMP
+            WHERE building_id = $6
             RETURNING *
         `;
-        const result = await this.db.query(query, [building_name, date_of_arrival || null, age_of_arrival || null, status, buildingId]);
+        const result = await this.db.query(query, [building_name, date_of_arrival || null, age_of_arrival || null, total_population || null, status, buildingId]);
         return result.rows[0];
     }
 

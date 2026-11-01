@@ -5,6 +5,21 @@ function getAuthHeaders() {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
+function formatTotalPopulation(input) {
+    if (!input) return;
+    let v = input.value.replace(/[^0-9]/g, '');
+    if (v) v = Number(v).toLocaleString('en-US');
+    input.value = v;
+}
+
+function formatAgeArrival(input) {
+    if (!input) return;
+    let v = input.value.replace(/[^0-9]/g, '');
+    if (v.length > 1) v = v.slice(0, 2) + '-' + v.slice(2);
+    if (v.length > 7) v = v.slice(0, 7);
+    input.value = v;
+}
+
 function parseCullingAge(str) {
     if (!str) return null;
     const v = str.toString().trim();
@@ -59,7 +74,7 @@ function updateCullingDateForRow(row) {
     const dateOfArrivalCell = cells[1];
     const ageOfArrivalCell = cells[2];
     const cullingAgeInput = row.querySelector('.culling-age-input');
-    const cullingDateCell = cells[4];
+    const cullingDateCell = cells[5];
     if (!cullingAgeInput || !cullingDateCell) return;
     const arrivalDate = (dateOfArrivalCell.textContent || '').trim();
     const arrivalAge = (ageOfArrivalCell.textContent || '').trim();
@@ -257,6 +272,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                         <th>Layer Building</th>
                                         <th>Date of Arrival</th>
                                         <th>Age of Arrival</th>
+                                        <th>Total Population</th>
                                         <th>Culling Age</th>
                                         <th class="sortable" data-sort="culling_date">Culling Date <span class="sort-arrow">&#8645;</span></th>
                                         <th>Next Arrival Date</th>
@@ -349,10 +365,11 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 <div class="modal-field med-field">
                                     <label for="med-count">Number of Medications</label>
                                     <select class="modal-select" id="med-count">
+                                        <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
                                         <option value="3">3</option>
-                                </select>
+                                    </select>
                             </div>
                             <div id="medication-entries"></div>
                         </div>
@@ -457,6 +474,10 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 <input type="text" id="new-building-age-arrival" placeholder="XX - XX" maxlength="7" oninput="formatAgeArrival(this)" />
                             </div>
                             <div class="modal-field">
+                                <label for="new-building-total-population">Total Population</label>
+                                <input type="text" id="new-building-total-population" placeholder="XX,XXX" oninput="formatTotalPopulation(this)" />
+                            </div>
+                            <div class="modal-field">
                                 <label for="new-building-status">Status</label>
                                 <select class="modal-select" id="new-building-status">
                                     <option value="Active">Active</option>
@@ -558,7 +579,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 option.value = b.building_id;
                                 option.textContent = b.building_name;
                                 select.appendChild(option);
-                            });
+                        });
                         }
                     } catch (err) {
                         console.error('Failed to load buildings', err);
@@ -571,13 +592,14 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
             const buildingName = document.getElementById('new-building-name').value.trim();
             const dateOfArrival = document.getElementById('new-building-date-arrival').value;
             const ageOfArrival = document.getElementById('new-building-age-arrival').value.trim();
+            const totalPopulation = document.getElementById('new-building-total-population').value.replace(/,/g, '').trim();
             const status = document.getElementById('new-building-status').value;
             if (!buildingName) { alert('Please enter a building name.'); return; }
             try {
                 const res = await fetch('/api/layer-buildings-reports/buildings', {
                     method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ building_id: buildingId, building_name: buildingName, date_of_arrival: dateOfArrival || null, age_of_arrival: ageOfArrival || null, status })
+                    body: JSON.stringify({ building_id: buildingId, building_name: buildingName, date_of_arrival: dateOfArrival || null, age_of_arrival: ageOfArrival || null, total_population: totalPopulation || null, status })
                 });
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
@@ -587,6 +609,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 document.getElementById('new-building-name').value = '';
                 document.getElementById('new-building-date-arrival').value = '';
                 document.getElementById('new-building-age-arrival').value = '';
+                document.getElementById('new-building-total-population').value = '';
                 closeAddRemoveModal();
                 loadBuildingsTable();
         (async () => {
@@ -601,6 +624,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                         <td>${b.building_name || ''}</td>
                         <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
                         <td>${b.age_of_arrival || ''}</td>
+                        <td>${b.total_population ? Number(b.total_population).toLocaleString('en-US') : ''}</td>
                         <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
                         <td></td>
                         <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
@@ -643,6 +667,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                         <td>${b.building_name || ''}</td>
                         <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
                         <td>${b.age_of_arrival || ''}</td>
+                        <td>${b.total_population ? Number(b.total_population).toLocaleString('en-US') : ''}</td>
                         <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
                         <td></td>
                         <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
@@ -939,6 +964,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                         <td>${b.building_name || ''}</td>
                         <td>${(b.date_of_arrival || '').toString().slice(0,10)}</td>
                         <td>${b.age_of_arrival || ''}</td>
+                        <td>${b.total_population ? Number(b.total_population).toLocaleString('en-US') : ''}</td>
                         <td><input type="text" class="culling-age-input" placeholder="XXX-XX" maxlength="6" oninput="formatCullingAge(this)" style="border-radius: 4px; width: 80px; text-align: center; font-size: 12px;" /></td>
                         <td></td>
                         <td><input type="date" style="border-radius: 4px; width: 120px; color: #000; font-size: 12px;" /></td>
@@ -971,8 +997,8 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                         if (!rec) return;
                         const input = row.querySelector('.culling-age-input');
                         if (input) input.value = rec.culling_age || '';
-                        if (row.cells[4]) row.cells[4].textContent = rec.culling_date || '';
-                        const dateInput = row.cells[5].querySelector('input[type="date"]');
+                        if (row.cells[5]) row.cells[5].textContent = rec.culling_date || '';
+                        const dateInput = row.cells[6].querySelector('input[type="date"]');
                         if (dateInput) dateInput.value = (rec.next_arrival_date || '').toString().slice(0,10);
                         const sel = row.querySelector('.rtl-company-select');
                         if (sel) sel.value = rec.company || '';
@@ -986,9 +1012,9 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                 const row = btn.closest('tr');
                 const buildingName = row.cells[0].textContent.trim();
                 const cullingAge = row.querySelector('.culling-age-input')?.value || '';
-                const nextArrival = row.cells[5].querySelector('input[type="date"]')?.value || '';
+                const nextArrival = row.cells[6].querySelector('input[type="date"]')?.value || '';
                 const company = row.querySelector('.rtl-company-select')?.value || '';
-                const cullingDate = row.cells[4].textContent.trim();
+                const cullingDate = row.cells[5].textContent.trim();
                 const res = await fetch('/api/layer-buildings-culling', {
                     method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
@@ -1008,8 +1034,8 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                     const asc = th.dataset.dir !== 'asc';
                     th.dataset.dir = asc ? 'asc' : 'desc';
                     rows.sort((a,b) => {
-                        const va = (a.cells[4].textContent || '').trim();
-                        const vb = (b.cells[4].textContent || '').trim();
+                        const va = (a.cells[5].textContent || '').trim();
+                        const vb = (b.cells[5].textContent || '').trim();
                         return asc ? va.localeCompare(vb) : vb.localeCompare(va);
                     });
                     rows.forEach(r => tbody.appendChild(r));
