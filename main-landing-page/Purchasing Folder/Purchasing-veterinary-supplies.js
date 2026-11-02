@@ -2249,23 +2249,15 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const modal = document.getElementById('order-vet-supplies-modal');
             if (!modal) return;
 
-            try {
-                const idRes = await fetch(API_BASE_VET_ORDERS + '/next-id', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
-                });
-                const idData = await idRes.json();
-                document.getElementById('order-vet-supplies-id').value = idData.order_id || 'OrVeSupID-1';
-            } catch (err) {
-                console.error('Failed to fetch next order ID', err);
-                document.getElementById('order-vet-supplies-id').value = 'OrVeSupID-1';
-            }
-
             document.getElementById('order-vet-supplies-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('order-vet-supplies-terms').value = '';
             document.getElementById('order-vet-supplies-invoice').value = '';
-            document.getElementById('order-vet-supplies-company').innerHTML = '<option value="">Select Company</option>';
-            document.getElementById('order-vet-supplies-product').innerHTML = '<option value="">Select Product</option>';
-            document.getElementById('order-vet-supplies-grand-total').value = '';
+            const companySel = document.getElementById('order-vet-supplies-company');
+            if (companySel) companySel.innerHTML = '<option value="">Select Company</option>';
+            const productSel = document.getElementById('order-vet-supplies-product');
+            if (productSel) productSel.innerHTML = '<option value="">Select Product</option>';
+            const grandTotal = document.getElementById('order-vet-supplies-grand-total');
+            if (grandTotal) grandTotal.value = '';
             orderVetSuppliesItems = [];
             renderOrderVetSuppliesItems();
 
@@ -2274,8 +2266,22 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 uploadZone._clear();
             }
 
-            await loadActiveSuppliersForOrderVet();
             modal.classList.remove('hidden');
+
+            try {
+                const idRes = await fetch(API_BASE_VET_ORDERS + '/next-id', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                });
+                const idData = await idRes.json();
+                const idInput = document.getElementById('order-vet-supplies-id');
+                if (idInput) idInput.value = idData.order_id || 'OrVeSupID-1';
+            } catch (err) {
+                console.error('Failed to fetch next order ID', err);
+                const idInput = document.getElementById('order-vet-supplies-id');
+                if (idInput) idInput.value = 'OrVeSupID-1';
+            }
+
+            await loadActiveSuppliersForOrderVet();
         }
 
         function closeOrderVetSuppliesModal() {

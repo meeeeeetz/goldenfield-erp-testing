@@ -258,6 +258,40 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
                 </div>
             </div>
         </div>
+
+            <div id="attendance-template-config-modal" class="modal" style="display:none; align-items: flex-start; justify-content: center; padding-top: 40px;">
+                <div class="modal-content" style="max-width: 1000px; width: 95%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="modal-header-row">
+                    <h3>Download Attendance Template</h3>
+                    <button class="modal-close-btn" id="close-attendance-template-config-modal">&times;</button>
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; max-height: 85vh;">
+                    <div style="display: flex; gap: 16px; flex-shrink: 0;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-weight: 600; font-size: 13px;">From Date</label>
+                            <input type="date" id="template-from-date" style="padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px;">
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-weight: 600; font-size: 13px;">To Date</label>
+                            <input type="date" id="template-to-date" style="padding: 8px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 13px;">
+                        </div>
+                    </div>
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: visible; display: flex; flex-direction: column; flex-shrink: 0;">
+                        <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                            <input type="checkbox" id="template-select-all-depts" style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="template-select-all-depts" style="font-weight: 600; font-size: 14px; cursor: pointer;">Select All Departments</label>
+                        </div>
+                        <div id="template-departments-list" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px;">
+                            <div style="text-align: center; color: #64748b; padding: 20px;">Loading employees...</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; flex-shrink: 0;">
+                    <button id="cancel-attendance-template-config-btn" class="btn-danger" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Cancel</button>
+                    <button id="download-attendance-template-config-btn" class="btn-primary" type="button" style="padding: 10px 16px; font-size: 14px; cursor: pointer;">Download</button>
+                </div>
+            </div>
+        </div>
     `;
 
     const attendanceSubtabAddBtn = document.getElementById('attendance-subtab-add-btn');
@@ -1114,7 +1148,207 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
         }
     };
 
-    const batchUploadAttendanceBtn = document.getElementById('batch-upload-attendance-btn');
+    let templateEmployeesList = [];
+
+    const loadTemplateConfigEmployees = async () => {
+        try {
+            const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
+            const employeesData = employeesRes.ok ? await employeesRes.json() : [];
+            const employees = Array.isArray(employeesData) ? employeesData : (employeesData.value || []);
+            templateEmployeesList = Array.isArray(employees) ? employees : [];
+            
+            const grouped = {};
+            templateEmployeesList.forEach(emp => {
+                const dept = emp.department || 'Unassigned';
+                if (!grouped[dept]) grouped[dept] = [];
+                grouped[dept].push(emp);
+            });
+            
+            const depts = Object.keys(grouped).sort();
+            const listDiv = document.getElementById('template-departments-list');
+            if (!listDiv) return;
+            
+            if (depts.length === 0) {
+                listDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No employees found</div>';
+                return;
+            }
+            
+            let html = '';
+            depts.forEach(dept => {
+                const emps = grouped[dept];
+                html += `<div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: visible;">`;
+                html += `<div style="background: #f1f5f9; padding: 10px 12px; display: flex; align-items: center; gap: 10px;">`;
+                html += `<input type="checkbox" class="template-dept-checkbox" data-dept="${dept.replace(/"/g, '&quot;')}" style="width: 18px; height: 18px; cursor: pointer;">`;
+                html += `<label style="font-weight: 600; font-size: 13px; cursor: pointer;">${dept} (${emps.length})</label>`;
+                html += `</div>`;
+                html += `<div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; height: auto; overflow: visible;">`;
+                emps.forEach(emp => {
+                    html += `<div style="display: flex; align-items: center; gap: 10px; padding: 5px 0; min-height: 26px; width: 100%;">`;
+                    html += `<input type="checkbox" class="template-emp-checkbox" data-dept="${dept.replace(/"/g, '&quot;')}" data-empid="${emp.employee_id}" style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">`;
+                    html += `<label style="font-size: 13px; cursor: pointer; word-break: break-all; flex: 1;">${emp.last_name}, ${emp.first_name} (${emp.employee_id})</label>`;
+                    html += `</div>`;
+                });
+                html += `</div>`;
+                html += `</div>`;
+            });
+            listDiv.innerHTML = html;
+            
+            document.querySelectorAll('.template-dept-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const dept = e.target.getAttribute('data-dept');
+                    document.querySelectorAll(`.template-emp-checkbox[data-dept="${dept.replace(/"/g, '\\"')}"]`).forEach(ecb => {
+                        ecb.checked = e.target.checked;
+                    });
+                });
+            });
+        } catch (err) {
+            console.error('Failed to load employees:', err);
+            const listDiv = document.getElementById('template-departments-list');
+            if (listDiv) listDiv.innerHTML = '<div style="text-align: center; color: #dc2626; padding: 20px;">Failed to load employees</div>';
+        }
+    };
+
+    const downloadTemplateFromConfig = () => {
+        try {
+            const fromDate = document.getElementById('template-from-date')?.value;
+            const toDate = document.getElementById('template-to-date')?.value;
+            if (!fromDate || !toDate) {
+                alert('Please select both From Date and To Date');
+                return;
+            }
+            if (new Date(toDate) < new Date(fromDate)) {
+                alert('To Date must be after or equal to From Date');
+                return;
+            }
+            
+            const selectedEmpIds = [];
+            document.querySelectorAll('.template-emp-checkbox:checked').forEach(cb => {
+                selectedEmpIds.push(cb.getAttribute('data-empid'));
+            });
+            if (selectedEmpIds.length === 0) {
+                alert('Please select at least one employee');
+                return;
+            }
+            
+            const selectedEmployees = templateEmployeesList.filter(e => selectedEmpIds.includes(e.employee_id));
+            selectedEmployees.sort((a,b) => {
+                if (a.employee_id < b.employee_id) return -1;
+                if (a.employee_id > b.employee_id) return 1;
+                return 0;
+            });
+            
+            const attendanceHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', '1st Coffee Break IN', '1st Coffee Break OUT', 'Mid Break IN', 'Mid Break OUT', '2nd Coffee Break IN', '2nd Coffee Break OUT', 'Time Out'];
+            const instructionRow = ['Auto-filled from Employees tab (do not edit)', 'Auto-filled from Employees tab (do not edit)', 'Enter Employee ID here', '', '', '', '', '', '', '', '', ''];
+            const attendanceData = [attendanceHeaders, instructionRow];
+            
+            const start = new Date(fromDate + 'T00:00:00');
+            const end = new Date(toDate + 'T00:00:00');
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const displayDate = mm + '/' + dd + '/' + yyyy;
+                selectedEmployees.forEach(emp => {
+                    attendanceData.push([
+                        emp.last_name || '',
+                        emp.first_name || '',
+                        emp.employee_id || '',
+                        displayDate,
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        ''
+                    ]);
+                });
+            }
+            
+            const employeeHeaders = ['Employee ID', 'Last Name', 'First Name', 'Department', 'Role'];
+            const employeeData = [employeeHeaders];
+            templateEmployeesList.forEach(emp => {
+                employeeData.push([
+                    emp.employee_id || '',
+                    emp.last_name || '',
+                    emp.first_name || '',
+                    emp.department || '',
+                    emp.role || ''
+                ]);
+            });
+            
+            const workbook = XLSX.utils.book_new();
+            const attendanceSheet = XLSX.utils.aoa_to_sheet(attendanceData);
+            const employeeSheet = XLSX.utils.aoa_to_sheet(employeeData);
+            
+            attendanceSheet['!merges'] = [
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }
+            ];
+            
+            for (let row = 2; row < attendanceData.length + 10; row++) {
+                const rowNum = row + 1;
+                const lastNameAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
+                attendanceSheet[lastNameAddr] = { t: 'f', f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
+                const firstNameAddr = XLSX.utils.encode_cell({ r: row, c: 1 });
+                attendanceSheet[firstNameAddr] = { t: 'f', f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
+            }
+            Object.keys(attendanceSheet).forEach(key => {
+                if (key[0] === '!') return;
+                const cell = attendanceSheet[key];
+                if (cell && cell.f && typeof cell.f === 'string') {
+                    cell.f = cell.f.replace(/^=@/, '=').replace(/^@/, '');
+                    cell.t = 'f';
+                }
+            });
+                // Remove any @ prefix if present
+                for (let key in attendanceSheet) {
+                    if (key[0] === '!') continue;
+                    if (attendanceSheet[key] && attendanceSheet[key].f && typeof attendanceSheet[key].f === 'string') {
+                        attendanceSheet[key].f = attendanceSheet[key].f.replace(/^@+/, '');
+                    }
+                }
+            
+            attendanceSheet['!cols'] = [
+                { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 12, z: 'MM/DD/YYYY' },
+                { wch: 10 }, { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 20 }, { wch: 10 }
+            ];
+            
+            XLSX.utils.book_append_sheet(workbook, attendanceSheet, 'Attendance');
+            XLSX.utils.book_append_sheet(workbook, employeeSheet, 'Employees');
+            XLSX.writeFile(workbook, 'attendance_template.xlsx');
+            
+            document.getElementById('attendance-template-config-modal').style.display = 'none';
+        } catch (err) {
+            console.error('Failed to download template:', err);
+            alert('Failed to download template');
+        }
+    };
+
+    if (document.getElementById('close-attendance-template-config-modal')) {
+        document.getElementById('close-attendance-template-config-modal').addEventListener('click', () => {
+            document.getElementById('attendance-template-config-modal').style.display = 'none';
+        });
+    }
+    if (document.getElementById('cancel-attendance-template-config-btn')) {
+        document.getElementById('cancel-attendance-template-config-btn').addEventListener('click', () => {
+            document.getElementById('attendance-template-config-modal').style.display = 'none';
+        });
+    }
+    if (document.getElementById('download-attendance-template-config-btn')) {
+        document.getElementById('download-attendance-template-config-btn').addEventListener('click', downloadTemplateFromConfig);
+    }
+    if (document.getElementById('template-select-all-depts')) {
+        document.getElementById('template-select-all-depts').addEventListener('change', (e) => {
+            document.querySelectorAll('.template-emp-checkbox').forEach(cb => {
+                cb.checked = e.target.checked;
+            });
+            document.querySelectorAll('.template-dept-checkbox').forEach(cb => {
+                cb.checked = e.target.checked;
+            });
+        });
+    }
     const batchUploadAttendanceModal = document.getElementById('batch-upload-attendance-modal');
     const closeBatchUploadAttendanceModal = document.getElementById('close-batch-upload-attendance-modal');
     const cancelBatchUploadAttendanceBtn = document.getElementById('cancel-batch-upload-attendance-btn');
@@ -1124,6 +1358,7 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
     const batchAttendanceDropZone = document.getElementById('batch-attendance-drop-zone');
     const batchAttendanceFileInput = document.getElementById('batch-attendance-file-input');
     const batchAttendanceFileName = document.getElementById('batch-attendance-file-name');
+    const batchUploadAttendanceBtn = document.getElementById('batch-upload-attendance-btn');
 
     const resetBatchUploadAttendanceValidation = () => {
         const okEl = document.getElementById('batch-attendance-ok-count');
@@ -1355,69 +1590,9 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
 
     if (downloadAttendanceTemplateBtn) {
         downloadAttendanceTemplateBtn.addEventListener('click', async () => {
-            try {
-                const employeesRes = await fetch('/api/employee-profiles/active-with-compensation');
-                const employees = employeesRes.ok ? await employeesRes.json() : [];
-
-                const attendanceHeaders = ['Last Name', 'First Name', 'Employee ID', 'Date', 'Time In', '1st Coffee Break IN', '1st Coffee Break OUT', 'Mid Break IN', 'Mid Break OUT', '2nd Coffee Break IN', '2nd Coffee Break OUT', 'Time Out'];
-                const instructionRow = ['Auto-filled from Employees tab (do not edit)', 'Auto-filled from Employees tab (do not edit)', 'Enter Employee ID here', '', '', '', '', '', '', '', '', ''];
-                const attendanceData = [attendanceHeaders, instructionRow];
-
-                const employeeHeaders = ['Employee ID', 'Last Name', 'First Name', 'Department', 'Role'];
-                const employeeData = [employeeHeaders];
-
-                if (Array.isArray(employees)) {
-                    employees.forEach(emp => {
-                        employeeData.push([
-                            emp.employee_id || '',
-                            emp.last_name || '',
-                            emp.first_name || '',
-                            emp.department || '',
-                            emp.role || ''
-                        ]);
-                    });
-                }
-
-                const workbook = XLSX.utils.book_new();
-                const attendanceSheet = XLSX.utils.aoa_to_sheet(attendanceData);
-                const employeeSheet = XLSX.utils.aoa_to_sheet(employeeData);
-
-                attendanceSheet['!merges'] = [
-                    { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }
-                ];
-
-                for (let row = 2; row < 102; row++) {
-                    const rowNum = row + 1;
-                    const lastNameAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
-                    attendanceSheet[lastNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
-
-                    const firstNameAddr = XLSX.utils.encode_cell({ r: row, c: 1 });
-                    attendanceSheet[firstNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
-                }
-
-                attendanceSheet['!cols'] = [
-                    { wch: 18 },
-                    { wch: 18 },
-                    { wch: 16 },
-                    { wch: 12, z: 'MM/DD/YYYY' },
-                    { wch: 10 },
-                    { wch: 18 },
-                    { wch: 20 },
-                    { wch: 14 },
-                    { wch: 16 },
-                    { wch: 20 },
-                    { wch: 20 },
-                    { wch: 10 }
-                ];
-
-                XLSX.utils.book_append_sheet(workbook, attendanceSheet, 'Attendance');
-                XLSX.utils.book_append_sheet(workbook, employeeSheet, 'Employees');
-
-                XLSX.writeFile(workbook, 'attendance_template.xlsx');
-            } catch (err) {
-                console.error('Failed to download template:', err);
-                alert('Failed to download template');
-            }
+            const modal = document.getElementById('attendance-template-config-modal');
+            if (modal) modal.style.display = 'flex';
+            await loadTemplateConfigEmployees();
         });
     }
 
@@ -1457,10 +1632,24 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
                 for (let row = 2; row < 102; row++) {
                     const rowNum = row + 1;
                     const lastNameAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
-                    attendanceSheet[lastNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
+                    attendanceSheet[lastNameAddr] = { t: 'f', f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!B:B,"")` };
 
                     const firstNameAddr = XLSX.utils.encode_cell({ r: row, c: 1 });
-                    attendanceSheet[firstNameAddr] = { f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
+                    attendanceSheet[firstNameAddr] = { t: 'f', f: `XLOOKUP(C${rowNum},Employees!A:A,Employees!C:C,"")` };
+                }
+                Object.keys(attendanceSheet).forEach(key => {
+                    if (key[0] === '!') return;
+                    const cell = attendanceSheet[key];
+                    if (cell && cell.f && typeof cell.f === 'string') {
+                        cell.f = cell.f.replace(/^=@/, '=').replace(/^@/, '');
+                        cell.t = 'f';
+                    }
+                });
+                for (let key in attendanceSheet) {
+                    if (key[0] === '!') continue;
+                    if (attendanceSheet[key] && attendanceSheet[key].f && typeof attendanceSheet[key].f === 'string') {
+                        attendanceSheet[key].f = attendanceSheet[key].f.replace(/^@+/, '');
+                    }
                 }
 
                 attendanceSheet['!cols'] = [

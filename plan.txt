@@ -1,0 +1,8 @@
+﻿PLAN
+
+1. Add mini modal HTML for template selection (department checkboxes + employee checkboxes + date range + download button)
+2. Change Download Template button to open mini modal
+3. Load and group employees by department
+4. Handle department checkbox to select/deselect all in dept
+5. Generate template with rows ordered by date - iterate dates from start to end, for each date add rows for all selected employees
+6. Include columns similar to current template with pre-filled Employee ID and Date

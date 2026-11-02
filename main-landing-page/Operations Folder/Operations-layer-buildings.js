@@ -343,7 +343,7 @@ ModuleComponents['operations-layer-buildings'] = (container) => {
                                 </div>
                                 <div class="modal-field">
                                     <label for="report-date">Date</label>
-                                    <input type="text" id="report-date" class="readonly-field" readonly placeholder="Date will be set automatically" />
+                                     <input type="text" id="report-date" placeholder="Date will be set automatically" />
                                 </div>
                             </div>
                             <div class="modal-section">
