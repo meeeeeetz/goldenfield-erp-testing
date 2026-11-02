@@ -379,62 +379,147 @@ function renderDashboard() {
 }
 
 let moduleLoadId = 0;
+const MAX_CONCURRENT_LOADS = 3;
+const activeLoads = new Map(); // loadId -> { loadId, tabId, path, script, timeout, startedAt }
+let loadQueue = [];
 
-function loadModule(tabId) {
-    const contentArea = document.getElementById('content-area');
-    const scriptPath = tabModules[tabId];
-    const currentLoadId = ++moduleLoadId;
+function isCurrentLoad(loadId) {
+    return loadId === moduleLoadId;
+}
 
-    if (!scriptPath) {
-        contentArea.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') + '</h2><p>No module configured.</p></div>';
-        return;
+function abortLoad(entry) {
+    if (!entry) return;
+    if (entry.timeout) clearTimeout(entry.timeout);
+    if (entry.script) {
+        // Detach handlers first so a late-completing request can never
+        // render stale content or fire a false timeout after supersession.
+        entry.script.onload = null;
+        entry.script.onerror = null;
+        if (entry.script.parentNode) entry.script.parentNode.removeChild(entry.script);
     }
+    activeLoads.delete(entry.loadId);
+}
 
-    contentArea.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') + '</h2><p>Loading module...</p></div>';
+function drainQueue() {
+    while (loadQueue.length > 0 && activeLoads.size < MAX_CONCURRENT_LOADS) {
+        const next = loadQueue.shift();
+        startLoad(next.tabId, next.path, next.loadId);
+    }
+}
 
-    window.__currentTabId = tabId;
-    
-    // Clean up previous module's global function before loading new script
-    delete window.initializeModule;
+function startLoad(tabId, scriptPath, loadId) {
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
+
+    const entry = {
+        loadId,
+        tabId,
+        path: scriptPath,
+        script: null,
+        timeout: null,
+        startedAt: performance.now()
+    };
+    activeLoads.set(loadId, entry);
 
     const script = document.createElement('script');
-    script.src = scriptPath + '?t=' + Date.now();
+    script.src = scriptPath + '?t=' + Date.now() + '&l=' + loadId;
+    script.dataset.loadId = String(loadId);
+    entry.script = script;
 
-    const cleanup = () => {
+    const removeScript = () => {
         if (script.parentNode) script.parentNode.removeChild(script);
     };
 
-    const timeout = setTimeout(function() {
-        if (moduleLoadId !== currentLoadId) return;
-        cleanup();
-        contentArea.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') + '</h2><p>Module timed out while loading.</p></div>';
-    }, 8000);
+    // Adaptive timeout: base 8s, grows with queued/active pressure so a burst
+    // of rapid tab clicks never starves a valid module into a false timeout.
+    const baseTimeout = 8000;
+    const extraPerPending = 1500;
+    const maxTimeout = 30000;
+    const pendingPressure = loadQueue.length + activeLoads.size;
+    const timeoutMs = Math.min(maxTimeout, baseTimeout + pendingPressure * extraPerPending);
 
-    script.onload = function() {
-        clearTimeout(timeout);
-        cleanup();
-        if (moduleLoadId !== currentLoadId) return;
-        
-        // Now this safely checks if the NEWLY loaded script actually defined the function
+    entry.timeout = setTimeout(function () {
+        const current = activeLoads.get(loadId);
+        if (!current || !isCurrentLoad(loadId)) return;
+        abortLoad(current);
+        const ca = document.getElementById('content-area');
+        if (ca) {
+            ca.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') +
+                '</h2><p>Module timed out while loading (' + (timeoutMs / 1000) +
+                's). Click the tab again to retry.</p></div>';
+        }
+    }, timeoutMs);
+
+    script.onload = function () {
+        const current = activeLoads.get(loadId);
+        if (!current) return;
+        clearTimeout(current.timeout);
+        removeScript();
+        activeLoads.delete(loadId);
+        drainQueue();
+        if (!isCurrentLoad(loadId)) return;
+
         if (typeof window.initializeModule === 'function') {
             try {
                 window.initializeModule(contentArea);
             } catch (err) {
                 console.error('[MODULE RUNTIME ERROR]:', err);
+                contentArea.innerHTML = '<div class="placeholder-content"><h2>' +
+                    (tabTitles[tabId] || 'Module') + '</h2><p>Module runtime error. See console.</p></div>';
             }
         } else {
-            contentArea.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') + '</h2><p>Module loaded. Add content in ' + scriptPath + '</p></div>';
+            contentArea.innerHTML = '<div class="placeholder-content"><h2>' +
+                (tabTitles[tabId] || 'Module') + '</h2><p>Module loaded. Add content in ' + scriptPath + '</p></div>';
         }
     };
 
-    script.onerror = function() {
-        clearTimeout(timeout);
-        cleanup();
-        if (moduleLoadId !== currentLoadId) return;
-        contentArea.innerHTML = '<div class="placeholder-content"><h2>' + (tabTitles[tabId] || 'Module') + '</h2><p>Failed to load module: ' + scriptPath + '</p></div>';
+    script.onerror = function () {
+        const current = activeLoads.get(loadId);
+        if (!current) return;
+        clearTimeout(current.timeout);
+        removeScript();
+        activeLoads.delete(loadId);
+        drainQueue();
+        if (!isCurrentLoad(loadId)) return;
+        contentArea.innerHTML = '<div class="placeholder-content"><h2>' +
+            (tabTitles[tabId] || 'Module') + '</h2><p>Failed to load module: ' + scriptPath + '</p></div>';
     };
 
     document.head.appendChild(script);
+}
+
+function loadModule(tabId) {
+    const contentArea = document.getElementById('content-area');
+    const scriptPath = tabModules[tabId];
+
+    if (!scriptPath) {
+        if (contentArea) {
+            contentArea.innerHTML = '<div class="placeholder-content"><h2>' +
+                (tabTitles[tabId] || 'Module') + '</h2><p>No module configured.</p></div>';
+        }
+        return;
+    }
+
+    // Supersede every previous request: only the latest tab click wins. This
+    // aborts in-flight <script> injections (freeing the browser connection pool)
+    // and drops stale queued requests so rapid clicking can never stack up.
+    moduleLoadId++;
+    loadQueue = [];
+
+    for (const entry of Array.from(activeLoads.values())) {
+        abortLoad(entry);
+    }
+
+    if (contentArea) {
+        contentArea.innerHTML = '<div class="placeholder-content"><h2>' +
+            (tabTitles[tabId] || 'Module') + '</h2><p>Loading module...</p></div>';
+    }
+
+    window.__currentTabId = tabId;
+    delete window.initializeModule;
+
+    loadQueue.push({ tabId, path: scriptPath, loadId: moduleLoadId });
+    drainQueue();
 }
 
 // Delegated Sidebar Navigation Handler

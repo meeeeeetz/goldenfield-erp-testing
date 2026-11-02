@@ -71,6 +71,7 @@ const shippingPermitRecipientPhotoRoutes = require('./routes/operationRoutes/shi
 const shippingPermitLicensesRoutes = require('./routes/operationRoutes/shipping-permit-licenses-routes');
 const eggProductsRoutes = require('./routes/operationRoutes/egg-products-routes');
 const dailyEggProductionRoutes = require('./routes/operationRoutes/daily-egg-production-routes');
+const metzelerPrintRoutes = require('./routes/metzelerRoutes/metzeler-print-routes');
 
 
 
@@ -125,6 +126,7 @@ app.use('/api/shipping-permit-recipient-photo', shippingPermitRecipientPhotoRout
 app.use('/api/shipping-permit-licenses', shippingPermitLicensesRoutes);
 app.use('/api/egg-products', eggProductsRoutes);
 app.use('/api/daily-egg-production', dailyEggProductionRoutes);
+app.use('/api/metzeler/print/templates', metzelerPrintRoutes);
 app.use('/api/code-of-conduct', codeOfConductRoutes);
 app.use('/api/onboarding-documents', onboardingDocumentsRoutes);
 app.use('/api/vet-supplies-categories', vetSuppliesCategoriesRoutes);
