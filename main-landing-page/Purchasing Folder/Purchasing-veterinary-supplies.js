@@ -528,6 +528,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                                     <label>Dosage Preventive Unit</label>
                                     <input type="text" id="create-vet-product-dosage-prev-unit" readonly />
                                 </div>
+                                <div class="modal-field">
+                                    <label>Preventive Water Ratio</label>
+                                    <input type="text" id="create-vet-product-prev-water-ratio" placeholder="0" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Preventive Water Unit</label>
+                                    <input type="text" id="create-vet-product-prev-water-unit" value="Liters" readonly />
+                                </div>
                             </div>
                             <div class="modal-meta-row">
                                 <div class="modal-field">
@@ -537,6 +545,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                                 <div class="modal-field">
                                     <label>Dosage Treatment Unit</label>
                                     <input type="text" id="create-vet-product-dosage-treat-unit" readonly />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Treatment Water Ratio</label>
+                                    <input type="text" id="create-vet-product-treat-water-ratio" placeholder="0" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Treatment Water Unit</label>
+                                    <input type="text" id="create-vet-product-treat-water-unit" value="Liters" readonly />
                                 </div>
                             </div>
                             <div class="modal-meta-row">
@@ -624,6 +640,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                                     <label>Dosage Preventive Unit</label>
                                     <input type="text" id="edit-vet-product-dosage-prev-unit" readonly />
                                 </div>
+                                <div class="modal-field">
+                                    <label>Preventive Water Ratio</label>
+                                    <input type="text" id="edit-vet-product-prev-water-ratio" placeholder="0" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Preventive Water Unit</label>
+                                    <input type="text" id="edit-vet-product-prev-water-unit" value="Liters" readonly />
+                                </div>
                             </div>
                             <div class="modal-meta-row">
                                 <div class="modal-field">
@@ -633,6 +657,14 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                                 <div class="modal-field">
                                     <label>Dosage Treatment Unit</label>
                                     <input type="text" id="edit-vet-product-dosage-treat-unit" readonly />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Treatment Water Ratio</label>
+                                    <input type="text" id="edit-vet-product-treat-water-ratio" placeholder="0" />
+                                </div>
+                                <div class="modal-field">
+                                    <label>Treatment Water Unit</label>
+                                    <input type="text" id="edit-vet-product-treat-water-unit" value="Liters" readonly />
                                 </div>
                             </div>
                             <div class="modal-meta-row">
@@ -1646,8 +1678,10 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const status = document.getElementById('create-vet-product-status').value;
             const dosagePreventiveValue = document.getElementById('create-vet-product-dosage-prev-value')?.value.trim() || '';
             const dosagePreventiveUnit = document.getElementById('create-vet-product-dosage-prev-unit')?.value || '';
-            const dosagePreventiveWater = document.getElementById('create-vet-product-dosage-prev-water')?.value.trim() || '';
             const dosageTreatmentValue = document.getElementById('create-vet-product-dosage-treat-value')?.value.trim() || '';
+            const dosageTreatmentUnit = document.getElementById('create-vet-product-dosage-treat-unit')?.value || '';
+            const dosagePreventiveWaterRatio = document.getElementById('create-vet-product-prev-water-ratio')?.value.trim() || '';
+            const dosageTreatmentWaterRatio = document.getElementById('create-vet-product-treat-water-ratio')?.value.trim() || '';
             try {
                 const res = await fetch(API_BASE_VET_PRODUCTS, {
                     method: 'POST',
@@ -1669,7 +1703,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                         dosage_preventive_value: dosagePreventiveValue || null,
                         dosage_preventive_unit: dosagePreventiveUnit || null,
                         dosage_treatment_value: dosageTreatmentValue || null,
-                        dosage_treatment_unit: dosageTreatmentUnit || null
+                        dosage_treatment_unit: dosageTreatmentUnit || null,
+                        dosage_preventive_water_ratio: dosagePreventiveWaterRatio || null,
+                        dosage_treatment_water_ratio: dosageTreatmentWaterRatio || null
                     })
                 });
 
@@ -1712,21 +1748,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const unitCost = document.getElementById('edit-vet-product-cost').value.trim();
             const discount = document.getElementById('edit-vet-product-discount').value;
             const status = document.getElementById('edit-vet-product-status').value;
-            const dosagePreventiveValue = document.getElementById('edit-vet-product-dosage-prev-value')?.value.trim() || '';
-            const dosagePreventiveUnit = document.getElementById('edit-vet-product-dosage-prev-unit')?.value || '';
-            const dosagePreventiveWater = document.getElementById('edit-vet-product-dosage-prev-water')?.value.trim() || '';
-            const dosageTreatmentValue = document.getElementById('edit-vet-product-dosage-treat-value')?.value.trim() || '';
-            const dosageTreatmentUnit = document.getElementById('edit-vet-product-dosage-treat-unit')?.value || '';
-            const dosageTreatmentWater = document.getElementById('edit-vet-product-dosage-treat-water')?.value.trim() || '';
-
-            if (!productId || !item) {
-                alert('Product ID and Item are required');
-                return;
-            }
-
             try {
-                const res = await fetch(API_BASE_VET_PRODUCTS, {
-                    method: 'POST',
+                const res = await fetch(`${API_BASE_VET_PRODUCTS}/${encodeURIComponent(productId)}`, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
@@ -1745,7 +1769,9 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                         dosage_preventive_value: dosagePreventiveValue || null,
                         dosage_preventive_unit: dosagePreventiveUnit || null,
                         dosage_treatment_value: dosageTreatmentValue || null,
-                        dosage_treatment_unit: dosageTreatmentUnit || null
+                        dosage_treatment_unit: dosageTreatmentUnit || null,
+                        dosage_preventive_water_ratio: dosagePreventiveWaterRatio || null,
+                        dosage_treatment_water_ratio: dosageTreatmentWaterRatio || null
                     })
                 });
 
@@ -1809,6 +1835,10 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     document.getElementById('edit-vet-product-dosage-prev-unit').value = product.dosage_preventive_unit || product.unit || '';
                     document.getElementById('edit-vet-product-dosage-treat-value').value = product.dosage_treatment_value || '';
                     document.getElementById('edit-vet-product-dosage-treat-unit').value = product.dosage_treatment_unit || product.unit || '';
+                    document.getElementById('edit-vet-product-prev-water-ratio').value = product.dosage_preventive_water_ratio || '';
+                    document.getElementById('edit-vet-product-treat-water-ratio').value = product.dosage_treatment_water_ratio || '';
+                    document.getElementById('edit-vet-product-prev-water-ratio').value = product.dosage_preventive_water_ratio || '';
+                    document.getElementById('edit-vet-product-treat-water-ratio').value = product.dosage_treatment_water_ratio || '';
                     const editUnitSelect = document.getElementById('edit-vet-product-unit');
                     const editPrevUnit = document.getElementById('edit-vet-product-dosage-prev-unit');
                     const editTreatUnit = document.getElementById('edit-vet-product-dosage-treat-unit');

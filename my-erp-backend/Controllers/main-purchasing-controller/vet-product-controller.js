@@ -50,38 +50,11 @@ class VetProductController {
     }
 
     async addProduct(productData) {
-        const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit } = productData;
+        const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio } = productData;
         const query = `
             INSERT INTO vet_products 
-            (product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            RETURNING *
-        `;
-        const result = await this.db.query(query, [
-            product_id,
-            supplier_id,
-            item,
-            generic_name || null,
-            category,
-            package_size || null,
-            unit,
-            unit_cost || 0,
-            discount || '0%',
-            status || 'Active',
-            dosage_preventive_value || null,
-            dosage_preventive_unit || null,
-            dosage_treatment_value || null,
-            dosage_treatment_unit || null
-        ]);
-        return result.rows[0];
-    }
-
-    async updateProduct(productId, productData) {
-        const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit } = productData;
-        const query = `
-            UPDATE vet_products 
-            SET product_id = $1, supplier_id = $2, item = $3, generic_name = $4, category = $5, package_size = $6, unit = $7, unit_cost = $8, discount = $9, status = $10, dosage_preventive_value = $11, dosage_preventive_unit = $12, dosage_treatment_value = $13, dosage_treatment_unit = $14, updated_at = CURRENT_TIMESTAMP
-            WHERE product_id = $15
+            (product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             RETURNING *
         `;
         const result = await this.db.query(query, [
@@ -99,6 +72,37 @@ class VetProductController {
             dosage_preventive_unit || null,
             dosage_treatment_value || null,
             dosage_treatment_unit || null,
+            dosage_preventive_water_ratio || null,
+            dosage_treatment_water_ratio || null
+        ]);
+        return result.rows[0];
+    }
+
+    async updateProduct(productId, productData) {
+        const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio } = productData;
+        const query = `
+            UPDATE vet_products 
+            SET product_id = $1, supplier_id = $2, item = $3, generic_name = $4, category = $5, package_size = $6, unit = $7, unit_cost = $8, discount = $9, status = $10, dosage_preventive_value = $11, dosage_preventive_unit = $12, dosage_treatment_value = $13, dosage_treatment_unit = $14, dosage_preventive_water_ratio = $15, dosage_treatment_water_ratio = $16, updated_at = CURRENT_TIMESTAMP
+            WHERE product_id = $17
+            RETURNING *
+        `;
+        const result = await this.db.query(query, [
+            product_id,
+            supplier_id,
+            item,
+            generic_name || null,
+            category,
+            package_size || null,
+            unit,
+            unit_cost || 0,
+            discount || '0%',
+            status || 'Active',
+            dosage_preventive_value || null,
+            dosage_preventive_unit || null,
+            dosage_treatment_value || null,
+            dosage_treatment_unit || null,
+            dosage_preventive_water_ratio || null,
+            dosage_treatment_water_ratio || null,
             productId
         ]);
         return result.rows[0];
