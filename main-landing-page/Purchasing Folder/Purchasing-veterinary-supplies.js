@@ -27,10 +27,6 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Veterinary Suppliers</span>
                     </button>
-                    <button id="add-rtl-suppliers-btn" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        <span class="btn-label">Add RTL Suppliers</span>
-                    </button>
                     <button id="add-vet-products-btn" class="btn-icon-circle">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         <span class="btn-label">Add Veterinary Products</span>
@@ -1072,7 +1068,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
         }
 
         var vetSuppliersData = [];
-        var API_BASE_VET_SUPPLIERS = '/api/vet-suppliers';
+        var API_BASE_VET_SUPPLIERS = '/api/vet-supplies';
 
         function switchVetSupplierTab(tab) {
             const createPanel = document.getElementById('panel-create-vet-supplier');
@@ -1325,161 +1321,6 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
         if (saveCreateVetSupplierBtn) {
             saveCreateVetSupplierBtn.onclick = saveCreateVetSupplier;
         }
-
-        const addRtlSuppliersBtn = document.getElementById('add-rtl-suppliers-btn');
-        const rtlSuppliersModal = document.getElementById('rtl-suppliers-modal');
-
-        function switchRtlSupplierTab(tab) {
-            const createPanel = document.getElementById('panel-create-rtl-supplier');
-            const editPanel = document.getElementById('panel-edit-rtl-supplier');
-            const createTab = document.getElementById('tab-create-rtl-supplier');
-            const editTab = document.getElementById('tab-edit-rtl-supplier');
-
-            if (tab === 'create') {
-                createPanel.style.display = 'block';
-                editPanel.style.display = 'none';
-                createTab.classList.add('active');
-                editTab.classList.remove('active');
-            } else {
-                createPanel.style.display = 'none';
-                editPanel.style.display = 'block';
-                createTab.classList.remove('active');
-                editTab.classList.add('active');
-            }
-        }
-
-        function openRtlSuppliersModal() {
-            const modal = document.getElementById('rtl-suppliers-modal');
-            if (!modal) return;
-
-            document.getElementById('create-rtl-supplier-id').value = 'RTLSuID-1';
-            switchRtlSupplierTab('create');
-            modal.classList.remove('hidden');
-        }
-
-        function closeRtlSuppliersModal() {
-            const modal = document.getElementById('rtl-suppliers-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        if (addRtlSuppliersBtn && rtlSuppliersModal) {
-            addRtlSuppliersBtn.onclick = openRtlSuppliersModal;
-        }
-
-        const closeRtlSuppliersBtn = document.getElementById('close-rtl-suppliers-modal');
-        if (closeRtlSuppliersBtn && rtlSuppliersModal) {
-            closeRtlSuppliersBtn.onclick = closeRtlSuppliersModal;
-        }
-
-        if (rtlSuppliersModal) {
-            let mouseDownOnBackdrop = false;
-            rtlSuppliersModal.addEventListener('mousedown', (e) => {
-                mouseDownOnBackdrop = e.target === rtlSuppliersModal;
-            });
-            rtlSuppliersModal.addEventListener('mouseup', (e) => {
-                if (mouseDownOnBackdrop && e.target === rtlSuppliersModal) {
-                    rtlSuppliersModal.classList.add('hidden');
-                }
-                mouseDownOnBackdrop = false;
-            });
-        }
-
-        const saveCreateRtlSupplierBtn = document.getElementById('save-create-rtl-supplier-btn');
-        if (saveCreateRtlSupplierBtn) {
-            saveCreateRtlSupplierBtn.onclick = async () => {
-                const supplierId = document.getElementById('create-rtl-supplier-id').value;
-                const companyName = document.getElementById('create-rtl-company-name').value.trim();
-                const address = document.getElementById('create-rtl-address').value.trim();
-                const tinNumber = document.getElementById('create-rtl-tin-number').value.trim();
-                const contactPerson = document.getElementById('create-rtl-contact-person').value.trim();
-                const contactNumber = document.getElementById('create-rtl-contact-number').value.trim();
-                const status = document.getElementById('create-rtl-supplier-status').value;
-
-                if (!supplierId || !companyName) {
-                    alert('Supplier ID and Company Name are required');
-                    return;
-                }
-
-                try {
-                    const res = await fetch('/api/rtl-suppliers', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                        },
-                        body: JSON.stringify({
-                            supplier_id: supplierId,
-                            company_name: companyName,
-                            address: address || null,
-                            tin_number: tinNumber || null,
-                            contact_person: contactPerson || null,
-                            contact_number: contactNumber || null,
-                            status: status
-                        })
-                    });
-
-                    if (!res.ok) {
-                        const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || 'Failed to create RTL supplier');
-                    }
-
-                    alert('RTL Supplier created successfully');
-                    closeRtlSuppliersModal();
-                } catch (err) {
-                    alert('Error: ' + err.message);
-                }
-            };
-        }
-
-        const saveEditRtlSupplierBtn = document.getElementById('save-edit-rtl-supplier-btn');
-        if (saveEditRtlSupplierBtn) {
-            saveEditRtlSupplierBtn.onclick = async () => {
-                const supplierId = document.getElementById('edit-rtl-supplier-id').value;
-                const companyName = document.getElementById('edit-rtl-company-name').value.trim();
-                const address = document.getElementById('edit-rtl-address').value.trim();
-                const tinNumber = document.getElementById('edit-rtl-tin-number').value.trim();
-                const contactPerson = document.getElementById('edit-rtl-contact-person').value.trim();
-                const contactNumber = document.getElementById('edit-rtl-contact-number').value.trim();
-                const status = document.getElementById('edit-rtl-supplier-status').value;
-
-                if (!supplierId || !companyName) {
-                    alert('Supplier ID and Company Name are required');
-                    return;
-                }
-
-                try {
-                    const res = await fetch(`/api/rtl-suppliers/${encodeURIComponent(supplierId)}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}`
-                        },
-                        body: JSON.stringify({
-                            company_name: companyName,
-                            address: address || null,
-                            tin_number: tinNumber || null,
-                            contact_person: contactPerson || null,
-                            contact_number: contactNumber || null,
-                            status: status
-                        })
-                    });
-
-                    if (!res.ok) {
-                        const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || 'Failed to update RTL supplier');
-                    }
-
-                    alert('RTL Supplier updated successfully');
-                    closeRtlSuppliersModal();
-                } catch (err) {
-                    alert('Error: ' + err.message);
-                }
-            };
-        }
-
-        window.switchRtlSupplierTab = switchRtlSupplierTab;
-        window.openRtlSuppliersModal = openRtlSuppliersModal;
-        window.closeRtlSuppliersModal = closeRtlSuppliersModal;
 
         const saveEditVetSupplierBtn = document.getElementById('save-edit-vet-supplier-btn');
         if (saveEditVetSupplierBtn) {
