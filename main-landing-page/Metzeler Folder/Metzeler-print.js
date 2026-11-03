@@ -194,7 +194,8 @@ function injectPrintStyles() {
             #print-sheet-content table[data-type="luckysheet_copy_action_table"] {
                 width: 100% !important;
                 table-layout: fixed !important;
-                border-collapse: collapse !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
                 border: 1px solid #000 !important;
                 page-break-inside: avoid !important;
                 transform: none !important;
@@ -204,12 +205,22 @@ function injectPrintStyles() {
                 border: 1px solid #000 !important;
                 background: #fff !important;
                 white-space: normal !important;
-                word-wrap: break-word !important;
-                overflow-wrap: break-word !important;
+                word-break: keep-all !important;
+                overflow-wrap: normal !important;
                 vertical-align: middle !important;
                 page-break-inside: avoid !important;
                 padding: 4px !important;
                 box-sizing: border-box !important;
+                min-height: 19px !important;
+                height: auto !important;
+                line-height: normal !important;
+                overflow: visible !important;
+            }
+
+            #print-sheet-content table[data-type="luckysheet_copy_action_table"] tr {
+                min-height: 19px !important;
+                height: auto !important;
+                page-break-inside: avoid !important;
             }
 
             .print-only { display: block !important; }
@@ -835,7 +846,30 @@ function initializeModule(contentArea) {
             const columnlen = sheetConfigFromSheet && sheetConfigFromSheet.config && sheetConfigFromSheet.config.columnlen ? sheetConfigFromSheet.config.columnlen : null;
             const rowlen = sheetConfigFromSheet && sheetConfigFromSheet.config && sheetConfigFromSheet.config.rowlen ? sheetConfigFromSheet.config.rowlen : null;
             const merge = sheetConfigFromSheet && sheetConfigFromSheet.config && sheetConfigFromSheet.config.merge ? sheetConfigFromSheet.config.merge : null;
-            const printHtml = buildLuckysheetPrintTable(rangeCells, printRowCount, printColCount, columnlen, rowlen, merge);
+
+            // 3b. Calculate vertical scale factor so all rows fit on one page
+            let rowScale = 1;
+            try {
+                let totalRowHeight = 0;
+                if (rowlen && typeof rowlen === 'object') {
+                    Object.keys(rowlen).forEach(key => {
+                        totalRowHeight += parseInt(rowlen[key], 10) || 19;
+                    });
+                } else {
+                    totalRowHeight = printRowCount * 19;
+                }
+                // Printable page height: A4 portrait = 297mm, landscape = 210mm, minus 12mm margins
+                const mmToPx = 3.7795;
+                const pageHeightMm = currentOrientation === 'landscape' ? 210 : 297;
+                const printableHeightPx = (pageHeightMm - 12) * mmToPx;
+                // Scale down if content exceeds page height, cap at 1.0 (no upscale)
+                rowScale = Math.min(1, printableHeightPx / Math.max(totalRowHeight, 1));
+            } catch (e) {
+                console.error('calc row scale error:', e);
+                rowScale = 1;
+            }
+
+            const printHtml = buildLuckysheetPrintTable(rangeCells, printRowCount, printColCount, columnlen, rowlen, merge, rowScale);
 
             // 4. Inject into temporary print container (direct child of document.body)
             let printContainer = document.getElementById('print-sheet-content');
@@ -913,7 +947,7 @@ function initializeModule(contentArea) {
      * Build a Luckysheet-style print table HTML string.
      * Format: <table data-type="luckysheet_copy_action_table"><colgroup width="...">...<tr><td style="...">value</td></tr></table>
      */
-    function buildLuckysheetPrintTable(cells, rowCount, colCount, columnlen, rowlen, merge) {
+    function buildLuckysheetPrintTable(cells, rowCount, colCount, columnlen, rowlen, merge, rowScale) {
         // Build column widths as percentages: each column's width / total width * 100
         // This ensures all columns proportionally fill 100% of the page width regardless of column count
         let totalColWidth = 0;
@@ -931,11 +965,11 @@ function initializeModule(contentArea) {
             colWidthsPct[c] = (rawColWidths[c] / Math.max(totalColWidth, 1)) * 100;
         }
 
-        // Build row heights map: use saved rowlen from sheet config
+        // Build row heights map: use saved rowlen from sheet config, scaled by rowScale
         const rowHeights = {};
         if (rowlen && typeof rowlen === 'object') {
             Object.keys(rowlen).forEach(key => {
-                rowHeights[key] = rowlen[key];
+                rowHeights[key] = parseInt(rowlen[key], 10) * rowScale || 19 * rowScale;
             });
         }
 
@@ -981,6 +1015,38 @@ function initializeModule(contentArea) {
             }
         });
 
+        // Trim trailing empty columns (no data in any row) to prevent extra blank column
+        let actualColCount = colCount;
+        while (actualColCount > 0) {
+            let colHasData = false;
+            for (let r = 0; r < rowCount; r++) {
+                const cell = matrix[r][actualColCount - 1];
+                if (cell && cell.v != null && cell.v !== '') {
+                    colHasData = true;
+                    break;
+                }
+            }
+            if (colHasData) break;
+            actualColCount--;
+        }
+        colCount = Math.max(actualColCount, 1);
+
+        // Trim trailing empty rows (no data in any column) to prevent extra blank row
+        let actualRowCount = rowCount;
+        while (actualRowCount > 0) {
+            let rowHasData = false;
+            for (let c = 0; c < colCount; c++) {
+                const cell = matrix[actualRowCount - 1][c];
+                if (cell && cell.v != null && cell.v !== '') {
+                    rowHasData = true;
+                    break;
+                }
+            }
+            if (rowHasData) break;
+            actualRowCount--;
+        }
+        rowCount = Math.max(actualRowCount, 1);
+
         let html = '<table data-type="luckysheet_copy_action_table" style="border-collapse: collapse; width: 100%; table-layout: fixed;">';
 
         // Colgroup with percentage column widths (fill 100% of page)
@@ -992,8 +1058,8 @@ function initializeModule(contentArea) {
 
         // Rows with exact row heights
         for (let r = 0; r < rowCount; r++) {
-            const rh = rowHeights[r] != null ? rowHeights[r] : 19;
-            html += '<tr style="height:' + rh + 'px;">';
+            const rh = rowHeights[r] != null ? rowHeights[r] : 19 * rowScale;
+            html += '<tr style="height:' + rh + 'px; min-height:' + rh + 'px;">';
             for (let c = 0; c < colCount; c++) {
                 // Skip cells covered by a merge (not the top-left anchor)
                 if (mergeCovered[r + '_' + c]) {
@@ -1019,6 +1085,9 @@ function initializeModule(contentArea) {
                     console.error('buildTdStyle error at row ' + r + ' col ' + c + ':', e);
                 }
 
+                // Append row height min-height to cell style so row can't collapse below rh
+                const tdStyle = styleStr + (styleStr ? ';' : '') + 'min-height:' + rh + 'px;';
+
                 // Render formatted value (m) if available, else raw value (v)
                 let cellValue = '';
                 if (cell) {
@@ -1033,7 +1102,7 @@ function initializeModule(contentArea) {
                     cellValue = '&nbsp;';
                 }
 
-                html += '<td ' + spanAttrs + ' style="' + styleStr + '">' + cellValue + '</td>';
+                html += '<td ' + spanAttrs + ' style="' + tdStyle + '">' + cellValue + '</td>';
             }
             html += '</tr>';
         }
