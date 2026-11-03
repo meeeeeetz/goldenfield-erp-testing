@@ -8,23 +8,23 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 </div>
                 <div class="action-buttons-row">
                     <button id="open-vet-modal" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                         <span class="btn-label">Order Veterinary Supplies</span>
                     </button>
                     <button id="open-vet-payment-modal" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                         <span class="btn-label">Pay Veterinary Supplies</span>
                     </button>
                     <button id="calculate-vet-products-btn" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="10" x2="8" y2="10"></line><line x1="12" y1="10" x2="12" y2="10"></line><line x1="16" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="8" y2="18"></line><line x1="12" y1="18" x2="16" y2="18"></line></svg>
                         <span class="btn-label">Calculate Vet Products</span>
                     </button>
                     <button id="record-vet-use-btn" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                         <span class="btn-label">Record Internal Use</span>
                     </button>
                     <button id="add-vet-suppliers-btn" class="btn-icon-circle">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path><line x1="12" y1="12" x2="12" y2="16"></line><line x1="10" y1="14" x2="14" y2="14"></line></svg>
                         <span class="btn-label">Add Veterinary Suppliers</span>
                     </button>
                     <button id="add-vet-products-btn" class="btn-icon-circle">
@@ -42,7 +42,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                             <h3>Outstanding Balance</h3>
                             <p class="card-sub-label">Balance to Suppliers</p>
                             <div class="card-value-row">
-                                <div class="card-value">P 135,999.00</div>
+                                <div class="card-value">P 0.00</div>
                             </div>
                         </div>
                     </div>
@@ -189,7 +189,12 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 <div id="vet-computations-view" style="display: none;">
                     <h2 style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1f2e;">Veterinary Product Computations</h2>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 12px;">
-                        <input type="text" id="vet-computations-search" placeholder="Search active veterinary products..." style="flex: 1; max-width: 350px; padding: 8px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;" />
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 400px;">
+                            <input type="text" id="vet-computations-search" placeholder="Search or select product..." style="flex: 1; padding: 8px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;" />
+                            <select id="vet-computations-product-select" style="padding: 8px 12px; border: 1px solid #D6D6D6; border-radius: 6px; font-size: 14px;">
+                                <option value="">Select Product</option>
+                            </select>
+                        </div>
                         <button id="vet-computations-back-btn" class="btn-icon-circle" style="margin-left: auto;">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             <span class="btn-label">Back</span>
@@ -3101,16 +3106,21 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
         }
 
         const calculateVetProductsBtn = document.getElementById('calculate-vet-products-btn');
-        if (calculateVetProductsBtn) {
-            calculateVetProductsBtn.addEventListener('click', () => {
-                const mainViewElements = document.querySelectorAll('.vet-layout > .header-actions, .vet-layout > .action-buttons-row, .vet-layout > .vet-content-grid, .vet-layout > .vet-bottom-row, .vet-layout > .vet-bottom-row-2');
-                const computationsView = document.getElementById('vet-computations-view');
-                const breadcrumb = document.getElementById('breadcrumb');
-                mainViewElements.forEach(el => el.style.display = 'none');
-                if (computationsView) computationsView.style.display = 'block';
-                if (breadcrumb) breadcrumb.innerHTML = 'Purchasing <span>/</span> Veterinary Supplies <span>/</span> Veterinary Product Computations';
-            });
-        }
+            if (calculateVetProductsBtn) {
+                calculateVetProductsBtn.addEventListener('click', () => {
+                    const mainViewElements = document.querySelectorAll('.vet-layout > .header-actions, .vet-layout > .action-buttons-row, .vet-layout > .vet-content-grid, .vet-layout > .vet-bottom-row, .vet-layout > .vet-bottom-row-2');
+                    const computationsView = document.getElementById('vet-computations-view');
+                    const breadcrumb = document.getElementById('breadcrumb');
+                    mainViewElements.forEach(el => el.style.display = 'none');
+                    if (computationsView) computationsView.style.display = 'block';
+                    if (breadcrumb) breadcrumb.innerHTML = 'Purchasing <span>/</span> Veterinary Supplies <span>/</span> Veterinary Product Computations';
+                    if (vetComputationsResults) {
+                        vetComputationsResults.innerHTML = '<p>Search for a veterinary product to view computations.</p>';
+                    }
+                    if (vetComputationsSearch) vetComputationsSearch.value = '';
+                    if (vetComputationsProductSelect) vetComputationsProductSelect.value = '';
+                });
+            }
 
         const vetComputationsBackBtn = document.getElementById('vet-computations-back-btn');
         if (vetComputationsBackBtn) {
@@ -3124,13 +3134,74 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             });
         }
 
-        const vetComputationsSearch = document.getElementById('vet-computations-search');
-        const vetComputationsResults = document.getElementById('vet-computations-results');
-        if (vetComputationsSearch && vetComputationsResults) {
+            const vetComputationsSearch = document.getElementById('vet-computations-search');
+            const vetComputationsResults = document.getElementById('vet-computations-results');
+            const vetComputationsProductSelect = document.getElementById('vet-computations-product-select');
+            
+            async function loadVetComputationsProductList() {
+                if (!vetComputationsProductSelect) return;
+                try {
+                    const res = await fetch(API_BASE_VET_PRODUCTS, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                    });
+                    if (res.ok) {
+                        const products = await res.json();
+                        const activeProducts = products.filter(p => p.status === 'Active');
+                        const grouped = {};
+                        activeProducts.forEach(p => {
+                            const cat = p.category || 'Uncategorized';
+                            if (!grouped[cat]) grouped[cat] = [];
+                            grouped[cat].push(p);
+                        });
+                        let html = '<option value="">Select Product</option>';
+                        Object.keys(grouped).sort().forEach(cat => {
+                            html += `<optgroup label="${cat}">`;
+                            grouped[cat].forEach(p => {
+                                html += `<option value="${p.product_id}">${p.item || p.product_id}</option>`;
+                            });
+                            html += '</optgroup>';
+                        });
+                        vetComputationsProductSelect.innerHTML = html;
+                    }
+                } catch (err) {
+                    console.error('Failed to load products for dropdown', err);
+                }
+            }
+            
+            loadVetComputationsProductList();
+            
+            if (vetComputationsProductSelect) {
+                vetComputationsProductSelect.addEventListener('change', async (e) => {
+                    const productId = e.target.value;
+                    if (!productId) {
+                        vetComputationsResults.innerHTML = '<p>Search for a veterinary product to view computations.</p>';
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`${API_BASE_VET_PRODUCTS}/code/${encodeURIComponent(productId)}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
+                        });
+                        if (res.ok) {
+                            const product = await res.json();
+                            vetComputationProduct = product;
+                            renderVetComputationForm(product);
+                            if (vetComputationsSearch) vetComputationsSearch.value = product.item || product.product_id || '';
+                        }
+                    } catch (err) {
+                        console.error('Failed to load product', err);
+                    }
+                });
+            }
+            
+            if (vetComputationsSearch && vetComputationsResults) {
             let searchDebounce = null;
             vetComputationsSearch.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
                 if (searchDebounce) clearTimeout(searchDebounce);
+                if (!query) {
+                    vetComputationsResults.innerHTML = '<p>Search for a veterinary product to view computations.</p>';
+                    return;
+                }
                 searchDebounce = setTimeout(async () => {
                     try {
                         const res = await fetch(API_BASE_VET_PRODUCTS + '?search=' + encodeURIComponent(query), {
@@ -3160,6 +3231,8 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             if (products.length === 1) {
                 vetComputationProduct = products[0];
                 renderVetComputationForm(products[0]);
+                if (vetComputationsSearch) vetComputationsSearch.value = products[0].item || products[0].product_id || '';
+                if (vetComputationsProductSelect) vetComputationsProductSelect.value = products[0].product_id;
                 return;
             }
 
@@ -3195,6 +3268,8 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     if (product) {
                         vetComputationProduct = product;
                         renderVetComputationForm(product);
+                        if (vetComputationsSearch) vetComputationsSearch.value = product.item || product.product_id || '';
+                        if (vetComputationsProductSelect) vetComputationsProductSelect.value = product.product_id;
                     }
                 });
             });
@@ -3205,10 +3280,10 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
 
             const prevValue = product.dosage_preventive_value || '';
             const prevUnit = product.dosage_preventive_unit || product.unit || '';
-            const prevWater = product.dosage_preventive_water || '';
+            const prevWater = product.dosage_preventive_water_ratio || product.dosage_preventive_water || '';
             const treatValue = product.dosage_treatment_value || '';
             const treatUnit = product.dosage_treatment_unit || product.unit || '';
-            const treatWater = product.dosage_treatment_water || '';
+            const treatWater = product.dosage_treatment_water_ratio || product.dosage_treatment_water || '';
 
             vetComputationsResults.innerHTML = `
                 <div style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; width: 100%; box-sizing: border-box;">
