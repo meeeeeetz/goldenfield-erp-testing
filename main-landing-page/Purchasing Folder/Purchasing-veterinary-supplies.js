@@ -1719,6 +1719,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     throw new Error(errData.error || 'Failed to save product');
                 }
 
+                const created = await res.json();
                 alert('Veterinary Product created successfully');
                 document.getElementById('create-vet-product-supplier').value = '';
                 document.getElementById('create-vet-product-item').value = '';
@@ -1729,11 +1730,19 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                 document.getElementById('create-vet-product-cost').value = '';
                 document.getElementById('create-vet-product-discount').value = '';
                 document.getElementById('create-vet-product-status').value = 'Active';
+                document.getElementById('create-vet-product-dosage-prev-value').value = '';
+                document.getElementById('create-vet-product-dosage-prev-unit').value = '';
+                document.getElementById('create-vet-product-dosage-treat-value').value = '';
+                document.getElementById('create-vet-product-dosage-treat-unit').value = '';
+                document.getElementById('create-vet-product-prev-water-ratio').value = '';
+                document.getElementById('create-vet-product-treat-water-ratio').value = '';
 
                 const idRes = await fetch(API_BASE_VET_PRODUCTS + '/next-id', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('goldenfield_auth_token')}` }
                 });
                 const idData = await idRes.json();
+                document.getElementById('create-vet-product-id').value = (created && created.product_id) ? '' : (idData.product_id || 'VetProdID-1');
+                // refresh to show the next ID properly
                 document.getElementById('create-vet-product-id').value = idData.product_id || 'VetProdID-1';
 
                 loadVetProductsPage();
@@ -1753,6 +1762,21 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             const unitCost = document.getElementById('edit-vet-product-cost').value.trim();
             const discount = document.getElementById('edit-vet-product-discount').value;
             const status = document.getElementById('edit-vet-product-status').value;
+            const dosagePreventiveValue = document.getElementById('edit-vet-product-dosage-prev-value')?.value.trim() || '';
+            const dosagePreventiveUnit = document.getElementById('edit-vet-product-dosage-prev-unit')?.value || '';
+            const dosageTreatmentValue = document.getElementById('edit-vet-product-dosage-treat-value')?.value.trim() || '';
+            const dosageTreatmentUnit = document.getElementById('edit-vet-product-dosage-treat-unit')?.value || '';
+            const dosagePreventiveWaterRatio = document.getElementById('edit-vet-product-prev-water-ratio')?.value.trim() || '';
+            const dosageTreatmentWaterRatio = document.getElementById('edit-vet-product-treat-water-ratio')?.value.trim() || '';
+
+            if (!productId || !item) {
+                alert('Product ID and Item are required');
+                return;
+            }
+            if (!supplierId) { alert('Supplier is required'); return; }
+            if (!category) { alert('Category is required'); return; }
+            if (!unit) { alert('Unit is required'); return; }
+
             try {
                 const res = await fetch(`${API_BASE_VET_PRODUCTS}/${encodeURIComponent(productId)}`, {
                     method: 'PUT',
@@ -1840,8 +1864,6 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
                     document.getElementById('edit-vet-product-dosage-prev-unit').value = product.dosage_preventive_unit || product.unit || '';
                     document.getElementById('edit-vet-product-dosage-treat-value').value = product.dosage_treatment_value || '';
                     document.getElementById('edit-vet-product-dosage-treat-unit').value = product.dosage_treatment_unit || product.unit || '';
-                    document.getElementById('edit-vet-product-prev-water-ratio').value = product.dosage_preventive_water_ratio || '';
-                    document.getElementById('edit-vet-product-treat-water-ratio').value = product.dosage_treatment_water_ratio || '';
                     document.getElementById('edit-vet-product-prev-water-ratio').value = product.dosage_preventive_water_ratio || '';
                     document.getElementById('edit-vet-product-treat-water-ratio').value = product.dosage_treatment_water_ratio || '';
                     const editUnitSelect = document.getElementById('edit-vet-product-unit');
