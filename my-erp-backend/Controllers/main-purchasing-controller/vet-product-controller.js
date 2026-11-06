@@ -51,36 +51,39 @@ class VetProductController {
 
     async addProduct(productData) {
         const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio } = productData;
-        let pid = product_id;
-        if (pid) {
-            const existing = await this.db.query('SELECT 1 FROM vet_products WHERE product_id = $1', [pid]);
-            if (existing.rowCount > 0) pid = await this.getNextProductId();
-        }
         const query = `
             INSERT INTO vet_products 
             (product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             RETURNING *
         `;
-        const result = await this.db.query(query, [
-            pid,
-            supplier_id,
-            item,
-            generic_name || null,
-            category,
-            package_size || null,
-            unit,
-            unit_cost || 0,
-            discount || '0%',
-            status || 'Active',
-            dosage_preventive_value || null,
-            dosage_preventive_unit || null,
-            dosage_treatment_value || null,
-            dosage_treatment_unit || null,
-            dosage_preventive_water_ratio || null,
-            dosage_treatment_water_ratio || null
-        ]);
-        return result.rows[0];
+        let lastErr;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            let pid = product_id;
+            if (!pid || attempt > 0) pid = await this.getNextProductId();
+            else {
+                const existing = await this.db.query('SELECT 1 FROM vet_products WHERE product_id = $1', [pid]);
+                if (existing.rowCount > 0) pid = await this.getNextProductId();
+            }
+            try {
+                const result = await this.db.query(query, [
+                    pid, supplier_id, item, generic_name || null, category, package_size || null,
+                    unit, unit_cost || 0, discount || '0%', status || 'Active',
+                    dosage_preventive_value || null, dosage_preventive_unit || null,
+                    dosage_treatment_value || null, dosage_treatment_unit || null,
+                    dosage_preventive_water_ratio || null, dosage_treatment_water_ratio || null
+                ]);
+                return result.rows[0];
+            } catch (e) {
+                lastErr = e;
+                if (e.code !== '23505') throw e;
+                // on PK/id sequence conflict, resync sequence
+                if ((e.constraint || '').includes('pkey')) {
+                    await this.db.query("SELECT setval(pg_get_serial_sequence('vet_products','id'), (SELECT COALESCE(MAX(id),1) FROM vet_products), true)");
+                }
+            }
+        }
+        throw lastErr;
     }
 
     async updateProduct(productId, productData) {
