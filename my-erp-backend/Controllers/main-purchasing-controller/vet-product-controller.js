@@ -51,6 +51,11 @@ class VetProductController {
 
     async addProduct(productData) {
         const { product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio } = productData;
+        let pid = product_id;
+        if (pid) {
+            const existing = await this.db.query('SELECT 1 FROM vet_products WHERE product_id = $1', [pid]);
+            if (existing.rowCount > 0) pid = await this.getNextProductId();
+        }
         const query = `
             INSERT INTO vet_products 
             (product_id, supplier_id, item, generic_name, category, package_size, unit, unit_cost, discount, status, dosage_preventive_value, dosage_preventive_unit, dosage_treatment_value, dosage_treatment_unit, dosage_preventive_water_ratio, dosage_treatment_water_ratio) 
@@ -58,7 +63,7 @@ class VetProductController {
             RETURNING *
         `;
         const result = await this.db.query(query, [
-            product_id,
+            pid,
             supplier_id,
             item,
             generic_name || null,

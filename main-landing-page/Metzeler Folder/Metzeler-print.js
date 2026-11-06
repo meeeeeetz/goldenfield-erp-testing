@@ -211,14 +211,14 @@ function injectPrintStyles() {
                 page-break-inside: avoid !important;
                 padding: 4px !important;
                 box-sizing: border-box !important;
-                min-height: 19px !important;
+                min-height: 0 !important;
                 height: auto !important;
                 line-height: normal !important;
                 overflow: visible !important;
             }
 
             #print-sheet-content table[data-type="luckysheet_copy_action_table"] tr {
-                min-height: 19px !important;
+                min-height: 0 !important;
                 height: auto !important;
                 page-break-inside: avoid !important;
             }
@@ -851,12 +851,13 @@ function initializeModule(contentArea) {
             let rowScale = 1;
             try {
                 let totalRowHeight = 0;
-                if (rowlen && typeof rowlen === 'object') {
-                    Object.keys(rowlen).forEach(key => {
-                        totalRowHeight += parseInt(rowlen[key], 10) || 19;
-                    });
-                } else {
-                    totalRowHeight = printRowCount * 19;
+                for (let r = 0; r < printRowCount; r++) {
+                    let rh = 19;
+                    if (rowlen && typeof rowlen === 'object') {
+                        const saved = rowlen[r] != null ? rowlen[r] : (rowlen[String(r)] != null ? rowlen[String(r)] : null);
+                        if (saved != null) rh = parseInt(saved, 10) || 19;
+                    }
+                    totalRowHeight += rh;
                 }
                 // Printable page height: A4 portrait = 297mm, landscape = 210mm, minus 12mm margins
                 const mmToPx = 3.7795;
@@ -869,7 +870,9 @@ function initializeModule(contentArea) {
                 rowScale = 1;
             }
 
-            const printHtml = buildLuckysheetPrintTable(rangeCells, printRowCount, printColCount, columnlen, rowlen, merge, rowScale);
+            const borderInfo = sheetConfigFromSheet && sheetConfigFromSheet.config && sheetConfigFromSheet.config.borderInfo ? sheetConfigFromSheet.config.borderInfo : null;
+
+            const printHtml = buildLuckysheetPrintTable(rangeCells, printRowCount, printColCount, columnlen, rowlen, merge, rowScale, borderInfo);
 
             // 4. Inject into temporary print container (direct child of document.body)
             let printContainer = document.getElementById('print-sheet-content');
@@ -896,11 +899,22 @@ function initializeModule(contentArea) {
                     }
                     luckysheetSheetId = null;
 
-                    // Apply @page orientation dynamically before printing
+                    // Apply @page orientation and margins dynamically before printing
                     try {
                         const styleEl = document.getElementById('print-sheet-styles');
                         if (styleEl) {
-                            const newPageRule = '@page { size: A4 ' + currentOrientation + '; margin: 6mm 6mm 6mm 6mm; }';
+                            // Read margin config from sheetConfig if available
+                            let pageMargin = '6mm 6mm 6mm 6mm';
+                            if (sheetConfigFromSheet && sheetConfigFromSheet.config) {
+                                const cfg = sheetConfigFromSheet.config;
+                                // Support Luckysheet print margin config or custom margin property
+                                if (cfg.printMargin) {
+                                    pageMargin = cfg.printMargin;
+                                } else if (cfg.margin) {
+                                    pageMargin = cfg.margin;
+                                }
+                            }
+                            const newPageRule = '@page { size: A4 ' + currentOrientation + '; margin: ' + pageMargin + '; }';
                             styleEl.textContent = styleEl.textContent.replace(
                                 /@page\s*\{\s*size:\s*A4\s+(?:portrait|landscape);/,
                                 newPageRule
@@ -908,6 +922,29 @@ function initializeModule(contentArea) {
                         }
                     } catch (e) {
                         console.error('set @page orientation error:', e);
+                    }
+
+                    // Center the print container on the page if center alignment is configured
+                    try {
+                        const isCenterAligned = sheetConfigFromSheet && sheetConfigFromSheet.config && sheetConfigFromSheet.config.printAlign === 'center';
+                        const printContainer = document.getElementById('print-sheet-content');
+                        if (printContainer) {
+                            if (isCenterAligned) {
+                                printContainer.style.position = 'static';
+                                printContainer.style.margin = '0 auto';
+                                printContainer.style.left = 'auto';
+                                printContainer.style.top = 'auto';
+                                printContainer.style.width = 'fit-content';
+                                printContainer.style.maxWidth = '100%';
+                            } else {
+                                printContainer.style.position = 'absolute';
+                                printContainer.style.left = '0';
+                                printContainer.style.top = '0';
+                                printContainer.style.margin = '0';
+                            }
+                        }
+                    } catch (e) {
+                        console.error('set print alignment error:', e);
                     }
 
                     try {
@@ -947,17 +984,18 @@ function initializeModule(contentArea) {
      * Build a Luckysheet-style print table HTML string.
      * Format: <table data-type="luckysheet_copy_action_table"><colgroup width="...">...<tr><td style="...">value</td></tr></table>
      */
-    function buildLuckysheetPrintTable(cells, rowCount, colCount, columnlen, rowlen, merge, rowScale) {
+    function buildLuckysheetPrintTable(cells, rowCount, colCount, columnlen, rowlen, merge, rowScale, borderInfo) {
         // Build column widths as percentages: each column's width / total width * 100
         // This ensures all columns proportionally fill 100% of the page width regardless of column count
         let totalColWidth = 0;
         const rawColWidths = [];
         for (let c = 0; c < colCount; c++) {
-            if (columnlen && columnlen[c] != null) {
-                rawColWidths[c] = parseInt(columnlen[c], 10) || 90;
-            } else {
-                rawColWidths[c] = 90;
+            let cw = 0;
+            if (columnlen && typeof columnlen === 'object') {
+                cw = columnlen[c] != null ? columnlen[c] : (columnlen[String(c)] != null ? columnlen[String(c)] : 0);
             }
+            if (!cw || cw <= 0) cw = 72;
+            rawColWidths[c] = parseInt(cw, 10);
             totalColWidth += rawColWidths[c];
         }
         const colWidthsPct = [];
@@ -999,6 +1037,65 @@ function initializeModule(contentArea) {
             });
         }
 
+        // Build border lookup from sheet-level borderInfo (range borders).
+        // borderInfo entries look like:
+        // {color:"#000", range:[{row:[3,6],column:[2,4]}], style:"1", borderType:"border-all"}
+        // Result: borderMap["r_c"] = {t:{w,c}, b:{w,c}, l:{w,c}, r:{w,c}}
+        const borderMap = {};
+        const borderWidth = 0.5; // pt
+        if (borderInfo && Array.isArray(borderInfo)) {
+            borderInfo.forEach(entry => {
+                const color = entry.color || '#000';
+                const ranges = entry.range || [];
+                const borderType = entry.borderType || 'border-all';
+                ranges.forEach(range => {
+                    const rowRange = range.row || [];
+                    const colRange = range.column || [];
+                    const rStart = rowRange.length > 0 ? parseInt(rowRange[0], 10) : 0;
+                    const rEnd = rowRange.length > 1 ? parseInt(rowRange[1], 10) : rStart;
+                    const cStart = colRange.length > 0 ? parseInt(colRange[0], 10) : 0;
+                    const cEnd = colRange.length > 1 ? parseInt(colRange[1], 10) : cStart;
+                    for (let r = rStart; r <= rEnd; r++) {
+                        for (let c = cStart; c <= cEnd; c++) {
+                            if (r < 0 || r >= rowCount || c < 0 || c >= colCount) continue;
+                            const key = r + '_' + c;
+                            if (!borderMap[key]) borderMap[key] = {};
+                            const isTopRow = (r === rStart);
+                            const isBottomRow = (r === rEnd);
+                            const isLeftCol = (c === cStart);
+                            const isRightCol = (c === cEnd);
+                            const setBorder = (side) => {
+                                if (!borderMap[key][side]) {
+                                    borderMap[key][side] = { w: borderWidth, c: color };
+                                }
+                            };
+                            if (borderType === 'border-all') {
+                                setBorder('t'); setBorder('b'); setBorder('l'); setBorder('r');
+                            } else if (borderType === 'border-top') {
+                                setBorder('t');
+                            } else if (borderType === 'border-bottom') {
+                                setBorder('b');
+                            } else if (borderType === 'border-left') {
+                                setBorder('l');
+                            } else if (borderType === 'border-right') {
+                                setBorder('r');
+                            } else if (borderType === 'border-outside') {
+                                if (isTopRow) setBorder('t');
+                                if (isBottomRow) setBorder('b');
+                                if (isLeftCol) setBorder('l');
+                                if (isRightCol) setBorder('r');
+                            } else if (borderType === 'border-inside') {
+                                if (!isTopRow) setBorder('t');
+                                if (!isBottomRow) setBorder('b');
+                                if (!isLeftCol) setBorder('l');
+                                if (!isRightCol) setBorder('r');
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         // Build dense matrix [row][col]
         const matrix = [];
         for (let r = 0; r < rowCount; r++) {
@@ -1015,13 +1112,25 @@ function initializeModule(contentArea) {
             }
         });
 
-        // Trim trailing empty columns (no data in any row) to prevent extra blank column
+        // Trim trailing empty columns (no data in any row) to prevent extra blank column.
+        // A cell counts as "data" if it has a value OR border info (so bordered empty cells
+        // — e.g. the last column of a grid — are not trimmed away).
+        function cellHasContent(cell) {
+            if (!cell || typeof cell !== 'object') return false;
+            if (cell.v != null && cell.v !== '') return true;
+            if (cell.bo && typeof cell.bo === 'object') return true;
+            // Also check sheet-level borderMap: empty cells with range borders still count as content
+            if (cell && cell.r != null && cell.c != null && borderMap && typeof borderMap === 'object') {
+                if (borderMap[cell.r + '_' + cell.c]) return true;
+            }
+            return false;
+        }
         let actualColCount = colCount;
         while (actualColCount > 0) {
             let colHasData = false;
             for (let r = 0; r < rowCount; r++) {
                 const cell = matrix[r][actualColCount - 1];
-                if (cell && cell.v != null && cell.v !== '') {
+                if (cellHasContent(cell)) {
                     colHasData = true;
                     break;
                 }
@@ -1037,7 +1146,7 @@ function initializeModule(contentArea) {
             let rowHasData = false;
             for (let c = 0; c < colCount; c++) {
                 const cell = matrix[actualRowCount - 1][c];
-                if (cell && cell.v != null && cell.v !== '') {
+                if (cellHasContent(cell)) {
                     rowHasData = true;
                     break;
                 }
@@ -1047,18 +1156,18 @@ function initializeModule(contentArea) {
         }
         rowCount = Math.max(actualRowCount, 1);
 
-        let html = '<table data-type="luckysheet_copy_action_table" style="border-collapse: collapse; width: 100%; table-layout: fixed;">';
+        let html = '<table data-type="luckysheet_copy_action_table" style="border-collapse: separate; width: 100%; table-layout: fixed;">';
 
         // Colgroup with percentage column widths (fill 100% of page)
         html += '<colgroup>';
         for (let c = 0; c < colCount; c++) {
-            html += '<colgroup width="' + colWidthsPct[c].toFixed(2) + '%"></colgroup>';
+            html += '<col style="width:' + colWidthsPct[c].toFixed(2) + '%">';
         }
         html += '</colgroup>';
 
         // Rows with exact row heights
         for (let r = 0; r < rowCount; r++) {
-            const rh = rowHeights[r] != null ? rowHeights[r] : 19 * rowScale;
+            const rh = (rowHeights[r] != null ? rowHeights[r] : 19) * rowScale;
             html += '<tr style="height:' + rh + 'px; min-height:' + rh + 'px;">';
             for (let c = 0; c < colCount; c++) {
                 // Skip cells covered by a merge (not the top-left anchor)
@@ -1080,7 +1189,7 @@ function initializeModule(contentArea) {
 
                 let styleStr = '';
                 try {
-                    styleStr = buildTdStyle(cell);
+                    styleStr = buildTdStyle(cell, rowScale, borderMap);
                 } catch (e) {
                     console.error('buildTdStyle error at row ' + r + ' col ' + c + ':', e);
                 }
@@ -1114,10 +1223,37 @@ function initializeModule(contentArea) {
     /**
      * Build the inline style string for a <td> based on Luckysheet cell props.
      */
-    function buildTdStyle(cell) {
-        if (!cell || typeof cell !== 'object') return '';
-
+    function buildTdStyle(cell, rowScale, borderMap) {
         const parts = [];
+
+        // Even empty cells can have borders from sheet-level borderInfo
+        const cellKey = (cell && cell.r != null && cell.c != null) ? (cell.r + '_' + cell.c) : null;
+        const debugCol = cell && cell.c != null ? parseInt(cell.c, 10) : -1;
+
+        // DEBUG: log columns AI(34) and AJ(35)
+        if (debugCol === 34 || debugCol === 35) {
+            console.log('PRINT DEBUG buildTdStyle r=' + (cell ? cell.r : 'null') + ' c=' + debugCol + ' cellKey=' + cellKey + ' cellExists=' + !!cell + ' borderMapHasKey=' + (borderMap && borderMap[cellKey] ? 'YES' : 'no'));
+        }
+
+        if (!cell || typeof cell !== 'object') {
+            // Empty cell: only apply borders from borderMap if available
+            if (cellKey && borderMap && typeof borderMap === 'object') {
+                const bm = borderMap[cellKey];
+                if (debugCol === 34 || debugCol === 35) {
+                    console.log('PRINT DEBUG empty cell r=' + (cellKey ? cellKey.split('_')[0] : '?') + ' c=' + debugCol + ' bm=', JSON.stringify(bm));
+                }
+                if (bm && typeof bm === 'object') {
+                    if (bm.l) parts.push('border-left: ' + (bm.l.w || 0.5) + 'pt solid ' + (bm.l.c || '#000'));
+                    if (bm.r) parts.push('border-right: ' + (bm.r.w || 0.5) + 'pt solid ' + (bm.r.c || '#000'));
+                    if (bm.t) parts.push('border-top: ' + (bm.t.w || 0.5) + 'pt solid ' + (bm.t.c || '#000'));
+                    if (bm.b) parts.push('border-bottom: ' + (bm.b.w || 0.5) + 'pt solid ' + (bm.b.c || '#000'));
+                }
+            }
+            if (debugCol === 34 || debugCol === 35) {
+                console.log('PRINT DEBUG empty cell r=' + (cellKey ? cellKey.split('_')[0] : '?') + ' c=' + debugCol + ' final parts:', JSON.stringify(parts));
+            }
+            return parts.join('; ');
+        }
 
         // Bold
         if (cell.bl === 1 || cell.bl === true) parts.push('font-weight: bold');
@@ -1134,13 +1270,18 @@ function initializeModule(contentArea) {
         // Cell background
         if (cell.bg) parts.push('background-color: ' + escapeHtml(String(cell.bg)));
 
-        // Font size
-        if (cell.fs != null) parts.push('font-size: ' + cell.fs + 'px');
+        // Font size — scale with rowScale so text shrinks proportionally when rows are compressed
+        if (cell.fs != null) {
+            parts.push('font-size: ' + (cell.fs * rowScale).toFixed(1) + 'px');
+        } else {
+            // Luckysheet default font size when none specified, scaled
+            parts.push('font-size: ' + (12 * rowScale).toFixed(1) + 'px');
+        }
 
         // Font family
         if (cell.ff != null) parts.push('font-family: "' + escapeHtml(String(cell.ff)) + '"');
 
-        // Borders from bo (Luckysheet border object)
+        // Borders from bo (Luckysheet per-cell border object)
         if (cell.bo && typeof cell.bo === 'object') {
             const b = cell.bo;
             try {
@@ -1153,12 +1294,30 @@ function initializeModule(contentArea) {
             }
         }
 
-        // Fallback: default borders if cell has any content
+        // Borders from sheet-level borderInfo (range borders applied via borderMap)
+        if (cellKey && borderMap && typeof borderMap === 'object') {
+            const bm = borderMap[cellKey];
+            if (debugCol === 34 || debugCol === 35) {
+                console.log('PRINT DEBUG non-empty cell r=' + cell.r + ' c=' + debugCol + ' bm=', JSON.stringify(bm) + ' partsSoFar=', JSON.stringify(parts));
+            }
+            if (bm && typeof bm === 'object') {
+                if (bm.l && !parts.some(p => p.startsWith('border-left'))) parts.push('border-left: ' + (bm.l.w || 0.5) + 'pt solid ' + (bm.l.c || '#000'));
+                if (bm.r && !parts.some(p => p.startsWith('border-right'))) parts.push('border-right: ' + (bm.r.w || 0.5) + 'pt solid ' + (bm.r.c || '#000'));
+                if (bm.t && !parts.some(p => p.startsWith('border-top'))) parts.push('border-top: ' + (bm.t.w || 0.5) + 'pt solid ' + (bm.t.c || '#000'));
+                if (bm.b && !parts.some(p => p.startsWith('border-bottom'))) parts.push('border-bottom: ' + (bm.b.w || 0.5) + 'pt solid ' + (bm.b.c || '#000'));
+            }
+        }
+
+        // Fallback: default borders if cell has any content but no borders at all
         if (cell && cell.v != null && parts.filter(p => p.startsWith('border')).length === 0) {
             parts.push('border-left: 0.5pt solid #000');
             parts.push('border-right: 0.5pt solid #000');
             parts.push('border-top: 0.5pt solid #000');
             parts.push('border-bottom: 0.5pt solid #000');
+        }
+
+        if (debugCol === 34 || debugCol === 35) {
+            console.log('PRINT DEBUG cell r=' + cell.r + ' c=' + debugCol + ' final parts:', JSON.stringify(parts));
         }
 
         return parts.join('; ');
