@@ -2038,7 +2038,7 @@ ModuleComponents['purchasing-veterinary-supplies'] = (container) => {
             tbody.innerHTML = pageData.map(product => `
                 <tr>
                     <td>${product.product_id || '-'}</td>
-                    <td>${product.supplier_id || '-'}</td>
+                    <td>${product.company_name || product.supplier_id || '-'}</td>
                     <td>${product.item || '-'}</td>
                     <td>${product.generic_name || '-'}</td>
                     <td>${product.category || '-'}</td>

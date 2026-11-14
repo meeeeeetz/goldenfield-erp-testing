@@ -147,8 +147,8 @@ function injectPrintStyles() {
             display: block !important;
         }
 
-        @page { size: A4 portrait; margin: 6mm 6mm 6mm 6mm; }
-        @page :first { margin: 6mm 6mm 6mm 6mm; }
+        @page { size: A4 portrait; margin: 5mm 5mm 5mm 5mm; }
+        @page :first { margin: 5mm 5mm 5mm 5mm; }
 
         @media print {
             /* Hide everything by default */
@@ -184,6 +184,7 @@ function injectPrintStyles() {
                 box-sizing: border-box !important;
                 box-shadow: none !important;
                 border: none !important;
+                page-break-inside: avoid !important;
             }
 
             #luckysheet-print-container {
@@ -209,21 +210,38 @@ function injectPrintStyles() {
                 overflow-wrap: normal !important;
                 vertical-align: middle !important;
                 page-break-inside: avoid !important;
-                padding: 4px !important;
+                padding: 1px 3px !important;
                 box-sizing: border-box !important;
                 min-height: 0 !important;
                 height: auto !important;
-                line-height: normal !important;
-                overflow: visible !important;
+                line-height: 1.1 !important;
+                font-size: 10px !important;
+                overflow: hidden !important;
             }
 
             #print-sheet-content table[data-type="luckysheet_copy_action_table"] tr {
                 min-height: 0 !important;
-                height: auto !important;
                 page-break-inside: avoid !important;
+                overflow: hidden !important;
             }
 
             .print-only { display: block !important; }
+        }
+
+        @media print and (orientation: portrait) {
+            #print-sheet-content table[data-type="luckysheet_copy_action_table"] td {
+                font-size: 10px !important;
+                padding: 1px 3px !important;
+                line-height: 1.1 !important;
+            }
+        }
+
+        @media print and (orientation: landscape) {
+            #print-sheet-content table[data-type="luckysheet_copy_action_table"] td {
+                font-size: 9px !important;
+                padding: 0.5px 2px !important;
+                line-height: 1.0 !important;
+            }
         }
 
         @media screen {
@@ -904,7 +922,7 @@ function initializeModule(contentArea) {
                         const styleEl = document.getElementById('print-sheet-styles');
                         if (styleEl) {
                             // Read margin config from sheetConfig if available
-                            let pageMargin = '6mm 6mm 6mm 6mm';
+                            let pageMargin = '5mm 5mm 5mm 5mm';
                             if (sheetConfigFromSheet && sheetConfigFromSheet.config) {
                                 const cfg = sheetConfigFromSheet.config;
                                 // Support Luckysheet print margin config or custom margin property

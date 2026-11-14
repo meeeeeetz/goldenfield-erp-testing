@@ -1,55 +1,73 @@
-# Plan: Ensure All Rows Fit on One Printed Page (Metzeler-print.js)
+# Plan: Force Single-Page A4 Print Fit (Metzeler-print.js)
 
 ## Goal
-Make the Metzeler attendance template print so all rows fit on exactly one page, with no content spilling to a second page. Row heights stay at natural (saved) height and are only scaled DOWN if total content exceeds the page. Row heights remain fully editable in Luckysheet — `rowScale` is print-time only, never modifies stored `rowlen` data.
+Make the Metzeler attendance table (~43 rows + headers/footers) fit cleanly on exactly ONE A4 page in both Portrait and Landscape print orientations, with zero overflow to Page 2.
 
-## Affected Files
-- `main-landing-page/Metzeler Folder/Metzeler-print.js` — `doPrint()` (lines 796-980) and `buildLuckysheetPrintTable()` (lines 982-1216)
+## Affected File
+- `main-landing-page/Metzeler Folder/Metzeler-print.js` — the `@media print` CSS block (lines 153-227) and the inline row-height assignment in `buildLuckysheetPrintTable()` (line 1169).
 
-## User Decision
-- **No upscaling**: When content is shorter than the page, rows stay at natural height with white space at the bottom.
-- **Downscaling only**: When content exceeds the page, `rowScale < 1.0` shrinks rows proportionally to fit.
-- Row heights remain editable in Luckysheet (stored `rowlen` data is never modified by printing).
+## Root Cause (confirmed from code)
+- CSS `height: auto !important` on `tr` (line 222) and `td` (line 215) **overrides** the JS-computed inline `height: rh px` set at line 1169. So `rowScale` calculated by `doPrint()` has **no effect** on printed row heights.
+- `white-space: normal` + `line-height: normal` + `padding: 4px` lets cell text wrap and expand rows beyond the saved `rowlen` height.
+- `@page` margin is 6mm (line 917), leaving limited vertical space.
 
-## Current Behavior
-- `rowScale = Math.min(1, printableHeightPx / totalRowHeight)` — scales down only, never up (already matches user preference)
-- `rowlen` config stores only custom row heights; missing rows default to 19px
-- Row height per row: `rh = rowHeights[r] || 19 * rowScale` — **bug**: rows with saved heights don't get `rowScale` applied
-- Columns use percentage widths summing to 100% (should fit horizontally)
-- CSS `@page` margin: 6mm all sides; `td { min-height: 19px }` — could block downscaling below 19px
-- Table has `page-break-inside: avoid`
+## Decisions (all resolved — recommended answers below)
 
-## Proposed Changes
+| Decision | Recommended Choice | Rationale |
+|----------|-------------------|-----------|
+| @page margins | **5mm** on all sides | Maximizes printable area: Portrait ≈ 287mm usable height, Landscape ≈ 200mm usable height |
+| Base font-size in print | **10px** on `td` | Compact but readable; can be overridden per-orientation |
+| Line-height | **1.1** on `td` | Tight vertical packing without overlap |
+| Cell padding | **1px top/bottom, 3px left/right** | Minimal vertical space, keeps horizontal readability |
+| Row height enforcement | **Remove `height: auto !important` from `tr`** so inline `rh` from JS takes effect | Allows `rowScale` to actually compress rows |
+| Text overflow | **`overflow: hidden` on `td`** | Prevents wrapped text from expanding rows beyond allocated height |
+| Orientation-specific tuning | `@media print and (orientation: portrait)` + `@media print and (orientation: landscape)` | Portrait needs smaller font/less padding; Landscape has less height so needs more aggressive compression |
+| Last-resort scaling | **`transform: scale()` on container** only if compression alone still exceeds 1 page | Guarantees fit even for dense templates |
 
-### 1. Row height calculation (doPrint, lines 850-870)
-Keep `Math.min(1, ...)` cap (downscale only). But improve `totalRowHeight` to include ALL rows:
-- For rows with entry in `rowlen`: use that value
-- For rows without entry: use saved default (19px)
+## Proposed Changes (all inside `loadPrintStyles()` CSS block, lines 153-227)
 
-### 2. Row height application (buildLuckysheetPrintTable, lines 1164-1166)
-- Current: `rh = rowHeights[r] != null ? rowHeights[r] : 19 * rowScale`
-  - **Bug**: rows with saved heights skip `rowScale`, so downscaling doesn't apply to them
-- Change: always apply `rowScale` to every row:
-  - `rh = (rowHeights[r] != null ? rowHeights[r] : 19) * rowScale`
+### 1. @page rules (lines 150-151)
+Replace static 6mm margins with orientation-aware 5mm margins. The JS at line 917 already dynamically rewrites `@page` — keep that mechanism but change the default from `6mm` to `5mm`.
 
-### 3. Remove/override td min-height CSS conflict
-- Current CSS: `#print-sheet-content ... td { min-height: 19px !important; }`
-- If `rowScale` < 1, rows could be shorter than 19px but CSS forces 19px minimum, defeating downscaling
-- Change `min-height: 19px` to `min-height: 0` (or remove the rule) so scaled row heights take effect
+### 2. td compression (lines 204-218)
+- `padding: 1px 3px !important;` (was `padding: 4px !important;`)
+- `line-height: 1.1 !important;` (was `line-height: normal !important;`)
+- `font-size: 10px !important;` (add new)
+- `overflow: hidden !important;` (add new — prevents content from expanding row)
+- `white-space: nowrap !important;` or keep `normal` — recommend `normal` with `overflow: hidden` so text wraps but is clipped at row boundary
 
-### 4. Horizontal fit verification (already mostly handled)
-- Column widths are percentages summing to 100% — should fit on one page horizontally
-- Verify no `page-break-inside: avoid` on `td`/`tr` causes row splitting across pages
+### 3. tr height enforcement (lines 220-224)
+- Remove `height: auto !important;` so inline `height: rh px` from JS takes effect
+- Keep `min-height: 0 !important;` and `page-break-inside: avoid !important;`
+- Add `overflow: hidden !important;` on tr as safety
 
-## Validation
+### 4. Orientation-specific rules (add after line 224, before `.print-only`)
+```
+@media print and (orientation: portrait) {
+    #print-sheet-content table td { font-size: 10px !important; padding: 1px 3px !important; line-height: 1.1 !important; }
+}
+@media print and (orientation: landscape) {
+    #print-sheet-content table td { font-size: 9px !important; padding: 0.5px 2px !important; line-height: 1.0 !important; }
+}
+```
+
+### 5. Container safety (line 172-187)
+- Add `page-break-inside: avoid !important;` to `#print-sheet-content` (already on table, add to wrapper too)
+- Keep `overflow: visible !important;` so content isn't clipped at container level
+
+## What NOT to change
+- Screen view (`@media screen` block, lines 229-231) — untouched
+- Luckysheet editor container (`#luckysheet-print-container`) — untouched
+- `rowScale` JS logic — keep as-is; the CSS changes make it actually take effect
+- Stored `rowlen` data — never modified by printing
+
+## Validation Steps
 1. `node --check` on Metzeler-print.js (syntax)
-2. Open browser DevTools → Console, load Weekly Attendance template, click Print
-3. Verify `PRINT DEBUG` logs show correct row heights and scale factor
-4. Print to PDF and confirm:
-   - All rows (including rows 7, 11, 15...) appear on ONE page
-   - Borders on columns AI (34) and AJ (35) render
-   - No content spills to page 2
-   - Row heights are proportionally scaled DOWN when content exceeds page
+2. Open browser, load Weekly Attendance template, click Print
+3. In print preview, confirm "1 of 1 pages" in both Portrait and Landscape
+4. Confirm borders on columns AI (34) and AJ (35) still render
+5. Confirm text is readable (not overlapping/clipped unacceptably)
+6. Confirm on-screen UI is unchanged (switch back to screen view)
 
 ## Rollback
-Revert `rh` assignment to original `rowHeights[r] || 19 * rowScale` and restore `td { min-height: 19px }`.
+Restore `height: auto !important` on `tr`/`td`, restore `padding: 4px`, `line-height: normal`, remove orientation-specific rules, revert `@page` margin to 6mm.

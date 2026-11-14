@@ -1317,7 +1317,29 @@ if (typeof ModuleComponents === 'undefined') { window.ModuleComponents = {}; }
             
             XLSX.utils.book_append_sheet(workbook, attendanceSheet, 'Attendance');
             XLSX.utils.book_append_sheet(workbook, employeeSheet, 'Employees');
-            XLSX.writeFile(workbook, 'attendance_template.xlsx');
+
+            // Build dynamic filename based on selected departments and date range
+            const selectedDeptSet = new Set();
+            document.querySelectorAll('.template-emp-checkbox:checked').forEach(cb => {
+                const dept = cb.getAttribute('data-dept');
+                if (dept) selectedDeptSet.add(dept);
+            });
+            const selectedDepts = Array.from(selectedDeptSet);
+
+            let deptPart;
+            if (selectedDepts.length === 1) {
+                deptPart = selectedDepts[0]
+                    .toLowerCase()
+                    .trim()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_]/g, '');
+            } else {
+                deptPart = 'multiple_departments';
+            }
+
+            const fileExtension = 'xlsx';
+            const filename = `attendance_template_${deptPart}_${fromDate}_${toDate}.${fileExtension}`;
+            XLSX.writeFile(workbook, filename);
             
             document.getElementById('attendance-template-config-modal').style.display = 'none';
         } catch (err) {
