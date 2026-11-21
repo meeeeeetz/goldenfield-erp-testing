@@ -50,6 +50,7 @@ const tabModules = {
     'finance-vat': 'Finance Folder/Finance-vat.js',
     'metz-print': 'Metzeler Folder/Metzeler-print.js',
     'metz-master-control': 'Metzeler Folder/Metzeler-master-control.js',
+    'metz-schedule-maker': 'Metzeler Folder/Metzeler-schedule-maker.js',
     'systems-user-management': 'Systems Folder/Systems-user-management.js',
     'systems-integrations': 'Systems Folder/Systems-integrations.js',
     'systems-maintenance': 'Systems Folder/Systems-maintenance.js',
@@ -119,6 +120,7 @@ const tabTitles = {
     'finance-vat': 'VAT',
     'metz-print': 'Print',
     'metz-master-control': 'Master control',
+    'metz-schedule-maker': 'Schedule Maker ( Turks )',
     'systems-user-management': 'User Management',
     'systems-integrations': 'Integrations',
     'systems-maintenance': 'Maintenance'

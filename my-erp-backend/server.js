@@ -72,6 +72,10 @@ const shippingPermitLicensesRoutes = require('./routes/operationRoutes/shipping-
 const eggProductsRoutes = require('./routes/operationRoutes/egg-products-routes');
 const dailyEggProductionRoutes = require('./routes/operationRoutes/daily-egg-production-routes');
 const metzelerPrintRoutes = require('./routes/metzelerRoutes/metzeler-print-routes');
+const turksBranchRoutes = require('./routes/metzelerRoutes/turks-branch-routes');
+const turksEmployeeRoutes = require('./routes/metzelerRoutes/turks-employee-routes');
+const turksScheduleRoutes = require('./routes/metzelerRoutes/turks-schedule-routes');
+const turksBranchStaffDayRoutes = require('./routes/metzelerRoutes/turks-branch-staff-day-routes');
 
 
 
@@ -127,6 +131,10 @@ app.use('/api/shipping-permit-licenses', shippingPermitLicensesRoutes);
 app.use('/api/egg-products', eggProductsRoutes);
 app.use('/api/daily-egg-production', dailyEggProductionRoutes);
 app.use('/api/metzeler/print/templates', metzelerPrintRoutes);
+app.use('/api/metzeler/turks/branches', turksBranchRoutes);
+app.use('/api/metzeler/turks/employees', turksEmployeeRoutes);
+app.use('/api/metzeler/turks/schedules', turksScheduleRoutes);
+app.use('/api/metzeler/turks/branch-staff-day', turksBranchStaffDayRoutes);
 app.use('/api/code-of-conduct', codeOfConductRoutes);
 app.use('/api/onboarding-documents', onboardingDocumentsRoutes);
 app.use('/api/vet-supplies-categories', vetSuppliesCategoriesRoutes);
